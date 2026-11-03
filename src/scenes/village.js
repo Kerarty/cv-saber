@@ -11,12 +11,23 @@ G.scenes.village = function (params) {
   bg.rect(0, 0, G.W, 340).fill(G.viz.gradient(0, 0, 0, 340, [
     [0, 0x070b13], [0.6, 0x0d1420], [1, 0x16273f],
   ]));
-  bg.rect(0, 340, G.W, G.H - 340).fill(0x1a2738);
-  // снежная равнина с намётом холмов
-  bg.ellipse(G.W / 2, 730, 940, 140).fill(0x243449);
-  bg.ellipse(200, 750, 420, 110).fill(0x28394f);
-  bg.ellipse(1100, 745, 380, 100).fill(0x20303f);
   c.addChild(bg);
+
+  // деревня стоит на травяном острове в фьорде (тайлы Tiny Swords)
+  const waterY = 648;
+  const water = G.art.water(G.W, G.H - waterY, { tint: 0x2e5468 });
+  water.y = waterY;
+  c.addChild(water);
+  const shelf = new PIXI.Graphics();
+  shelf.roundRect(-12, 326, G.W + 24, waterY - 318, 30).fill({ color: 0x051019, alpha: 0.4 });
+  const island = G.art.island(G.W, waterY - 320);
+  island.y = 328;
+  c.addChild(shelf, island);
+  const depth = new PIXI.Graphics();
+  depth.rect(0, 0, G.W, G.H).fill(G.viz.gradient(0, 0, 0, G.H, [
+    [0, 'rgba(6,10,18,0.42)'], [0.4, 'rgba(6,10,18,0.05)'], [1, 'rgba(6,10,18,0.3)'],
+  ]));
+  c.addChild(depth);
 
   const aur = G.viz.aurora(c, { y: 22, alpha: 0.1, index: c.children.length - 1 });
 
@@ -72,6 +83,7 @@ G.scenes.village = function (params) {
     { id: 'thing', x: 1040, y: 470, need: 3 },
   ];
   const torches = [];
+  const torchFlames = [];
 
   for (const b of layout) {
     const def = G.BUILDINGS.find(x => x.id === b.id);
@@ -82,40 +94,48 @@ G.scenes.village = function (params) {
     bld.cursor = 'pointer';
 
     // спрайтовое здание (Tiny Swords) или процедурный фолбэк
-    const BT = { forge: 'b_barracks', shipyard: 'b_house', stone: 'b_tower', thing: 'b_monastery' };
+    const BT = { forge: 'b_barracks', shipyard: 'b_house3', stone: 'b_tower2', thing: 'b_monastery' };
+    const BH = { forge: 175, shipyard: 150, stone: 190, thing: 205 };
     let sprBuilt = false;
     if (G.TEX && G.TEX[BT[b.id]]) {
       const t = G.TEX[BT[b.id]];
       const sp = new PIXI.Sprite(t.frames[0]);
       sp.anchor.set(0.5, 1);
-      const sc = 170 / t.frames[0].height;
+      const sc = BH[b.id] / t.frames[0].height;
       sp.scale.set(sc, sc);
       sp.y = 42;
       sp.alpha = open ? 1 : 0.45;
+      if (!open) sp.tint = 0x8a94a8;
       bld.addChild(sp);
       sprBuilt = true;
       // тёплый свет у открытой постройки
       if (open) {
         const glow = new PIXI.Graphics();
-        glow.circle(0, 20, 60).fill({ color: G.C.gold, alpha: 0.06 });
-        glow.circle(0, 20, 40).fill({ color: G.C.gold, alpha: 0.05 });
+        glow.circle(0, 20, 64).fill({ color: G.C.gold, alpha: 0.07 });
+        glow.circle(0, 20, 42).fill({ color: G.C.gold, alpha: 0.06 });
         bld.addChildAt(glow, 0);
       }
     }
     const g = new PIXI.Graphics();
     if (!sprBuilt) drawBuilding(g, b.id, open);
-    else { g.ellipse(0, 44, 62, 10).fill({ color: 0x000000, alpha: 0.25 }); }
+    else { g.ellipse(0, 44, 66, 11).fill({ color: 0x06121c, alpha: 0.35 }); }
 
-    // табличка с названием раздела — текст на деревянной подложке
+    // табличка с названием раздела — деревянная плашка Tiny Swords
     const label = new PIXI.Text({
       text: G.t(def.titleKey).split('·')[0].trim(),
-      style: { fontFamily: G.FONT_BODY, fontSize: 15, fill: open ? G.C.text : G.C.textDim, fontWeight: 'bold' },
+      style: { fontFamily: G.FONT_BODY, fontSize: 14, fill: 0xf0e2b8, fontWeight: 'bold' },
     });
     label.anchor.set(0.5, 0);
-    const plate = new PIXI.Graphics();
-    plate.roundRect(-label.width / 2 - 12, 70, label.width + 24, 26, 6)
-      .fill({ color: 0x2c2216, alpha: 0.92 })
-      .stroke({ width: 1.5, color: 0x4a3a24 });
+    let plate;
+    if (G.art && G.art.wood) {
+      plate = G.art.wood(label.width + 30, 30, { tint: 0x6a5138, stud: null, shadow: false });
+      plate.x = 0; plate.y = 86;
+    } else {
+      plate = new PIXI.Graphics();
+      plate.roundRect(-label.width / 2 - 12, 70, label.width + 24, 26, 6)
+        .fill({ color: 0x2c2216, alpha: 0.92 })
+        .stroke({ width: 1.5, color: 0x4a3a24 });
+    }
     label.y = 74;
 
     // замок на закрытой
@@ -123,20 +143,19 @@ G.scenes.village = function (params) {
     if (!open) {
       lock.roundRect(-9, -6, 18, 14, 3).fill(0x0d1420);
       lock.arc(0, -6, 7, Math.PI, 0).stroke({ width: 4, color: 0x0d1420 });
+      lock.y = 10;
     }
 
-    // факел на открытой
+    // факел на открытой: живой огонь из спрайт-листа
     let torch = null;
     if (open) {
       torch = new PIXI.Container();
       const stick = new PIXI.Graphics();
       stick.rect(-2, -26, 4, 26).fill(0x2c2216);
-      const flame = new PIXI.Graphics();
-      flame.circle(0, -30, 6).fill(G.C.gold);
-      flame.circle(0, -31, 3).fill(0xffd98a);
+      const flame = G.art.fire(0, -30, 26, { glow: 0.8 });
       torch.addChild(stick, flame);
-      torch.x = 0; torch.y = -66;
-      torches.push(flame);
+      torch.x = 0; torch.y = -70;
+      torchFlames.push(flame);
     }
 
     bld.addChild(g, plate, label, lock);
@@ -161,12 +180,50 @@ G.scenes.village = function (params) {
     c.addChild(bld);
   }
 
-  // пропсы: бочки, деревья, камни
-  const props = new PIXI.Graphics();
-  drawBarrel(props, 590, 520);
-  drawBarrel(props, 612, 542);
-  drawBarrel(props, 975, 530);
-  c.addChild(props);
+  // пропсы: деревья, кусты, камни, пни, инструменты, бочки — всё спрайты
+  if (G.TEX) {
+    const put = (name, fi, x, y, hgt, alpha = 1) => {
+      const t = G.TEX[name];
+      if (!t || !t.frames.length) return;
+      const fr = t.frames[fi % t.frames.length];
+      const sp = new PIXI.Sprite(fr);
+      sp.anchor.set(0.5, 0.9);
+      sp.scale.set(hgt / fr.height, hgt / fr.height);
+      sp.x = x; sp.y = y;
+      sp.alpha = alpha;
+      c.addChild(sp);
+      return sp;
+    };
+    // дальний план: домики и стрелковый двор, притушенные
+    put('b_house1', 0, 62, 420, 105, 0.75);
+    put('b_archery', 0, 1215, 415, 120, 0.7);
+    // деревья по краям острова
+    put('tree1', 0, 66, 500, 150);
+    put('tree2', 2, 175, 405, 110, 0.85);
+    put('tree1', 3, 1210, 495, 140);
+    put('tree3', 4, 1115, 395, 100, 0.85);
+    put('tree4', 5, 640, 372, 88, 0.8);
+    // кусты и камни
+    put('bush1', 0, 388, 528, 42, 0.95);
+    put('bush2', 3, 668, 470, 38, 0.95);
+    put('bush3', 5, 948, 520, 40, 0.95);
+    put('bush4', 1, 1130, 560, 40, 0.95);
+    put('rock1', 0, 700, 560, 38);
+    put('rock2', 0, 1090, 545, 34);
+    put('rock3', 0, 335, 545, 32);
+    // пни у верфи и инструменты у кузницы
+    put('stump1', 0, 452, 545, 44);
+    put('stump2', 0, 590, 470, 36, 0.9);
+    put('tool1', 0, 196, 512, 26);
+    put('tool3', 0, 218, 520, 24);
+    // самородок у рунического камня
+    put('gold_resource', 0, 858, 520, 30);
+    // бочки процедурные
+    const props = new PIXI.Graphics();
+    drawBarrel(props, 975, 530);
+    drawBarrel(props, 996, 545);
+    c.addChild(props);
+  }
   let sheep = null;
   if (G.TEX && G.TEX.sheep_idle) {
     sheep = new PIXI.Container();
@@ -174,31 +231,14 @@ G.scenes.village = function (params) {
     shSp.anchor.set(0.5, 1);
     shSp.scale.set(0.55, 0.55);
     sheep.addChild(shSp);
-    sheep.x = 700; sheep.y = 558;
+    sheep.x = 700; sheep.y = 600;
     sheep.anim = { frames: G.TEX.sheep_idle.frames, i: 0, t: 0, fps: 3.5, sp: shSp };
     c.addChild(sheep);
   }
 
-  if (G.TEX) {
-    const put = (name, x, y, hgt) => {
-      const t = G.TEX[name];
-      if (!t) return;
-      const sp = new PIXI.Sprite(t.frames[0]);
-      sp.anchor.set(0.5, 1);
-      sp.scale.set(hgt / t.frames[0].height, hgt / t.frames[0].height);
-      sp.x = x; sp.y = y;
-      c.addChild(sp);
-    };
-    put('tree1', 60, 430, 150);
-    put('tree1', 1200, 420, 130);
-    put('rock1', 680, 560, 40);
-    put('rock2', 1100, 555, 36);
-    put('rock3', 320, 555, 34);
-  }
-
   // Причал с драккаром — левый угол, вдали от кнопок
   const dock = new PIXI.Container();
-  dock.x = 130; dock.y = 616;
+  dock.x = 130; dock.y = 640;
   const pierG = new PIXI.Graphics();
   pierG.rect(-90, 8, 200, 12).fill(0x3a2d1c);
   pierG.rect(-78, 18, 10, 26).fill(0x2c2216);
@@ -250,20 +290,23 @@ G.scenes.village = function (params) {
     setTimeout(() => { if (!c.destroyed) G.ui.toast(G.t('village_unlocked', { n: G.t(def.titleKey).split('·')[0].trim() }), 2200); }, 400);
   }
 
-  // Анимация: качание драккара, мерцание факелов, дым из кузницы
+  // Анимация: качание драккара, дрейф воды, мерцание огней, дым из кузницы
   let lastSmoke = 0;
   c.tick = (dtMs) => {
     aur.update();
     const t = performance.now() / 1000;
     ship.rotation = Math.sin(t * 1.4) * 0.03;
-    for (let i = 0; i < torches.length; i++) {
-      torches[i].alpha = 0.8 + 0.2 * Math.sin(t * (7 + i) + i * 2);
-      torches[i].scale.set(1 + 0.08 * Math.sin(t * 11 + i));
+    if (water && water.__tile) {
+      water.__tile.tilePosition.x = t * 6;
+      water.__tile.tilePosition.y = Math.sin(t * 0.5) * 4;
+    }
+    for (let i = 0; i < torchFlames.length; i++) {
+      torchFlames[i].alpha = 0.88 + 0.12 * Math.sin(t * (7 + i) + i * 2);
     }
     // дымок из трубы кузницы
     if (t - lastSmoke > 0.6) {
       lastSmoke = t;
-      G.fxParticles.burst(274, 372, 0x8a94a0, 1, { size: 3.5, speed: 8, up: true, grav: -14, ttl: 1900 });
+      G.fxParticles.burst(262, 312, 0x8a94a0, 1, { size: 3.5, speed: 8, up: true, grav: -14, ttl: 1900 });
     }
     // овца: щиплет траву и бродит
     if (sheep) {

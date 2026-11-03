@@ -29,36 +29,39 @@ G.scenes.battle = function (params) {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const key = (col, row) => col + ',' + row;
 
-  // --- Фон поля: градиент + виньетка ---
-  const bg = new PIXI.Graphics();
-  bg.rect(0, 0, G.W, G.H).fill(G.viz.gradient(0, 0, 0, G.H, [
-    [0, 0x0a1220], [0.5, 0x101b2b], [1, 0x0c1522],
+  // --- Фон поля: ночная вода + травяной остров Tiny Swords ---
+  const bg = new PIXI.Container();
+  const water = G.art.water(G.W, G.H, { tint: 0x2e5468 });
+  bg.addChild(water);
+  const depth = new PIXI.Graphics();
+  depth.rect(0, 0, G.W, G.H).fill(G.viz.gradient(0, 0, 0, G.H, [
+    [0, 'rgba(6,10,18,0.55)'], [0.35, 'rgba(6,10,18,0.1)'], [1, 'rgba(6,10,18,0.45)'],
   ]));
-  bg.rect(0, 0, G.W, 60).fill(0x0b121d);      // верхняя плашка
-  bg.rect(0, G.H - 128, G.W, 128).fill(0x0b121d); // нижняя плашка карт
+  bg.addChild(depth);
   c.addChild(bg);
 
-  // Скалы за полем и туман
-  const scenery = new PIXI.Graphics();
-  const ridge = (baseY, amp, step, color) => {
-    const pts = [0, baseY + amp];
-    for (let x = 0; x <= G.W + step; x += step) {
-      pts.push(x, baseY - Math.abs(Math.sin(x * 0.012) * amp * (0.35 + 0.65 * Math.abs(Math.sin(x * 0.005)))));
-    }
-    pts.push(G.W, baseY + amp, G.W, G.H, 0, G.H);
-    scenery.poly(pts).fill(color);
-  };
-  ridge(150, 66, 80, 0x0c1524);
-  ridge(185, 48, 64, 0x0a111d);
-  c.addChild(scenery);
-  const fog = new PIXI.Graphics();
-  fog.rect(0, 130, G.W, 120).fill(G.viz.gradient(0, 130, 0, 250, [
-    [0, 'rgba(140,170,200,0.09)'], [1, 'rgba(140,170,200,0)'],
-  ]));
-  c.addChild(fog);
-  G.viz.vignette(c, 0.32);
+  // остров: шельф-тень в воде, затем травяной массив
+  const FIELD = { x: 148, y: 44, w: 1010, h: 558 };
+  const shelf = new PIXI.Graphics();
+  shelf.roundRect(FIELD.x - 10, FIELD.y - 8, FIELD.w + 20, FIELD.h + 16, 30)
+    .fill({ color: 0x051019, alpha: 0.4 });
+  const island = G.art.island(FIELD.w, FIELD.h);
+  island.x = FIELD.x; island.y = FIELD.y;
+  c.addChild(shelf, island);
 
-  // --- Гексы ---
+  // тёмные полосы под HUD сверху и под столом карт снизу
+  const hudTint = new PIXI.Graphics();
+  hudTint.rect(0, 0, G.W, 60).fill({ color: 0x060a12, alpha: 0.45 });
+  hudTint.rect(0, G.H - 128, G.W, 128).fill({ color: 0x060a12, alpha: 0.5 });
+  c.addChild(hudTint);
+  // деревянный стол, на который выходят карты способностей
+  const table = G.art.wood(G.W, 128, { tint: 0x65513c, stud: null, shadow: false });
+  table.x = G.W / 2; table.y = G.H - 64;
+  table.eventMode = 'none';
+  c.addChild(table);
+  G.viz.vignette(c, 0.3);
+
+  // --- Гексы: деликатная сетка поверх травы ---
   const hexLayer = new PIXI.Container();
   hexLayer.sortableChildren = true;
   c.addChild(hexLayer);
@@ -66,20 +69,22 @@ G.scenes.battle = function (params) {
     for (let row = 0; row < G.HEX.rows; row++) {
       const { x, y } = G.hexToPx(col, row);
       const g = new PIXI.Graphics();
-      // лёгкая шахматная тонировка — поле не выглядит плоским
-      const base = (col + row) % 2 ? 0x16202e : 0x18232f;
-      g.poly(hexPoints(x, y)).fill(base).stroke({ width: 1.5, color: G.C.hexBorder });
+      // лёгкая шахматная тонировка — сетка читается, трава видна
+      const dark = (col + row) % 2 === 0;
+      g.poly(hexPoints(x, y))
+        .fill({ color: 0x0c1a26, alpha: dark ? 0.14 : 0.07 })
+        .stroke({ width: 1.2, color: 0x08202e, alpha: 0.42 });
       g.eventMode = 'static';
       g.on('pointertap', () => onHexTap(col, row));
       g.on('pointerover', () => hexHover(col, row, true));
       g.on('pointerout', () => hexHover(col, row, false));
       hexLayer.addChild(g);
       B.hexViews.set(key(col, row), g);
-      g.__x = x; g.__y = y; g.__base = base; g.__hover = false;
+      g.__x = x; g.__y = y; g.__hover = false;
     }
   }
 
-  // Декор поля: камни, снежные пятна, трещины — на случайных гексах
+  // Декор поля: камни, кусты и снежные пятна на случайных гексах
   const deco = new PIXI.Container();
   deco.zIndex = 1;
   hexLayer.addChild(deco);
@@ -91,11 +96,11 @@ G.scenes.battle = function (params) {
   lightPool.eventMode = 'none';
   lightPool.zIndex = 2;
   hexLayer.addChild(lightPool);
-  for (let i = 0; i < 11; i++) {
+  for (let i = 0; i < 12; i++) {
     const col = 1 + Math.floor(Math.random() * (G.HEX.cols - 2));
     const row = Math.floor(Math.random() * G.HEX.rows);
     const { x, y } = G.hexToPx(col, row);
-    const kind = Math.floor(Math.random() * 3);
+    const kind = Math.floor(Math.random() * 4);
     const d = new PIXI.Graphics();
     if (kind === 0) { // камни: спрайт или процедурка
       if (G.TEX && G.TEX['rock' + (1 + i % 3)]) {
@@ -103,14 +108,26 @@ G.scenes.battle = function (params) {
         rsp.anchor.set(0.5, 0.5);
         rsp.scale.set(0.55, 0.55);
         rsp.x = x; rsp.y = y + 6;
-        rsp.alpha = 0.85;
+        rsp.alpha = 0.9;
         deco.addChild(rsp);
         continue;
       }
       d.poly([x - 9, y + 10, x - 4, y + 2, x + 3, y + 1, x + 9, y + 10])
         .fill(0x2a3648).stroke({ width: 1, color: 0x1a2432 });
       d.poly([x - 2, y + 3, x + 2, y + 2, x + 5, y + 8, x - 4, y + 9]).fill(0x39465c);
-    } else if (kind === 1) { // снег
+    } else if (kind === 1) { // анимированный куст
+      const bn = 'bush' + (1 + i % 4);
+      if (G.TEX && G.TEX[bn] && G.TEX[bn].frames.length > 1) {
+        const bsp = new PIXI.Sprite(G.TEX[bn].frames[i % G.TEX[bn].frames.length]);
+        bsp.anchor.set(0.5, 0.82);
+        bsp.scale.set(0.42, 0.42);
+        bsp.x = x + (i % 2 ? 8 : -7); bsp.y = y + 14;
+        bsp.alpha = 0.95;
+        deco.addChild(bsp);
+        continue;
+      }
+      d.circle(x, y + 8, 8).fill(0x2c4a38);
+    } else if (kind === 2) { // снег
       d.ellipse(x - 4, y + 12, 12, 3.5).fill({ color: 0xdfe9f2, alpha: 0.16 });
       d.ellipse(x + 8, y + 6, 8, 2.6).fill({ color: 0xdfe9f2, alpha: 0.12 });
     } else { // трещина
@@ -120,18 +137,34 @@ G.scenes.battle = function (params) {
     deco.addChild(d);
   }
 
-  // Деревья по краям поля: отдельные кадры из листа
-  if (G.TEX && G.TEX.tree1) {
-    [[96, 210, 150, 0], [1180, 200, 140, 2], [50, 560, 120, 3], [1225, 545, 135, 4]].forEach(([tx, ty, hgt, fi]) => {
-      const fr = G.TEX.tree1.frames[fi % G.TEX.tree1.frames.length];
-      const tsp = new PIXI.Sprite(fr);
-      tsp.anchor.set(0.5, 0.9);
-      tsp.scale.set(hgt / fr.height, hgt / fr.height);
-      tsp.x = tx; tsp.y = ty;
-      tsp.alpha = 0.92;
-      tsp.zIndex = 0;
-      hexLayer.addChild(tsp);
-    });
+  // Деревья и кусты по краям острова: обрамляют поле, не мешают гексам
+  const edgePlants = new PIXI.Container();
+  edgePlants.zIndex = 0;
+  edgePlants.eventMode = 'none';
+  hexLayer.addChild(edgePlants);
+  const putSprite = (cont, name, fi, tx, ty, hgt, alpha = 1) => {
+    const t = G.TEX[name];
+    if (!t || !t.frames.length) return;
+    const fr = t.frames[fi % t.frames.length];
+    const sp = new PIXI.Sprite(fr);
+    sp.anchor.set(0.5, 0.9);
+    sp.scale.set(hgt / fr.height, hgt / fr.height);
+    sp.x = tx; sp.y = ty;
+    sp.alpha = alpha;
+    cont.addChild(sp);
+  };
+  if (G.TEX) {
+    putSprite(edgePlants, 'tree1', 0, 196, 210, 150, 0.95);
+    putSprite(edgePlants, 'tree2', 1, 1092, 190, 140, 0.95);
+    putSprite(edgePlants, 'tree4', 2, 1130, 400, 120, 0.9);
+    putSprite(edgePlants, 'tree3', 3, 176, 430, 115, 0.9);
+    putSprite(edgePlants, 'tree1', 4, 620, 120, 110, 0.75);
+    putSprite(edgePlants, 'bush1', 0, 300, 156, 44, 0.9);
+    putSprite(edgePlants, 'bush2', 2, 480, 142, 40, 0.9);
+    putSprite(edgePlants, 'bush3', 4, 830, 146, 42, 0.9);
+    putSprite(edgePlants, 'bush4', 6, 1000, 158, 44, 0.9);
+    putSprite(edgePlants, 'rock4', 0, 130, 300, 40, 0.9);
+    putSprite(edgePlants, 'rock4', 0, 1160, 540, 36, 0.9);
   }
 
   // Светлячки над полем
@@ -152,20 +185,17 @@ G.scenes.battle = function (params) {
     const g = B.hexViews.get(key(col, row));
     if (!g) return;
     g.__hover = on;
-    redrawHex(g, hexHoverColor(col, row) || g.__base, G.C.hexBorder);
+    const hl = B.hiViews.some(h => h.col === col && h.row === row);
+    if (on && hl) redrawHex(g, 0x9fe0f0, 0xbfeaf5, 0.34);
+    else if (hl) redrawHex(g, B.hiMode === 'attack' ? 0xc74a3c : 0x2f95b5, B.hiMode === 'attack' ? 0xffa090 : 0x9fe0f0, 0.5);
+    else redrawHex(g, 0x0c1a26, 0x08202e, g.__hover ? 0.22 : undefined);
   }
 
-  function hexHoverColor(col, row) {
-    if (B.state === 'moving' || B.state === 'acting') {
-      const hl = B.hiViews.length && B.hiViews.some(h => h.col === col && h.row === row);
-      if (hl) return 0x2d4a57;
-    }
-    return null;
-  }
-
-  function redrawHex(g, fill, border) {
+  function redrawHex(g, fill, border, alpha) {
     g.clear();
-    g.poly(hexPoints(g.__x, g.__y)).fill(fill).stroke({ width: 1.5, color: border });
+    g.poly(hexPoints(g.__x, g.__y))
+      .fill({ color: fill, alpha: alpha === undefined ? 0.11 : alpha })
+      .stroke({ width: 1.2, color: border, alpha: 0.5 });
   }
 
   function hexPoints(cx, cy, scaleMul = 1) {
@@ -814,11 +844,14 @@ G.scenes.battle = function (params) {
 
   function highlightCells(cells, mode) {
     clearHighlights();
+    B.hiMode = mode;
     for (const cell of cells) {
       const g = new PIXI.Graphics();
       const { x, y } = G.hexToPx(cell.col, cell.row);
-      g.poly(hexPoints(x, y)).fill(mode === 'move' ? G.C.hexMove : G.C.hexAtk)
-        .stroke({ width: 2, color: mode === 'move' ? 0x59b7c9 : 0xd0685c });
+      const atk = mode === 'attack';
+      g.poly(hexPoints(x, y))
+        .fill({ color: atk ? 0xc74a3c : 0x2f95b5, alpha: atk ? 0.5 : 0.46 })
+        .stroke({ width: 2, color: atk ? 0xffa090 : 0x9fe0f0, alpha: 0.9 });
       g.zIndex = 5;
       hexLayer.addChild(g);
       B.hiViews.push({ g, col: cell.col, row: cell.row });
@@ -936,6 +969,18 @@ G.scenes.battle = function (params) {
     u.hp = 0;
     G.sfx.play(u.kind === 'hero' ? 'thud' : 'hit');
     if (u.kind === 'enemy' || u.kind === 'zone') {
+      // спрайтовый взрыв + угасание
+      const ex = G.art.anim('fx_explosion', {
+        h: 96, fps: 15, loop: false,
+        onDone: () => { if (ex.view.parent) ex.view.parent.removeChild(ex.view); ex.view.destroy(); },
+      });
+      if (ex) {
+        ex.view.x = u.view.x; ex.view.y = u.view.y - 8;
+        ex.view.zIndex = 35;
+        ex.view.alpha = 0.95;
+        c.addChild(ex.view);
+      }
+      G.fxParticles.burst(u.view.x, u.view.y, 0xffb070, 10, { size: 3, speed: 130, ttl: 560 });
       G.tween(u.view, { alpha: 0.15 }, 400);
       if (u.kind === 'zone') onZoneDestroyed(u);
     }
@@ -995,19 +1040,24 @@ G.scenes.battle = function (params) {
   function showDefeat() {
     const p = new PIXI.Container();
     p.zIndex = 80;
+    const pw = 520, ph = 220;
+    const sheet = G.ui.parchment(pw, ph);
+    sheet.x = G.W / 2; sheet.y = G.H / 2;
     const g = new PIXI.Graphics();
-    g.roundRect(G.W / 2 - 260, G.H / 2 - 110, 520, 220, 16).fill({ color: G.C.panelDark, alpha: 0.97 })
-      .roundRect(G.W / 2 - 260, G.H / 2 - 110, 520, 220, 16).stroke({ width: 2, color: G.C.enemy });
+    G.ui.fancyFrame(g, pw, ph);
+    g.x = G.W / 2; g.y = G.H / 2;
+    g.roundRect(G.W / 2 - pw / 2 + 3, G.H / 2 - ph / 2 + 3, pw - 6, ph - 6, 12)
+      .stroke({ width: 2, color: G.C.blood, alpha: 0.85 });
     const t = new PIXI.Text({
       text: G.t('defeat_title'),
-      style: { fontFamily: G.FONT_TITLE, fontSize: 30, fill: G.C.enemy },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 30, fill: G.C.blood },
     });
     t.anchor.set(0.5); t.x = G.W / 2; t.y = G.H / 2 - 60;
     const retry = G.ui.button({
       label: G.t('defeat_retry'), x: G.W / 2, y: G.H / 2 + 40, w: 280, h: 54, primary: true,
       onClick: () => G.setScene('battle', { wave: waveIdx }),
     });
-    p.addChild(g, t, retry);
+    p.addChild(sheet, g, t, retry);
     c.addChild(p);
   }
 
@@ -1350,21 +1400,21 @@ G.scenes.battle = function (params) {
     dim.rect(0, 0, G.W, G.H).fill({ color: 0x060a12, alpha: 0.72 });
     ov.addChild(dim);
     const pw = 620, ph = wave.boss ? 300 : 262;
+    const sheet = G.ui.parchment(pw, ph);
+    sheet.x = G.W / 2; sheet.y = G.H / 2 - 20;
     const pg = new PIXI.Graphics();
-    pg.roundRect(G.W / 2 - pw / 2, G.H / 2 - ph / 2 - 20, pw, ph, 16)
-      .fill({ color: G.C.panelDark, alpha: 0.98 })
-      .roundRect(G.W / 2 - pw / 2, G.H / 2 - ph / 2 - 20, pw, ph, 16)
-      .stroke({ width: 2.5, color: G.C.gold });
-    ov.addChild(pg);
+    G.ui.fancyFrame(pg, pw, ph);
+    pg.x = G.W / 2; pg.y = G.H / 2 - 20;
+    ov.addChild(sheet, pg);
     const head = new PIXI.Text({
       text: G.t(wave.nameKey),
-      style: { fontFamily: G.FONT_TITLE, fontSize: 30, fill: G.C.gold, letterSpacing: 2 },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 30, fill: G.C.ink, letterSpacing: 2 },
     });
     head.anchor.set(0.5, 0);
     head.x = G.W / 2; head.y = G.H / 2 - ph / 2 + 4;
     const hint = new PIXI.Text({
       text: G.t(wave.hintKey),
-      style: { fontFamily: G.FONT_BODY, fontSize: 15, fill: G.C.textDim, wordWrap: true, wordWrapWidth: pw - 80, align: 'center' },
+      style: { fontFamily: G.FONT_BODY, fontSize: 15, fill: G.C.inkSoft, wordWrap: true, wordWrapWidth: pw - 80, align: 'center' },
     });
     hint.anchor.set(0.5, 0);
     hint.x = G.W / 2; hint.y = G.H / 2 - ph / 2 + 46;
@@ -1385,18 +1435,18 @@ G.scenes.battle = function (params) {
     for (const [name, info] of byName) {
       const t = new PIXI.Text({
         text: (info.count > 1 ? info.count + ' × ' : '') + name + '  —  ' + G.t('roster_hp', { n: info.hp }),
-        style: { fontFamily: G.FONT_BODY, fontSize: 16, fill: G.C.text },
+        style: { fontFamily: G.FONT_BODY, fontSize: 16, fill: G.C.ink },
       });
       t.x = -80; t.y = ry;
       const dot = new PIXI.Graphics();
-      dot.circle(-96, ry + 9, 5).fill(G.C.enemy);
+      dot.circle(-96, ry + 9, 5).fill(G.C.blood);
       roster.addChild(dot, t);
       ry += 34;
     }
     if (wave.boss) {
       const bt = new PIXI.Text({
         text: G.t('hint3'),
-        style: { fontFamily: G.FONT_BODY, fontSize: 13, fill: G.C.textDim },
+        style: { fontFamily: G.FONT_BODY, fontSize: 13, fill: G.C.inkDim },
       });
       bt.y = ry + 4;
       roster.addChild(bt);
@@ -1433,15 +1483,13 @@ G.scenes.battle = function (params) {
     dim.rect(0, 0, G.W, G.H).fill({ color: 0x060a12, alpha: 0.6 });
     ov.addChild(dim);
     const pw = 480, ph = 260;
+    const sheet = G.ui.parchment(pw, ph);
     const pg = new PIXI.Graphics();
-    pg.roundRect(G.W / 2 - pw / 2, G.H / 2 - ph / 2, pw, ph, 16)
-      .fill({ color: G.C.panelDark, alpha: 0.98 })
-      .roundRect(G.W / 2 - pw / 2, G.H / 2 - ph / 2, pw, ph, 16)
-      .stroke({ width: 2.5, color: G.C.gold });
-    ov.addChild(pg);
+    G.ui.fancyFrame(pg, pw, ph);
+    ov.addChild(sheet, pg);
     const head = new PIXI.Text({
       text: G.t('wave_clear_title'),
-      style: { fontFamily: G.FONT_TITLE, fontSize: 30, fill: G.C.gold, letterSpacing: 2 },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 30, fill: G.C.ink, letterSpacing: 2 },
     });
     head.anchor.set(0.5, 0);
     head.x = G.W / 2; head.y = G.H / 2 - ph / 2 + 24;
@@ -1454,7 +1502,7 @@ G.scenes.battle = function (params) {
     rows.forEach((r, i) => {
       const t = new PIXI.Text({
         text: r,
-        style: { fontFamily: G.FONT_BODY, fontSize: 17, fill: G.C.text },
+        style: { fontFamily: G.FONT_BODY, fontSize: 17, fill: G.C.ink },
       });
       t.x = G.W / 2 - 130; t.y = G.H / 2 - ph / 2 + 84 + i * 34;
       ov.addChild(t);
@@ -1476,6 +1524,11 @@ G.scenes.battle = function (params) {
   c.tick = (dtMs) => {
     const t = performance.now() / 1000;
     if (ring.visible) ring.rotation += (dtMs / 1000) * 1.4;
+    // вода дышит: медленный дрейф тайла
+    if (water && water.__tile) {
+      water.__tile.tilePosition.x = t * 7;
+      water.__tile.tilePosition.y = Math.sin(t * 0.6) * 5;
+    }
     tickAnims(dtMs);
     for (const u of B.units) {
       if (u.body && u.alive) u.body.y = Math.sin(t * 2.3 + u.bobPhase) * 1.2;
@@ -1501,44 +1554,52 @@ G.CARD_ICONS = {
   rune_sdk: '🛡️', kb472: '💾', code_review: '🔧',
 };
 
-// Карта способности v2: иконка, полоса героя, hover
+// Карта способности v3: гвинт-пергамент, геройская кромка, иконка в круге
 G.ui.drawCard = function (card, index, heroColor) {
   const cc = new PIXI.Container();
   cc.eventMode = 'static';
   cc.cursor = 'pointer';
   const w = 176, h = 100;
+  const body = G.art.nine && G.UI9 && G.UI9.paper
+    ? G.art.nine('paper', w, h)
+    : new PIXI.Graphics();
+  if (!G.art.nine || !G.UI9 || !G.UI9.paper) body.roundRect(0, 0, w, h, 10).fill(G.C.paper);
   const g = new PIXI.Graphics();
   const draw = (hover) => {
-    const yo = hover ? -4 : 0;
     g.clear();
-    g.roundRect(0, yo, w, h, 10).fill(G.C.panel);
-    g.roundRect(0, yo, w, h, 10).stroke({ width: hover ? 2.5 : 2, color: hover ? G.C.gold : G.C.goldDark });
-    g.rect(0, yo, w, 20).fill({ color: 0x241c12, alpha: 1 });
-    g.rect(0, yo + 20, w, 2).fill({ color: heroColor || G.C.gold, alpha: 0.85 });
+    if (hover) {
+      g.roundRect(1, 1, w - 2, h - 2, 10).fill({ color: 0xfff6dd, alpha: 0.42 });
+      g.roundRect(1, 1, w - 2, h - 2, 10).stroke({ width: 2, color: G.C.goldDark, alpha: 1 });
+    }
+    // геройская кромка снизу
+    g.roundRect(8, h - 9, w - 16, 4, 2).fill({ color: heroColor || G.C.goldDark, alpha: 0.9 });
   };
   draw(false);
   const icon = new PIXI.Text({
     text: G.CARD_ICONS[card.id] || '⚔️',
-    style: { fontSize: 19 },
+    style: { fontSize: 17 },
   });
   icon.anchor.set(0.5);
-  icon.x = w - 22; icon.y = 11;
+  const iconBg = new PIXI.Graphics();
+  iconBg.circle(w - 21, 20, 15).fill(0x2c2115);
+  iconBg.circle(w - 21, 20, 15).stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.9 });
+  icon.x = w - 21; icon.y = 20;
   const name = new PIXI.Text({
     text: G.t('c_' + card.id),
-    style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: G.C.gold, letterSpacing: 0.5 },
+    style: { fontFamily: G.FONT_TITLE, fontSize: 14, fill: G.C.ink, letterSpacing: 0.5 },
   });
-  name.x = 10; name.y = 3;
+  name.x = 10; name.y = 6;
   const desc = new PIXI.Text({
     text: G.t('c_' + card.id + '_d'),
-    style: { fontFamily: G.FONT_BODY, fontSize: 13, fill: G.C.text },
+    style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fill: G.C.ink, fontWeight: 'bold' },
   });
   desc.x = 10; desc.y = 32;
   const fact = new PIXI.Text({
     text: G.t('c_' + card.id + '_f'),
-    style: { fontFamily: G.FONT_BODY, fontSize: 12, fill: G.C.textDim, wordWrap: true, wordWrapWidth: w - 20, lineHeight: 15 },
+    style: { fontFamily: G.FONT_BODY, fontSize: 11.5, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 20, lineHeight: 14 },
   });
-  fact.x = 10; fact.y = 56;
-  cc.addChild(g, icon, name, desc, fact);
+  fact.x = 10; fact.y = 52;
+  cc.addChild(body, g, iconBg, icon, name, desc, fact);
   cc.on('pointerover', () => { draw(true); cc.y = -4; });
   cc.on('pointerout', () => { draw(false); cc.y = 0; });
   return cc;

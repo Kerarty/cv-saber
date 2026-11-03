@@ -56,18 +56,17 @@ G.scenes.victory = function () {
   ship.x = G.W / 2; ship.y = 560;
   c.addChild(ship);
 
-  // Отчёт рейда
+  // Отчёт рейда — пергамент
   const panel = new PIXI.Container();
   panel.x = G.W / 2; panel.y = 350;
   const pw = 460, ph = 190;
+  const sheet = G.ui.parchment(pw, ph);
   const pg = new PIXI.Graphics();
-  pg.roundRect(-pw / 2, -ph / 2, pw, ph, 14).fill({ color: G.C.panel, alpha: 0.96 });
-  pg.roundRect(-pw / 2, -ph / 2, pw, ph, 14).stroke({ width: 2, color: G.C.gold });
   G.ui.fancyFrame(pg, pw, ph);
-  panel.addChild(pg);
+  panel.addChild(sheet, pg);
   const pt = new PIXI.Text({
     text: G.t('win_report'),
-    style: { fontFamily: G.FONT_TITLE, fontSize: 20, fill: G.C.gold, letterSpacing: 1 },
+    style: { fontFamily: G.FONT_TITLE, fontSize: 20, fill: G.C.ink, letterSpacing: 1 },
   });
   pt.anchor.set(0.5, 0);
   pt.y = -ph / 2 + 14;
@@ -83,12 +82,12 @@ G.scenes.victory = function () {
   for (const [k, v] of rows) {
     const a = new PIXI.Text({
       text: G.t(k),
-      style: { fontFamily: G.FONT_BODY, fontSize: 16, fill: G.C.textDim },
+      style: { fontFamily: G.FONT_BODY, fontSize: 16, fill: G.C.inkSoft },
     });
     a.x = -pw / 2 + 36; a.y = yy;
     const b = new PIXI.Text({
       text: String(v),
-      style: { fontFamily: G.FONT_TITLE, fontSize: 18, fill: G.C.text },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 18, fill: G.C.ink },
     });
     b.anchor.set(1, 0);
     b.x = pw / 2 - 36; b.y = yy;

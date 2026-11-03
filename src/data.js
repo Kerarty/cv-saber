@@ -27,6 +27,23 @@ G.C = {
   textDim: 0x8fa3b8,
   panel: 0x1b2433,
   panelDark: 0x141c29,
+  // пергамент, чернила и дерево — новая визуальная база
+  ink: 0x2a2118,
+  inkSoft: 0x5a4a38,
+  inkDim: 0x7a6a56,
+  paper: 0xf0e2b8,
+  paperDark: 0xd8c49a,
+  paperShade: 0xc4ad82,
+  wood: 0x4a3424,
+  woodDark: 0x2c1f15,
+  woodLight: 0x6b4a30,
+  teal: 0x2e6f72,
+  tealDark: 0x1d4b52,
+  tealLight: 0x5aa0a0,
+  ember: 0xff9d4a,
+  emberHot: 0xffe0a0,
+  blood: 0x8a2f2a,
+  moss: 0x5a7a52,
 };
 
 G.FONT_TITLE = '"Ruslan Display", Impact, "Arial Black", sans-serif';
