@@ -2,7 +2,7 @@
 window.G = window.G || {};
 
 G.ui = {
-  // Кнопка: контейнер с фоном, тенью, hover/press состояниями
+  // Кнопка: скин из Tiny Swords UI (button_gold / button_blue), тень, hover/press
   button({ label, x, y, w = 260, h = 56, primary = false, small = false, onClick }) {
     const c = new PIXI.Container();
     c.x = x; c.y = y; c.eventMode = 'static'; c.cursor = 'pointer';
@@ -17,22 +17,42 @@ G.ui = {
       },
     });
     t.anchor.set(0.5);
-    // пилюля растёт под текст: Ruslan Display шире системного
+    // кнопка растёт под текст: Ruslan Display шире системного
     w = Math.max(w, t.width + (small ? 36 : 56));
     const shadow = new PIXI.Graphics();
-    shadow.roundRect(-w / 2 + 3, -h / 2 + 5, w, h, 10).fill({ color: 0x000000, alpha: 0.35 });
-    const g = new PIXI.Graphics();
+    shadow.roundRect(-w / 2 + 3, -h / 2 + 5, w, h, 12).fill({ color: 0x000000, alpha: 0.38 });
+    // скиновые девять-слайсы: обычная и утопленная (затемнённая) версии
+    const skinKey = primary ? 'button_gold' : 'button_blue';
+    const hasSkin = G.art && G.art.nine && G.UI9 && G.UI9[skinKey];
+    const mk = (tint, dy) => {
+      if (!hasSkin) return null;
+      const n = G.art.nine(skinKey, w, h, { tint });
+      n.x = -w / 2; n.y = -h / 2 + dy;
+      return n;
+    };
+    const normal = hasSkin ? mk(null, 0) : null;
+    const pressed = hasSkin ? mk(0x7d7d7d, 2) : null;
+    const g = new PIXI.Graphics(); // процедурный фолбэк
+    const hi = new PIXI.Graphics();
+    hi.roundRect(-w / 2 + 2, -h / 2 + 2, w - 4, h - 4, 11)
+      .stroke({ width: 2, color: primary ? 0xffe4a8 : 0xbfe0ff, alpha: 0.9 });
     const draw = (state) => {
       // state: 0 обычная, 1 нажата, 2 hover
-      g.clear();
-      const bg = primary ? (state === 2 ? 0xf5b959 : G.C.gold) : (state === 2 ? 0x243044 : G.C.panel);
-      g.roundRect(-w / 2, -h / 2, w, h, 10).fill(bg);
-      g.roundRect(-w / 2, -h / 2, w, h, 10).stroke({ width: 2, color: primary ? G.C.goldDark : G.C.hexBorder, alpha: 1 });
+      if (normal) { normal.visible = state !== 1; pressed.visible = state === 1; }
+      else {
+        g.clear();
+        const bg = primary ? (state === 2 ? 0xf5b959 : G.C.gold) : (state === 2 ? 0x243044 : G.C.panel);
+        g.roundRect(-w / 2, -h / 2, w, h, 10).fill(bg);
+        g.roundRect(-w / 2, -h / 2, w, h, 10).stroke({ width: 2, color: primary ? G.C.goldDark : G.C.hexBorder, alpha: 1 });
+      }
+      hi.visible = state === 2;
       c.y = y + (state === 1 ? 2 : 0);
+      t.y = state === 1 ? 1 : 0;
       shadow.visible = state !== 1;
     };
     draw(0);
-    c.addChild(shadow, g, t);
+    if (normal) c.addChild(shadow, normal, pressed, t, hi);
+    else c.addChild(shadow, g, t, hi);
     c.on('pointerover', () => draw(2));
     c.on('pointerout', () => draw(0));
     c.on('pointerdown', () => { G.sfx.play('blip'); draw(1); });
@@ -40,6 +60,19 @@ G.ui = {
     c.on('pointerupoutside', () => draw(0));
     c.on('pointertap', () => onClick && onClick());
     c.refreshLabel = (v) => { t.text = v; };
+    return c;
+  },
+
+  // Пергаментная основа панелей: nine-slice бумаги + тень (идиома гвинт-карточек)
+  parchment(w, h, opts = {}) {
+    const c = new PIXI.Container();
+    const shadow = new PIXI.Graphics();
+    shadow.roundRect(-w / 2 + (opts.sx === undefined ? 8 : opts.sx), -h / 2 + (opts.sy === undefined ? 10 : opts.sy), w, h, 16)
+      .fill({ color: 0x000000, alpha: opts.shadowAlpha === undefined ? 0.5 : opts.shadowAlpha });
+    c.addChild(shadow);
+    const p = G.art.nine(opts.special ? 'special' : 'paper', w, h, opts.tint ? { tint: opts.tint } : {});
+    p.x = -w / 2; p.y = -h / 2;
+    c.addChild(p);
     return c;
   },
 
@@ -199,43 +232,52 @@ G.ui = {
     return c;
   },
 
-  // Карточка факта в гвинт-стиле: иконка, заголовок, описание, стат-чип
+  // Карточка факта в гвинт-стиле: пергамент, иконка в круге, заголовок, стат-чип
   factCard(fact, x, y, w = 300, h = 128) {
     const L = fact[G.lang] || fact.ru;
     const cc = new PIXI.Container();
     cc.x = x; cc.y = y;
     cc.eventMode = 'static';
     cc.cursor = fact.link ? 'pointer' : 'default';
+    const body = G.art.nine && G.UI9 && G.UI9.paper
+      ? G.art.nine('paper', w, h)
+      : new PIXI.Graphics();
+    if (!G.art.nine || !G.UI9 || !G.UI9.paper) {
+      body.roundRect(0, 0, w, h, 10).fill(G.C.paper);
+    }
+    body.x = 0; body.y = 0;
     const g = new PIXI.Graphics();
     // угловые засечки как у гвинт-карт
     const corner = (cx, cy, sx, sy) => {
       g.moveTo(cx, cy + 14 * sy).lineTo(cx, cy).lineTo(cx + 14 * sx, cy)
-        .stroke({ width: 2.5, color: G.C.gold, alpha: 0.9 });
+        .stroke({ width: 2.5, color: G.C.goldDark, alpha: 0.9 });
     };
     const draw = (hover) => {
       g.clear();
-      g.roundRect(0, 0, w, h, 10).fill(hover ? 0x20304a : G.C.panel);
-      g.roundRect(0, 0, w, h, 10).stroke({ width: 1.5, color: G.C.hexBorder });
-      corner(4, 4, 1, 1); corner(w - 4, 4, -1, 1);
-      corner(4, h - 4, 1, -1); corner(w - 4, h - 4, -1, -1);
+      if (hover) {
+        g.roundRect(1, 1, w - 2, h - 2, 10).fill({ color: 0xfff6dd, alpha: 0.45 });
+        g.roundRect(1, 1, w - 2, h - 2, 10).stroke({ width: 2, color: G.C.goldDark, alpha: 0.9 });
+      }
+      corner(6, 6, 1, 1); corner(w - 6, 6, -1, 1);
+      corner(6, h - 6, 1, -1); corner(w - 6, h - 6, -1, -1);
     };
     draw(false);
     // иконка в тёмном круге
     const iconBg = new PIXI.Graphics();
-    iconBg.circle(26, 26, 19).fill(0x141c29);
-    iconBg.circle(26, 26, 19).stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.7 });
+    iconBg.circle(26, 26, 19).fill(0x2c2115);
+    iconBg.circle(26, 26, 19).stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.9 });
     const icon = new PIXI.Text({ text: fact.icon, style: { fontSize: 19 } });
     icon.anchor.set(0.5);
     icon.x = 26; icon.y = 26;
-    // заголовок и описание
+    // заголовок и описание — чернила по пергаменту
     const title = new PIXI.Text({
       text: L.t,
-      style: { fontFamily: G.FONT_SERIF, fontSize: 15, fill: G.C.gold },
+      style: { fontFamily: G.FONT_SERIF, fontSize: 15, fill: G.C.ink },
     });
     title.x = 54; title.y = 9;
     const desc = new PIXI.Text({
       text: L.d,
-      style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fill: G.C.text, wordWrap: true, wordWrapWidth: w - 68, lineHeight: 16 },
+      style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fill: G.C.inkSoft, wordWrap: true, wordWrapWidth: w - 68, lineHeight: 16 },
     });
     desc.x = 54; desc.y = 32;
     // стат-чип
@@ -254,18 +296,18 @@ G.ui = {
     chip.x = w - chip.width - 10; chip.y = h - 32;
     // метка ссылки
     if (fact.link) {
-      const arr = new PIXI.Text({ text: '↗', style: { fontSize: 13, fill: G.C.heroBlue } });
+      const arr = new PIXI.Text({ text: '↗', style: { fontSize: 13, fill: G.C.tealDark } });
       arr.x = w - 18; arr.y = 4;
       cc.addChild(arr);
       cc.on('pointertap', () => window.open(fact.link, '_blank'));
     }
-    cc.addChild(g, iconBg, icon, title, desc, chip);
+    cc.addChild(body, g, iconBg, icon, title, desc, chip);
     cc.on('pointerover', () => draw(true));
     cc.on('pointerout', () => draw(false));
     return cc;
   },
 
-  // Панель здания: заголовок + сетка карточек фактов с каскадом
+  // Панель здания: пергамент + сетка карточек фактов с каскадом
   buildingPanel({ title, facts, link, onClose }) {
     const c = new PIXI.Container();
     c.zIndex = 50;
@@ -273,31 +315,29 @@ G.ui = {
     const cols = 2, gap = 14;
     const cw = 300, ch = 128;
     const rows = Math.ceil(facts.length / cols);
-    const w = cols * cw + (cols - 1) * gap + 48;
+    let w = cols * cw + (cols - 1) * gap + 48;
     const h = 86 + rows * (ch + gap) + 26;
     c.x = G.W / 2; c.y = G.H / 2 - 10;
 
-    const shadow = new PIXI.Graphics();
-    shadow.roundRect(-w / 2 + 7, -h / 2 + 9, w, h, 16).fill({ color: 0x000000, alpha: 0.5 });
-    const g = new PIXI.Graphics();
-    g.roundRect(-w / 2, -h / 2, w, h, 16).fill({ color: 0x131b29, alpha: 0.99 });
-    g.roundRect(-w / 2, -h / 2, w, h, 16).stroke({ width: 2, color: G.C.gold });
-    // заголовок с подчёркиванием-росчерком
+    // заголовок с подчёркиванием-росчерком (панель подрастает под него)
     const tt = new PIXI.Text({
       text: title,
-      style: { fontFamily: G.FONT_TITLE, fontSize: 21, fill: G.C.gold, letterSpacing: 1 },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 21, fill: G.C.ink, letterSpacing: 1 },
     });
+    if (tt.width > w - 52) w = tt.width + 92;
     tt.x = -w / 2 + 26; tt.y = -h / 2 + 20;
-    if (tt.width > w - 52) w = tt.width + 92; // панель подрастает под заголовок
+
+    const sheet = G.ui.parchment(w, h);
+    const g = new PIXI.Graphics();
     const flour = new PIXI.Graphics();
     flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(w / 2 - 26, -h / 2 + 56)
       .stroke({ width: 2, color: G.C.goldDark, alpha: 0.55 });
     flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(-w / 2 + 96, -h / 2 + 56)
-      .stroke({ width: 3, color: G.C.gold });
+      .stroke({ width: 3, color: G.C.goldDark });
     G.ui.fancyFrame(g, w, h);
     const grain = G.viz.grain(w, h, 0.04);
     grain.x = -w / 2; grain.y = -h / 2;
-    c.addChild(shadow, g, grain, tt, flour);
+    c.addChild(sheet, g, grain, tt, flour);
 
     // карточки с каскадным появлением
     facts.forEach((f, i) => {
@@ -335,23 +375,19 @@ G.ui = {
     return c;
   },
 
-  // Лист кандидата: аватар, характеристики с анимированными полосами, чипы, контакты
+  // Лист кандидата: пергамент, аватар, характеристики с анимированными полосами, чипы
   characterSheet({ onClose }) {
     const c = new PIXI.Container();
     c.zIndex = 60;
     c.eventMode = 'static';
     const w = 780, h = 620;
     c.x = G.W / 2; c.y = G.H / 2;
-    const shadow = new PIXI.Graphics();
-    shadow.roundRect(-w / 2 + 8, -h / 2 + 10, w, h, 18).fill({ color: 0x000000, alpha: 0.55 });
+    const sheet = G.ui.parchment(w, h);
     const g = new PIXI.Graphics();
-    g.roundRect(-w / 2, -h / 2, w, h, 18).fill({ color: 0x131b29, alpha: 0.99 });
-    g.roundRect(-w / 2, -h / 2, w, h, 18).stroke({ width: 2.5, color: G.C.gold });
-    g.roundRect(-w / 2 + 10, -h / 2 + 10, w - 20, h - 20, 12).stroke({ width: 1, color: G.C.goldDark, alpha: 0.4 });
-    c.addChild(shadow, g);
+    G.ui.fancyFrame(g, w, h);
     const grain = G.viz.grain(w, h, 0.045);
     grain.x = -w / 2; grain.y = -h / 2;
-    c.addChild(shadow, g, grain);
+    c.addChild(sheet, g, grain);
     // аватар: викинг с кольчугой, косами и щитом
     const avatar = new PIXI.Container();
     avatar.x = -w / 2 + 140; avatar.y = -30;
@@ -407,17 +443,17 @@ G.ui = {
     // имя и роль
     const name = new PIXI.Text({
       text: G.CONFIG.name,
-      style: { fontFamily: G.FONT_TITLE, fontSize: 36, fill: G.C.text, letterSpacing: 2 },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 36, fill: G.C.ink, letterSpacing: 2 },
     });
     name.x = -w / 2 + 236; name.y = -h / 2 + 42;
     const role = new PIXI.Text({
       text: G.CONFIG.role[G.lang] + ' · playable-ads',
-      style: { fontFamily: G.FONT_BODY, fontSize: 17, fill: G.C.gold, letterSpacing: 1 },
+      style: { fontFamily: G.FONT_BODY, fontSize: 17, fill: G.C.goldDark, letterSpacing: 1 },
     });
     role.x = name.x; role.y = -h / 2 + 92;
     const lore = new PIXI.Text({
       text: G.SHEET.lore[G.lang],
-      style: { fontFamily: G.FONT_BODY, fontSize: 13.5, fill: G.C.textDim, wordWrap: true, wordWrapWidth: w - 320, lineHeight: 18 },
+      style: { fontFamily: G.FONT_BODY, fontSize: 13.5, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 320, lineHeight: 18 },
     });
     lore.x = name.x; lore.y = -h / 2 + 122;
     c.addChild(name, role, lore);
@@ -426,7 +462,7 @@ G.ui = {
     const sx = name.x, sy = -h / 2 + 186;
     const statsHead = new PIXI.Text({
       text: G.t('sheet_stats'),
-      style: { fontFamily: G.FONT_TITLE, fontSize: 16, fill: G.C.gold, letterSpacing: 1.5 },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 16, fill: G.C.ink, letterSpacing: 1.5 },
     });
     statsHead.x = sx; statsHead.y = sy - 6;
     c.addChild(statsHead);
@@ -435,12 +471,12 @@ G.ui = {
       const yy = sy + 46 + i * 38;
       const lt = new PIXI.Text({
         text: label,
-        style: { fontFamily: G.FONT_BODY, fontSize: 13.5, fill: G.C.text },
+        style: { fontFamily: G.FONT_BODY, fontSize: 13.5, fill: G.C.ink },
       });
       lt.x = sx; lt.y = yy - 17;
       const barBg = new PIXI.Graphics();
-      barBg.roundRect(sx, yy, barW, 10, 5).fill(0x0d1420);
-      barBg.roundRect(sx, yy, barW, 10, 5).stroke({ width: 1, color: G.C.hexBorder });
+      barBg.roundRect(sx, yy, barW, 10, 5).fill(0x2c2115);
+      barBg.roundRect(sx, yy, barW, 10, 5).stroke({ width: 1, color: G.C.goldDark, alpha: 0.7 });
       const barFill = new PIXI.Graphics();
       c.addChild(lt, barBg, barFill);
       setTimeout(() => {
@@ -571,10 +607,10 @@ G.ui.factRow = function (fact, w = 400) {
   const g = new PIXI.Graphics();
   const draw = (hover) => {
     g.clear();
-    g.roundRect(0, 0, w, 70, 8).fill(hover ? 0x20304a : G.C.panel);
-    g.roundRect(0, 0, w, 70, 8).stroke({ width: 1.5, color: hover ? G.C.gold : G.C.hexBorder });
-    g.circle(24, 29, 14).fill(0x141c29);
-    g.circle(24, 29, 14).stroke({ width: 1, color: G.C.goldDark, alpha: 0.6 });
+    g.roundRect(0, 0, w, 70, 8).fill(hover ? 0xfff2d0 : 0xf4e6c0);
+    g.roundRect(0, 0, w, 70, 8).stroke({ width: 1.5, color: hover ? G.C.goldDark : 0xd8c49a });
+    g.circle(24, 29, 14).fill(0x2c2115);
+    g.circle(24, 29, 14).stroke({ width: 1, color: G.C.goldDark, alpha: 0.8 });
   };
   draw(false);
   const icon = new PIXI.Text({ text: fact.icon, style: { fontSize: 14 } });
@@ -582,12 +618,12 @@ G.ui.factRow = function (fact, w = 400) {
   icon.x = 24; icon.y = 35;
   const title = new PIXI.Text({
     text: L.t,
-    style: { fontFamily: G.FONT_SERIF, fontSize: 13, fill: G.C.gold, wordWrap: true, wordWrapWidth: w - 190, lineHeight: 14 },
+    style: { fontFamily: G.FONT_SERIF, fontSize: 13, fill: G.C.ink, wordWrap: true, wordWrapWidth: w - 190, lineHeight: 14 },
   });
   title.x = 46; title.y = 8;
   const desc = new PIXI.Text({
     text: L.d,
-    style: { fontFamily: G.FONT_BODY, fontSize: 11, fill: G.C.textDim, wordWrap: true, wordWrapWidth: w - 60, lineHeight: 14 },
+    style: { fontFamily: G.FONT_BODY, fontSize: 11, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 60, lineHeight: 14 },
   });
   desc.x = 46; desc.y = 28 + (title.height > 15 ? 13 : 0);
   const chipText = new PIXI.Text({
@@ -619,19 +655,16 @@ G.ui.fullResume = function ({ onClose }) {
   const w = 1100, h = 560;
   c.x = G.W / 2; c.y = G.H / 2;
 
-  const shadow = new PIXI.Graphics();
-  shadow.roundRect(-w / 2 + 8, -h / 2 + 10, w, h, 18).fill({ color: 0x000000, alpha: 0.55 });
+  const sheet = G.ui.parchment(w, h);
   const g = new PIXI.Graphics();
-  g.roundRect(-w / 2, -h / 2, w, h, 18).fill({ color: 0x131b29, alpha: 0.99 });
-  g.roundRect(-w / 2, -h / 2, w, h, 18).stroke({ width: 2.5, color: G.C.gold });
-  g.roundRect(-w / 2 + 10, -h / 2 + 10, w - 20, h - 20, 12).stroke({ width: 1, color: G.C.goldDark, alpha: 0.4 });
+  G.ui.fancyFrame(g, w, h);
   const grain = G.viz.grain(w, h, 0.045);
   grain.x = -w / 2; grain.y = -h / 2;
-  c.addChild(shadow, g, grain);
+  c.addChild(sheet, g, grain);
 
   const head = new PIXI.Text({
     text: G.t('fr_title'),
-    style: { fontFamily: G.FONT_TITLE, fontSize: 26, fill: G.C.gold, letterSpacing: 1.5 },
+    style: { fontFamily: G.FONT_TITLE, fontSize: 26, fill: G.C.ink, letterSpacing: 1.5 },
   });
   head.x = -w / 2 + 36; head.y = -h / 2 + 20;
   const flour = new PIXI.Graphics();
@@ -652,7 +685,7 @@ G.ui.fullResume = function ({ onClose }) {
       const short = G.t(def.titleKey).split('·').pop().trim();
       const st = new PIXI.Text({
         text: short,
-        style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: G.C.gold, letterSpacing: 1 },
+        style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: G.C.goldDark, letterSpacing: 1 },
       });
       st.x = colX[ci]; st.y = y;
       const line = new PIXI.Graphics();
