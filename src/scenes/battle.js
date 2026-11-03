@@ -12,8 +12,8 @@ G.scenes.battle = function (params) {
     units: [],
     hexViews: new Map(),   // 'col,row' -> Graphics
     hiViews: [],           // подсветки
-    state: 'intro',        // intro | select | moving | acting | anim | enemy | over
-    step: 'hero',          // стадия хода игрока: hero | card | move | act
+    state: 'intro',        // intro | move | moving | act | anim | enemy | over
+    subphase: 'move',      // фаза игрока: move | act
     activeHero: null,
     pendingCard: null,
     hands: {},             // heroId -> [card, card]
@@ -206,12 +206,13 @@ G.scenes.battle = function (params) {
   function drawPhaseBar() {
     phaseBar.removeChildren();
     const phases = [
-      { key: 'ph_player', on: B.state !== 'enemy' && B.state !== 'intro' },
+      { key: 'ph_move', on: B.subphase === 'move' && B.state !== 'enemy' && B.state !== 'intro' },
+      { key: 'ph_act', on: B.subphase === 'act' && B.state !== 'enemy' && B.state !== 'intro' },
       { key: 'ph_enemy', on: B.state === 'enemy' },
       { key: 'ph_round', on: false, vars: { n: B.round } },
     ];
     let px = 0;
-    const widths = [120, 104, 118];
+    const widths = [116, 96, 104, 118];
     phases.forEach((ph, i) => {
       const w = widths[i];
       const t = new PIXI.Text({
@@ -237,13 +238,12 @@ G.scenes.battle = function (params) {
   stagePill.x = G.W / 2; stagePill.y = 588;
   c.addChild(stagePill);
 
-  function setStep(step) {
-    B.step = step;
+  function setStage(text) {
     stagePill.removeChildren();
-    if (B.state !== 'select' && B.state !== 'moving' && B.state !== 'acting') { stagePill.visible = false; return; }
+    if (!text || (B.state !== 'move' && B.state !== 'act')) { stagePill.visible = false; return; }
     stagePill.visible = true;
     const t = new PIXI.Text({
-      text: G.t('step_' + step),
+      text,
       style: { fontFamily: G.FONT_BODY, fontSize: 13, fill: G.C.textDim },
     });
     t.anchor.set(0.5);
@@ -280,9 +280,10 @@ G.scenes.battle = function (params) {
       }
     } else {
       for (const h of heroes) {
+        const done = B.subphase === 'move' ? h.moved : h.acted;
         slots.push({
           u: h,
-          status: !h.alive || h.acted ? 'done' : (h === B.activeHero ? 'active' : 'pending'),
+          status: !h.alive || done ? 'done' : (h === B.activeHero ? 'active' : 'pending'),
         });
       }
     }
@@ -420,12 +421,83 @@ G.scenes.battle = function (params) {
 
     const skip = G.ui.button({
       label: G.t('skip'), x: G.W - 120, y: 42, w: 150, h: 44, small: true,
-      onClick: () => { G.sfx.play('blip'); finishHero(hero); },
+      onClick: () => { G.sfx.play('blip'); advanceAct(); },
     });
     handBar.addChild(skip);
   }
 
   function hideHand() { handBar.removeChildren(); }
+
+  // --- Фазы игрока: 1) движение отряда 2) способности ---
+
+  function startPlayerPhase() {
+    B.subphase = 'move';
+    B.moveIdx = 0;
+    for (const h of heroes) h.moved = false;
+    activateMove();
+  }
+
+  function activateMove() {
+    const h = heroes.find(x => x.alive && !x.moved);
+    if (!h) { startActPhase(); return; }
+    B.activeHero = h;
+    B.state = 'move';
+    showRing(h);
+    highlightCells(
+      G.hexReachable(h.col, h.row, h.move, occupied(h)).concat([{ col: h.col, row: h.row }]),
+      'move'
+    );
+    showMoveBar(h);
+    setStage(G.t('st_move', { n: G.t(h.def.nameKey) }));
+    drawPhaseBar();
+    drawInitiative();
+  }
+
+  function advanceMove() {
+    if (B.activeHero) B.activeHero.moved = true;
+    hideRing(); clearHighlights(); hideHand();
+    activateMove();
+  }
+
+  function startActPhase() {
+    B.subphase = 'act';
+    B.actIdx = 0;
+    activateAct();
+  }
+
+  function activateAct() {
+    const h = heroes.find(x => x.alive && !x.acted);
+    if (!h) { setStage(null); enemyPhase(); return; }
+    B.activeHero = h;
+    B.state = 'act';
+    showRing(h);
+    showHand(h);
+    setStage(G.t('st_act', { n: G.t(h.def.nameKey) }));
+    drawPhaseBar();
+    drawInitiative();
+  }
+
+  function advanceAct() {
+    if (B.activeHero) B.activeHero.acted = true;
+    hideHand(); hideRing(); clearHighlights();
+    activateAct();
+  }
+
+  // нижняя панель движения: подсказка + пропуск
+  function showMoveBar(hero) {
+    handBar.removeChildren();
+    const hint = new PIXI.Text({
+      text: G.t('skip_move'),
+      style: { fontFamily: G.FONT_BODY, fontSize: 15, fill: G.C.textDim },
+    });
+    hint.x = 24; hint.y = -2;
+    handBar.addChild(hint);
+    const skip = G.ui.button({
+      label: G.t('skip_move'), x: G.W - 120, y: 42, w: 160, h: 44, small: true,
+      onClick: () => { G.sfx.play('blip'); if (B.state === 'move') advanceMove(); },
+    });
+    handBar.addChild(skip);
+  }
 
   // --- Юниты ---
   function makeUnit(o) {
@@ -973,7 +1045,7 @@ G.scenes.battle = function (params) {
   }
 
   function playCard(hero, card) {
-    if (B.state !== 'select' || B.over) return;
+    if (B.state !== 'act' || B.over) return;
     let actual = card;
     if (card.echo) {
       if (!B.lastCard) { G.ui.toast(G.t('echo_empty')); return; }
@@ -981,14 +1053,10 @@ G.scenes.battle = function (params) {
     }
     G.sfx.play('card');
     G.stats.cards++;
-    B.activeHero = hero;
     B.pendingCard = actual;
     hideHand();
 
-    // мгновенные эффекты без цели
-    let needMove = actual.move > 0;
-    let needTarget = false;
-
+    // мгновенные эффекты
     if (actual.shieldAll) {
       for (const h of heroes) if (h.alive) { h.shield += actual.shieldAll; refresh(h); }
       G.sfx.play('shield');
@@ -1000,158 +1068,146 @@ G.scenes.battle = function (params) {
       refresh(hero);
       G.sfx.play('shield');
     }
-    if (actual.buff) {
-      hero.bonus = (hero.bonus || 0) + actual.buff;
+    if (actual.bonusNext) {
+      hero.bonusNext = (hero.bonusNext || 0) + actual.bonusNext;
       const { x, y } = G.hexToPx(hero.col, hero.row);
-      popText(x, y, '⚔ +' + actual.buff, G.C.heroGreen);
+      popText(x, y, '⚔ +' + actual.bonusNext + ' →', G.C.heroGreen);
       G.sfx.play('shield');
     }
-    if (actual.heal) needTarget = true;
 
-    if (needMove) {
-      const cells = G.hexReachable(hero.col, hero.row, actual.move, occupied(hero));
-      cells.push({ col: hero.col, row: hero.row }); // остаться на месте
-      highlightCells(cells, 'move');
-      B.state = 'moving';
-      setStep('move');
-    } else if (actual.dmg > 0 || needTarget) {
-      enterActing();
-    } else {
-      finishHero(hero, actual);
-    }
-  }
-
-  function enterActing() {
-    const hero = B.activeHero;
-    const card = B.pendingCard;
-    B.state = 'acting';
-    setStep('act');
+    // цели: урон или лечение
     const targets = B.units.filter(u => {
       if (!u.alive || u === hero) return false;
       const d = G.hexDist(hero.col, hero.row, u.col, u.row);
-      if (card.dmg > 0) return (u.kind === 'enemy' || u.kind === 'zone') && d <= (card.range || 1);
-      if (card.heal) return u.kind === 'hero' && d <= (card.range || 1) && (u.hp < u.maxHp || !u.alive);
+      if (actual.dmg > 0) return (u.kind === 'enemy' || u.kind === 'zone') && d <= (actual.range || 1);
+      if (actual.heal) return u.kind === 'hero' && d <= (actual.range || 1) && (u.hp < u.maxHp || !u.alive);
       return false;
     });
     if (targets.length === 0) {
-      // целей нет — ход завершён
-      finishHero(hero, card);
+      // мгновенная карта без целей
+      finishActCard(hero, actual);
       return;
     }
-    highlightCells(targets.map(u => ({ col: u.col, row: u.row })), card.dmg > 0 ? 'attack' : 'move');
+    highlightCells(targets.map(u => ({ col: u.col, row: u.row })), actual.dmg > 0 ? 'attack' : 'move');
+  }
+
+  function applyCardToTarget(hero, card, u) {
+    const d = G.hexDist(hero.col, hero.row, u.col, u.row);
+    if (card.dmg > 0 && (u.kind === 'enemy' || u.kind === 'zone') && d <= (card.range || 1)) {
+      const dmg = card.dmg + (hero.bonusNext || 0);
+      hero.bonusNext = 0;
+      const short = G.SHORT[G.lang][card.echoOf || card.id] || '';
+      if (hero.sprite) playAnim(hero, 'atk', true);
+      else if (hero.weapon) {
+        G.tween(hero.weapon, { rotation: -1.25 }, 110, () => {
+          G.tween(hero.weapon, { rotation: 0.15 }, 260, null, G.easeOut);
+        }, G.easeOut);
+      }
+      B.state = 'anim';
+      hideRing();
+      const hx = hero.view.x, hy = hero.view.y;
+      const tx = u.view.x, ty = u.view.y;
+      G.tween(hero.view, { x: hx + (tx - hx) * 0.4, y: hy + (ty - hy) * 0.4 }, 110, () => {
+        G.sfx.play('hit');
+        G.fxShake.hit(card.dmg >= 4 ? 7 : 4);
+        hitFlash(tx, ty);
+        G.fxParticles.burst(tx, ty, 0xff9d8a, card.dmg >= 4 ? 14 : 9, { size: 3, speed: 120, ttl: 520 });
+        applyDamage(u, dmg, short, 0xff9d8a);
+        G.tween(hero.view, { x: hx, y: hy }, 170, () => {
+          if (card.stun && u.alive) {
+            u.stunned = true;
+            G.sfx.play('stun');
+            const { x, y } = G.hexToPx(u.col, u.row);
+            popText(x, y - 26, '💫', 0xffe4a8);
+          }
+          finishActCard(hero, card);
+        }, G.easeOut);
+      }, G.easeOut);
+    } else if (card.heal && u.kind === 'hero' && d <= (card.range || 1)) {
+      if (hero.sprite) playAnim(hero, 'heal', true);
+      G.sfx.play('heal');
+      u.hp = Math.min(u.maxHp, u.hp + card.heal);
+      if (!u.alive) { u.alive = true; G.ui.toast(G.t(u.def.nameKey) + ' — back!', 1200); }
+      const { x, y } = G.hexToPx(u.col, u.row);
+      popText(x, y, '+' + card.heal, G.C.heroGreen);
+      refresh(u);
+      finishActCard(hero, card);
+    } else {
+      finishActCard(hero, card);
+    }
+  }
+
+  function finishActCard(hero, card) {
+    if (card) B.lastCard = { card: card.echoOf ? G.CARDS.find(x => x.id === card.echoOf) : card };
+    B.pendingCard = null;
+    hideHand();
+    clearHighlights();
+    advanceAct();
   }
 
   function onHexTap(col, row) {
     if (B.over || B.state === 'intro' || B.state === 'anim') return;
-    if (B.state === 'moving') {
+    if (B.state === 'move') {
       const hero = B.activeHero;
-      const card = B.pendingCard;
-      const occ = occupied(hero);
-      if (occ.has(key(col, row)) && !(col === hero.col && row === hero.row)) return;
+      if (!hero) return;
+      const ok = (B.hiViews || []).length >= 0; // подсветка уже валидна
+      const reachable = G.hexReachable(hero.col, hero.row, hero.move, occupied(hero));
+      const canStay = true;
+      const inRange = (col === hero.col && row === hero.row) ||
+        reachable.some(c => c.col === col && c.row === row);
+      if (!inRange) return;
       clearHighlights();
-      const doAct = () => {
-        if (card.dmg > 0 || card.heal) enterActing();
-        else finishHero(hero, card);
-      };
       if (col === hero.col && row === hero.row) {
-        doAct();
-      } else {
-        B.state = 'anim';
-        G.tween(hero.view, { x: G.hexToPx(col, row).x, y: G.hexToPx(col, row).y }, 260, () => {
-          hero.col = col; hero.row = row;
-          showRing(hero);
-          // пыль из-под ног
-          const { x, y } = G.hexToPx(col, row);
-          G.fxParticles.burst(x, y + 22, 0x8a94a0, 6, { size: 2.5, speed: 55, ttl: 420, grav: 60 });
-          doAct();
-        }, G.easeOut);
+        advanceMove();
+        return;
       }
-    } else if (B.state === 'select') {
-      // тап по пустому гексу — снять выбор героя
-      B.activeHero = null;
-      hideHand();
+      B.state = 'moving';
+      G.tween(hero.view, { x: G.hexToPx(col, row).x, y: G.hexToPx(col, row).y }, 260, () => {
+        hero.col = col; hero.row = row;
+        showRing(hero);
+        const { x, y } = G.hexToPx(col, row);
+        G.fxParticles.burst(x, y + 22, 0x8a94a0, 6, { size: 2.5, speed: 55, ttl: 420, grav: 60 });
+        advanceMove();
+      }, G.easeOut);
     }
   }
 
   function onUnitTap(u) {
-    if (B.over || B.state === 'intro' || B.state === 'anim') return;
-    if (B.state === 'acting') {
+    if (B.over || B.state === 'intro' || B.state === 'anim' || B.state === 'enemy') return;
+    if (B.state === 'act' && B.pendingCard) {
+      // выбор цели карты
       const hero = B.activeHero;
       const card = B.pendingCard;
-      const d = G.hexDist(hero.col, hero.row, u.col, u.row);
-      if (card.dmg > 0 && (u.kind === 'enemy' || u.kind === 'zone') && d <= (card.range || 1)) {
-        let dmg = card.dmg + (hero.bonus || 0);
-        hero.bonus = 0;
-        const short = G.SHORT[G.lang][card.echoOf || card.id] || '';
-        // выпад к цели, удар, возврат
-        B.state = 'anim';
-        hideRing();
-        const hx = hero.view.x, hy = hero.view.y;
-        const tx = u.view.x, ty = u.view.y;
-        if (hero.sprite) playAnim(hero, 'atk', true);
-        else if (hero.weapon) {
-          G.tween(hero.weapon, { rotation: -1.25 }, 110, () => {
-            G.tween(hero.weapon, { rotation: 0.15 }, 260, null, G.easeOut);
-          }, G.easeOut);
-        }
-        G.tween(hero.view, { x: hx + (tx - hx) * 0.4, y: hy + (ty - hy) * 0.4 }, 110, () => {
-          G.sfx.play('hit');
-          G.fxShake.hit(card.dmg >= 4 ? 7 : 4);
-          hitFlash(tx, ty);
-          G.fxParticles.burst(tx, ty, 0xff9d8a, card.dmg >= 4 ? 14 : 9, { size: 3, speed: 120, ttl: 520 });
-          applyDamage(u, dmg, short, 0xff9d8a);
-          G.tween(hero.view, { x: hx, y: hy }, 170, () => {
-            if (card.stun && u.alive) {
-              u.stunned = true;
-              G.sfx.play('stun');
-              const { x, y } = G.hexToPx(u.col, u.row);
-              popText(x, y - 26, '💫', 0xffe4a8);
-            }
-            B.state = 'acting';
-            finishHero(hero, card);
-          }, G.easeOut);
-        }, G.easeOut);
-      } else if (card.heal && u.kind === 'hero' && d <= (card.range || 1)) {
-        if (hero.sprite) playAnim(hero, 'heal', true);
-        G.sfx.play('heal');
-        u.hp = Math.min(u.maxHp, u.hp + card.heal);
-        if (!u.alive) { u.alive = true; G.ui.toast(G.t(u.def.nameKey) + ' — back!', 1200); }
-        const { x, y } = G.hexToPx(u.col, u.row);
-        popText(x, y, '+' + card.heal, G.C.heroGreen);
-        refresh(u);
-        finishHero(hero, card);
-      }
-    } else if (B.state === 'select') {
-      if (u.kind === 'hero' && u.alive && !u.acted) {
-        B.activeHero = u;
-        G.sfx.play('blip');
-        showRing(u);
-        showHand(u);
-        setStep('card');
-      }
+      applyCardToTarget(hero, card, u);
+      return;
     }
-  }
-
-  function finishHero(hero, card) {
-    hero.acted = true;
-    if (card) B.lastCard = { card: card.echoOf ? G.CARDS.find(x => x.id === card.echoOf) : card };
-    B.activeHero = null;
-    B.pendingCard = null;
-    hideHand();
-    hideRing();
-    clearHighlights();
-    B.state = 'select';
-    drawInitiative();
-    // автопереключение на следующего героя — как в XCOM
-    const next = heroes.find(h => h.alive && !h.acted);
-    if (next) {
-      B.activeHero = next;
-      showRing(next);
-      showHand(next);
-      setStep('card');
-    } else {
-      setStep(null);
-      enemyPhase();
+    if (B.state === 'move' || B.state === 'act') {
+      // переключение на другого героя (если он ещё не отработал эту фазу)
+      if (u.kind === 'hero' && u.alive && u !== B.activeHero) {
+        const done = B.subphase === 'move' ? u.moved : u.acted;
+        if (!done) {
+          // вернуть текущего в очередь
+          if (B.activeHero) {
+            if (B.subphase === 'move') B.activeHero.moved = false;
+            else B.activeHero.acted = false;
+          }
+          hideHand(); clearHighlights();
+          B.activeHero = u;
+          if (B.subphase === 'move') {
+            showRing(u);
+            highlightCells(
+              G.hexReachable(u.col, u.row, u.move, occupied(u)).concat([{ col: u.col, row: u.row }]),
+              'move'
+            );
+            setStage(G.t('st_move', { n: G.t(u.def.nameKey) }));
+          } else {
+            showRing(u);
+            showHand(u);
+            setStage(G.t('st_act', { n: G.t(u.def.nameKey) }));
+          }
+          G.sfx.play('blip');
+        }
+      }
     }
   }
 
@@ -1265,17 +1321,15 @@ G.scenes.battle = function (params) {
 
     if (c.destroyed || B.over) return;
 
-    // новый раунд: итоги + смена фаз
+    // новый раунд: итоги + фазы игрока
     B.round++;
     roundLabel.text = G.t('round_n', { n: B.round });
     phaseLabel.text = G.t('phase_player');
     phaseLabel.style.fill = G.C.heroBlue;
     for (const h of heroes) { h.acted = false; if (h.alive) { h.shield = 0; refresh(h); } }
     dealHands();
-    B.state = 'select';
-    setStep('hero');
+    startPlayerPhase();
     drawPhaseBar();
-    drawInitiative();
     roundBanner(B.round, B.events.map(k => G.t(k, { n: B.bossDmg })).join(' · '));
   }
 
@@ -1287,7 +1341,7 @@ G.scenes.battle = function (params) {
   // --- Стадия разведки: брифинг волны ---
   function waveIntro() {
     B.state = 'intro';
-    setStep(null);
+    setStage(null);
     drawPhaseBar();
     const ov = new PIXI.Container();
     ov.zIndex = 85;
@@ -1364,10 +1418,7 @@ G.scenes.battle = function (params) {
 
   // вход в боевую фазу после брифинга
   function startWave() {
-    B.state = 'select';
-    setStep('hero');
-    drawPhaseBar();
-    drawInitiative();
+    startPlayerPhase();
   }
 
   // --- Итоги волны: панель со статистикой ---
@@ -1438,7 +1489,7 @@ G.scenes.battle = function (params) {
   };
 
   // отладочный доступ для автотестов
-  G.battleCtx = { B, heroes, playCard, onHexTap, onUnitTap, finishHero, enemyPhase, dealHands, startWave };
+  G.battleCtx = { B, heroes, playCard, onHexTap, onUnitTap, advanceMove, advanceAct, enemyPhase, dealHands, startWave };
 
   return c;
 };

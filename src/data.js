@@ -46,14 +46,14 @@ G.HEROES = [
 
 // --- Карты способностей (каждая = факт из портфолио) ---
 G.CARDS = [
-  { id: 'balance_lab', hero: 'berserk', move: 1, dmg: 5, range: 1 },
-  { id: 'event_tuner', hero: 'berserk', move: 1, dmg: 3, range: 1, stun: true },
-  { id: 'gwent_logic', hero: 'berserk', buff: 2 },
+  { id: 'balance_lab', hero: 'berserk', dmg: 5, range: 1 },
+  { id: 'event_tuner', hero: 'berserk', dmg: 3, range: 1, stun: true },
+  { id: 'gwent_logic', hero: 'berserk', bonusNext: 2 },
   { id: 'echo_loop', hero: 'skald', echo: true },
-  { id: 'onefile', hero: 'skald', move: 4, dmg: 2, range: 1 },
-  { id: 'mvp', hero: 'skald', move: 2, dmg: 2, range: 1 },
+  { id: 'onefile', hero: 'skald', dmg: 2, range: 3 },
+  { id: 'mvp', hero: 'skald', dmg: 2, range: 1 },
   { id: 'rune_sdk', hero: 'smith', shieldAll: 2 },
-  { id: 'kb472', hero: 'smith', move: 1, shieldSelf: 3, dmg: 1, range: 1 },
+  { id: 'kb472', hero: 'smith', shieldSelf: 3, dmg: 1, range: 1 },
   { id: 'code_review', hero: 'smith', heal: 3, range: 2 },
 ];
 

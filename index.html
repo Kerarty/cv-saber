@@ -2520,10 +2520,15 @@ G.T = {
     wc_damage: 'Урона нанесено: {n}',
     wc_cards: 'Карт сыграно: {n}',
     wc_cont: 'В деревню →',
-    step_hero: 'Стадия 1/4 · Выбери героя',
-    step_card: 'Стадия 2/4 · Выбери карту',
-    step_move: 'Стадия 3/4 · Движение (свой гекс — остаться)',
-    step_act: 'Стадия 4/4 · Выбери цель',
+    st_move: 'Фаза 1 · Движение: передвинь {n} или пропусти',
+    st_act: 'Фаза 2 · Атака: {n} — выбери карту',
+    skip_move: 'Пропустить движение',
+    skip_act: 'Пропустить',
+    ph_move: '1 · Движение',
+    ph_act: '2 · Атака',
+    
+    
+    
     ph_player: '⚔ Твой ход',
     ph_enemy: '💀 Враги',
     ph_round: '✦ Раунд {n}',
@@ -2536,7 +2541,7 @@ G.T = {
     wave1_name: 'Волна 1 · Стая багов',
     wave2_name: 'Волна 2 · Кринч и дедлайны',
     wave3_name: 'Финал · Вакансия гейм-дизайнера',
-    hint1: 'Выбери героя, потом карту: движение и удар за один ход',
+    hint1: 'Фаза 1 — двигай отряд по гексам, фаза 2 — играй карты способностей',
     hint2: 'Щиты кузнеца держат удар — но тают в конце раунда',
     hint3: 'Целься в зоны босса: каждая зона — требование вакансии',
     boss_dead_zone: 'Требование закрыто!',
@@ -2555,22 +2560,22 @@ G.T = {
 
     // Карты: имя / эффект / факт
     c_balance_lab: 'Лаборатория баланса',
-    c_balance_lab_d: 'Движение 1 · Урон 5 в упор',
+    c_balance_lab_d: 'Урон 5 · Дальность 1',
     c_balance_lab_f: 'факт: баланс-лаба merge-автобатлера',
     c_event_tuner: 'Ивент-тюнер',
-    c_event_tuner_d: 'Движение 1 · Урон 3 + стан',
+    c_event_tuner_d: 'Урон 3 + стан · Дальность 1',
     c_event_tuner_f: 'факт: тюнер liveops-ивентов',
     c_gwent_logic: 'Гвинт-логика',
-    c_gwent_logic_d: '+2 к урону следующей карты',
+    c_gwent_logic_d: '+2 к урону героя в следующем раунде',
     c_gwent_logic_f: 'факт: карточная логика в стиле Гвинта',
     c_echo_loop: 'Echo Loop',
     c_echo_loop_d: 'Повторить последнюю карту',
     c_echo_loop_f: 'факт: echoloop — эхо прошлых проходов',
     c_onefile: 'Однофайловик',
-    c_onefile_d: 'Рывок 4 · Урон 2',
+    c_onefile_d: 'Урон 2 · Дальность 3',
     c_onefile_f: 'факт: crowd-runner в одном HTML',
     c_mvp: 'MVP за вечер',
-    c_mvp_d: 'Движение 2 · Урон 2',
+    c_mvp_d: 'Урон 2 · Дальность 1',
     c_mvp_f: 'факт: прототип собирается быстро',
     c_rune_sdk: 'Рунный SDK',
     c_rune_sdk_d: 'Щит 2 всей команде',
@@ -2669,10 +2674,15 @@ G.T = {
     wc_damage: 'Damage dealt: {n}',
     wc_cards: 'Cards played: {n}',
     wc_cont: 'To the village →',
-    step_hero: 'Stage 1/4 · Pick a hero',
-    step_card: 'Stage 2/4 · Pick a card',
-    step_move: 'Stage 3/4 · Move (own hex — stay)',
-    step_act: 'Stage 4/4 · Pick a target',
+    st_move: 'Phase 1 · Move: move {n} or skip',
+    st_act: 'Phase 2 · Attack: {n}, play a card',
+    skip_move: 'Skip movement',
+    skip_act: 'Skip',
+    ph_move: '1 · Move',
+    ph_act: '2 · Attack',
+    
+    
+    
     ph_player: '⚔ Your turn',
     ph_enemy: '💀 Enemies',
     ph_round: '✦ Round {n}',
@@ -2685,7 +2695,7 @@ G.T = {
     wave1_name: 'Wave 1 · Bug swarm',
     wave2_name: 'Wave 2 · Crunch & deadlines',
     wave3_name: 'Final · The game designer vacancy',
-    hint1: 'Pick a hero, then a card: move and strike in one turn',
+    hint1: 'Phase 1 — move the squad, Phase 2 — play ability cards',
     hint2: "The smith's shields absorb hits — but fade at round's end",
     hint3: 'Aim at the boss zones: each one is a job requirement',
     boss_dead_zone: 'Requirement proven!',
@@ -2702,22 +2712,22 @@ G.T = {
     hero_smith: 'Smith-techie',
 
     c_balance_lab: 'Balance Lab',
-    c_balance_lab_d: 'Move 1 · Damage 5, melee',
+    c_balance_lab_d: 'Damage 5 · Range 1',
     c_balance_lab_f: 'fact: merge-autobattler balance lab',
     c_event_tuner: 'Event Tuner',
-    c_event_tuner_d: 'Move 1 · Damage 3 + stun',
+    c_event_tuner_d: 'Damage 3 + stun · Range 1',
     c_event_tuner_f: 'fact: liveops event tuner',
     c_gwent_logic: 'Gwent Logic',
-    c_gwent_logic_d: '+2 damage to the next card',
+    c_gwent_logic_d: '+2 hero damage next round',
     c_gwent_logic_f: 'fact: card logic, Gwent-style',
     c_echo_loop: 'Echo Loop',
     c_echo_loop_d: 'Repeat the last card',
     c_echo_loop_f: 'fact: echoloop — echoes of past runs',
     c_onefile: 'Single File',
-    c_onefile_d: 'Dash 4 · Damage 2',
+    c_onefile_d: 'Damage 2 · Range 3',
     c_onefile_f: 'fact: crowd runner in one HTML file',
     c_mvp: 'Evening MVP',
-    c_mvp_d: 'Move 2 · Damage 2',
+    c_mvp_d: 'Damage 2 · Range 1',
     c_mvp_f: 'fact: prototypes ship fast',
     c_rune_sdk: 'Rune SDK',
     c_rune_sdk_d: 'Shield 2 for the whole squad',
@@ -2841,14 +2851,14 @@ G.HEROES = [
 
 // --- Карты способностей (каждая = факт из портфолио) ---
 G.CARDS = [
-  { id: 'balance_lab', hero: 'berserk', move: 1, dmg: 5, range: 1 },
-  { id: 'event_tuner', hero: 'berserk', move: 1, dmg: 3, range: 1, stun: true },
-  { id: 'gwent_logic', hero: 'berserk', buff: 2 },
+  { id: 'balance_lab', hero: 'berserk', dmg: 5, range: 1 },
+  { id: 'event_tuner', hero: 'berserk', dmg: 3, range: 1, stun: true },
+  { id: 'gwent_logic', hero: 'berserk', bonusNext: 2 },
   { id: 'echo_loop', hero: 'skald', echo: true },
-  { id: 'onefile', hero: 'skald', move: 4, dmg: 2, range: 1 },
-  { id: 'mvp', hero: 'skald', move: 2, dmg: 2, range: 1 },
+  { id: 'onefile', hero: 'skald', dmg: 2, range: 3 },
+  { id: 'mvp', hero: 'skald', dmg: 2, range: 1 },
   { id: 'rune_sdk', hero: 'smith', shieldAll: 2 },
-  { id: 'kb472', hero: 'smith', move: 1, shieldSelf: 3, dmg: 1, range: 1 },
+  { id: 'kb472', hero: 'smith', shieldSelf: 3, dmg: 1, range: 1 },
   { id: 'code_review', hero: 'smith', heal: 3, range: 2 },
 ];
 
@@ -4680,8 +4690,8 @@ G.scenes.battle = function (params) {
     units: [],
     hexViews: new Map(),   // 'col,row' -> Graphics
     hiViews: [],           // подсветки
-    state: 'intro',        // intro | select | moving | acting | anim | enemy | over
-    step: 'hero',          // стадия хода игрока: hero | card | move | act
+    state: 'intro',        // intro | move | moving | act | anim | enemy | over
+    subphase: 'move',      // фаза игрока: move | act
     activeHero: null,
     pendingCard: null,
     hands: {},             // heroId -> [card, card]
@@ -4874,12 +4884,13 @@ G.scenes.battle = function (params) {
   function drawPhaseBar() {
     phaseBar.removeChildren();
     const phases = [
-      { key: 'ph_player', on: B.state !== 'enemy' && B.state !== 'intro' },
+      { key: 'ph_move', on: B.subphase === 'move' && B.state !== 'enemy' && B.state !== 'intro' },
+      { key: 'ph_act', on: B.subphase === 'act' && B.state !== 'enemy' && B.state !== 'intro' },
       { key: 'ph_enemy', on: B.state === 'enemy' },
       { key: 'ph_round', on: false, vars: { n: B.round } },
     ];
     let px = 0;
-    const widths = [120, 104, 118];
+    const widths = [116, 96, 104, 118];
     phases.forEach((ph, i) => {
       const w = widths[i];
       const t = new PIXI.Text({
@@ -4905,13 +4916,12 @@ G.scenes.battle = function (params) {
   stagePill.x = G.W / 2; stagePill.y = 588;
   c.addChild(stagePill);
 
-  function setStep(step) {
-    B.step = step;
+  function setStage(text) {
     stagePill.removeChildren();
-    if (B.state !== 'select' && B.state !== 'moving' && B.state !== 'acting') { stagePill.visible = false; return; }
+    if (!text || (B.state !== 'move' && B.state !== 'act')) { stagePill.visible = false; return; }
     stagePill.visible = true;
     const t = new PIXI.Text({
-      text: G.t('step_' + step),
+      text,
       style: { fontFamily: G.FONT_BODY, fontSize: 13, fill: G.C.textDim },
     });
     t.anchor.set(0.5);
@@ -4948,9 +4958,10 @@ G.scenes.battle = function (params) {
       }
     } else {
       for (const h of heroes) {
+        const done = B.subphase === 'move' ? h.moved : h.acted;
         slots.push({
           u: h,
-          status: !h.alive || h.acted ? 'done' : (h === B.activeHero ? 'active' : 'pending'),
+          status: !h.alive || done ? 'done' : (h === B.activeHero ? 'active' : 'pending'),
         });
       }
     }
@@ -5088,12 +5099,83 @@ G.scenes.battle = function (params) {
 
     const skip = G.ui.button({
       label: G.t('skip'), x: G.W - 120, y: 42, w: 150, h: 44, small: true,
-      onClick: () => { G.sfx.play('blip'); finishHero(hero); },
+      onClick: () => { G.sfx.play('blip'); advanceAct(); },
     });
     handBar.addChild(skip);
   }
 
   function hideHand() { handBar.removeChildren(); }
+
+  // --- Фазы игрока: 1) движение отряда 2) способности ---
+
+  function startPlayerPhase() {
+    B.subphase = 'move';
+    B.moveIdx = 0;
+    for (const h of heroes) h.moved = false;
+    activateMove();
+  }
+
+  function activateMove() {
+    const h = heroes.find(x => x.alive && !x.moved);
+    if (!h) { startActPhase(); return; }
+    B.activeHero = h;
+    B.state = 'move';
+    showRing(h);
+    highlightCells(
+      G.hexReachable(h.col, h.row, h.move, occupied(h)).concat([{ col: h.col, row: h.row }]),
+      'move'
+    );
+    showMoveBar(h);
+    setStage(G.t('st_move', { n: G.t(h.def.nameKey) }));
+    drawPhaseBar();
+    drawInitiative();
+  }
+
+  function advanceMove() {
+    if (B.activeHero) B.activeHero.moved = true;
+    hideRing(); clearHighlights(); hideHand();
+    activateMove();
+  }
+
+  function startActPhase() {
+    B.subphase = 'act';
+    B.actIdx = 0;
+    activateAct();
+  }
+
+  function activateAct() {
+    const h = heroes.find(x => x.alive && !x.acted);
+    if (!h) { setStage(null); enemyPhase(); return; }
+    B.activeHero = h;
+    B.state = 'act';
+    showRing(h);
+    showHand(h);
+    setStage(G.t('st_act', { n: G.t(h.def.nameKey) }));
+    drawPhaseBar();
+    drawInitiative();
+  }
+
+  function advanceAct() {
+    if (B.activeHero) B.activeHero.acted = true;
+    hideHand(); hideRing(); clearHighlights();
+    activateAct();
+  }
+
+  // нижняя панель движения: подсказка + пропуск
+  function showMoveBar(hero) {
+    handBar.removeChildren();
+    const hint = new PIXI.Text({
+      text: G.t('skip_move'),
+      style: { fontFamily: G.FONT_BODY, fontSize: 15, fill: G.C.textDim },
+    });
+    hint.x = 24; hint.y = -2;
+    handBar.addChild(hint);
+    const skip = G.ui.button({
+      label: G.t('skip_move'), x: G.W - 120, y: 42, w: 160, h: 44, small: true,
+      onClick: () => { G.sfx.play('blip'); if (B.state === 'move') advanceMove(); },
+    });
+    handBar.addChild(skip);
+  }
 
   // --- Юниты ---
   function makeUnit(o) {
@@ -5641,7 +5723,7 @@ G.scenes.battle = function (params) {
   }
 
   function playCard(hero, card) {
-    if (B.state !== 'select' || B.over) return;
+    if (B.state !== 'act' || B.over) return;
     let actual = card;
     if (card.echo) {
       if (!B.lastCard) { G.ui.toast(G.t('echo_empty')); return; }
@@ -5649,14 +5731,10 @@ G.scenes.battle = function (params) {
     }
     G.sfx.play('card');
     G.stats.cards++;
-    B.activeHero = hero;
     B.pendingCard = actual;
     hideHand();
 
-    // мгновенные эффекты без цели
-    let needMove = actual.move > 0;
-    let needTarget = false;
-
+    // мгновенные эффекты
     if (actual.shieldAll) {
       for (const h of heroes) if (h.alive) { h.shield += actual.shieldAll; refresh(h); }
       G.sfx.play('shield');
@@ -5668,158 +5746,146 @@ G.scenes.battle = function (params) {
       refresh(hero);
       G.sfx.play('shield');
     }
-    if (actual.buff) {
-      hero.bonus = (hero.bonus || 0) + actual.buff;
+    if (actual.bonusNext) {
+      hero.bonusNext = (hero.bonusNext || 0) + actual.bonusNext;
       const { x, y } = G.hexToPx(hero.col, hero.row);
-      popText(x, y, '⚔ +' + actual.buff, G.C.heroGreen);
+      popText(x, y, '⚔ +' + actual.bonusNext + ' →', G.C.heroGreen);
       G.sfx.play('shield');
     }
-    if (actual.heal) needTarget = true;
 
-    if (needMove) {
-      const cells = G.hexReachable(hero.col, hero.row, actual.move, occupied(hero));
-      cells.push({ col: hero.col, row: hero.row }); // остаться на месте
-      highlightCells(cells, 'move');
-      B.state = 'moving';
-      setStep('move');
-    } else if (actual.dmg > 0 || needTarget) {
-      enterActing();
-    } else {
-      finishHero(hero, actual);
-    }
-  }
-
-  function enterActing() {
-    const hero = B.activeHero;
-    const card = B.pendingCard;
-    B.state = 'acting';
-    setStep('act');
+    // цели: урон или лечение
     const targets = B.units.filter(u => {
       if (!u.alive || u === hero) return false;
       const d = G.hexDist(hero.col, hero.row, u.col, u.row);
-      if (card.dmg > 0) return (u.kind === 'enemy' || u.kind === 'zone') && d <= (card.range || 1);
-      if (card.heal) return u.kind === 'hero' && d <= (card.range || 1) && (u.hp < u.maxHp || !u.alive);
+      if (actual.dmg > 0) return (u.kind === 'enemy' || u.kind === 'zone') && d <= (actual.range || 1);
+      if (actual.heal) return u.kind === 'hero' && d <= (actual.range || 1) && (u.hp < u.maxHp || !u.alive);
       return false;
     });
     if (targets.length === 0) {
-      // целей нет — ход завершён
-      finishHero(hero, card);
+      // мгновенная карта без целей
+      finishActCard(hero, actual);
       return;
     }
-    highlightCells(targets.map(u => ({ col: u.col, row: u.row })), card.dmg > 0 ? 'attack' : 'move');
+    highlightCells(targets.map(u => ({ col: u.col, row: u.row })), actual.dmg > 0 ? 'attack' : 'move');
+  }
+
+  function applyCardToTarget(hero, card, u) {
+    const d = G.hexDist(hero.col, hero.row, u.col, u.row);
+    if (card.dmg > 0 && (u.kind === 'enemy' || u.kind === 'zone') && d <= (card.range || 1)) {
+      const dmg = card.dmg + (hero.bonusNext || 0);
+      hero.bonusNext = 0;
+      const short = G.SHORT[G.lang][card.echoOf || card.id] || '';
+      if (hero.sprite) playAnim(hero, 'atk', true);
+      else if (hero.weapon) {
+        G.tween(hero.weapon, { rotation: -1.25 }, 110, () => {
+          G.tween(hero.weapon, { rotation: 0.15 }, 260, null, G.easeOut);
+        }, G.easeOut);
+      }
+      B.state = 'anim';
+      hideRing();
+      const hx = hero.view.x, hy = hero.view.y;
+      const tx = u.view.x, ty = u.view.y;
+      G.tween(hero.view, { x: hx + (tx - hx) * 0.4, y: hy + (ty - hy) * 0.4 }, 110, () => {
+        G.sfx.play('hit');
+        G.fxShake.hit(card.dmg >= 4 ? 7 : 4);
+        hitFlash(tx, ty);
+        G.fxParticles.burst(tx, ty, 0xff9d8a, card.dmg >= 4 ? 14 : 9, { size: 3, speed: 120, ttl: 520 });
+        applyDamage(u, dmg, short, 0xff9d8a);
+        G.tween(hero.view, { x: hx, y: hy }, 170, () => {
+          if (card.stun && u.alive) {
+            u.stunned = true;
+            G.sfx.play('stun');
+            const { x, y } = G.hexToPx(u.col, u.row);
+            popText(x, y - 26, '💫', 0xffe4a8);
+          }
+          finishActCard(hero, card);
+        }, G.easeOut);
+      }, G.easeOut);
+    } else if (card.heal && u.kind === 'hero' && d <= (card.range || 1)) {
+      if (hero.sprite) playAnim(hero, 'heal', true);
+      G.sfx.play('heal');
+      u.hp = Math.min(u.maxHp, u.hp + card.heal);
+      if (!u.alive) { u.alive = true; G.ui.toast(G.t(u.def.nameKey) + ' — back!', 1200); }
+      const { x, y } = G.hexToPx(u.col, u.row);
+      popText(x, y, '+' + card.heal, G.C.heroGreen);
+      refresh(u);
+      finishActCard(hero, card);
+    } else {
+      finishActCard(hero, card);
+    }
+  }
+
+  function finishActCard(hero, card) {
+    if (card) B.lastCard = { card: card.echoOf ? G.CARDS.find(x => x.id === card.echoOf) : card };
+    B.pendingCard = null;
+    hideHand();
+    clearHighlights();
+    advanceAct();
   }
 
   function onHexTap(col, row) {
     if (B.over || B.state === 'intro' || B.state === 'anim') return;
-    if (B.state === 'moving') {
+    if (B.state === 'move') {
       const hero = B.activeHero;
-      const card = B.pendingCard;
-      const occ = occupied(hero);
-      if (occ.has(key(col, row)) && !(col === hero.col && row === hero.row)) return;
+      if (!hero) return;
+      const ok = (B.hiViews || []).length >= 0; // подсветка уже валидна
+      const reachable = G.hexReachable(hero.col, hero.row, hero.move, occupied(hero));
+      const canStay = true;
+      const inRange = (col === hero.col && row === hero.row) ||
+        reachable.some(c => c.col === col && c.row === row);
+      if (!inRange) return;
       clearHighlights();
-      const doAct = () => {
-        if (card.dmg > 0 || card.heal) enterActing();
-        else finishHero(hero, card);
-      };
       if (col === hero.col && row === hero.row) {
-        doAct();
-      } else {
-        B.state = 'anim';
-        G.tween(hero.view, { x: G.hexToPx(col, row).x, y: G.hexToPx(col, row).y }, 260, () => {
-          hero.col = col; hero.row = row;
-          showRing(hero);
-          // пыль из-под ног
-          const { x, y } = G.hexToPx(col, row);
-          G.fxParticles.burst(x, y + 22, 0x8a94a0, 6, { size: 2.5, speed: 55, ttl: 420, grav: 60 });
-          doAct();
-        }, G.easeOut);
+        advanceMove();
+        return;
       }
-    } else if (B.state === 'select') {
-      // тап по пустому гексу — снять выбор героя
-      B.activeHero = null;
-      hideHand();
+      B.state = 'moving';
+      G.tween(hero.view, { x: G.hexToPx(col, row).x, y: G.hexToPx(col, row).y }, 260, () => {
+        hero.col = col; hero.row = row;
+        showRing(hero);
+        const { x, y } = G.hexToPx(col, row);
+        G.fxParticles.burst(x, y + 22, 0x8a94a0, 6, { size: 2.5, speed: 55, ttl: 420, grav: 60 });
+        advanceMove();
+      }, G.easeOut);
     }
   }
 
   function onUnitTap(u) {
-    if (B.over || B.state === 'intro' || B.state === 'anim') return;
-    if (B.state === 'acting') {
+    if (B.over || B.state === 'intro' || B.state === 'anim' || B.state === 'enemy') return;
+    if (B.state === 'act' && B.pendingCard) {
+      // выбор цели карты
       const hero = B.activeHero;
       const card = B.pendingCard;
-      const d = G.hexDist(hero.col, hero.row, u.col, u.row);
-      if (card.dmg > 0 && (u.kind === 'enemy' || u.kind === 'zone') && d <= (card.range || 1)) {
-        let dmg = card.dmg + (hero.bonus || 0);
-        hero.bonus = 0;
-        const short = G.SHORT[G.lang][card.echoOf || card.id] || '';
-        // выпад к цели, удар, возврат
-        B.state = 'anim';
-        hideRing();
-        const hx = hero.view.x, hy = hero.view.y;
-        const tx = u.view.x, ty = u.view.y;
-        if (hero.sprite) playAnim(hero, 'atk', true);
-        else if (hero.weapon) {
-          G.tween(hero.weapon, { rotation: -1.25 }, 110, () => {
-            G.tween(hero.weapon, { rotation: 0.15 }, 260, null, G.easeOut);
-          }, G.easeOut);
-        }
-        G.tween(hero.view, { x: hx + (tx - hx) * 0.4, y: hy + (ty - hy) * 0.4 }, 110, () => {
-          G.sfx.play('hit');
-          G.fxShake.hit(card.dmg >= 4 ? 7 : 4);
-          hitFlash(tx, ty);
-          G.fxParticles.burst(tx, ty, 0xff9d8a, card.dmg >= 4 ? 14 : 9, { size: 3, speed: 120, ttl: 520 });
-          applyDamage(u, dmg, short, 0xff9d8a);
-          G.tween(hero.view, { x: hx, y: hy }, 170, () => {
-            if (card.stun && u.alive) {
-              u.stunned = true;
-              G.sfx.play('stun');
-              const { x, y } = G.hexToPx(u.col, u.row);
-              popText(x, y - 26, '💫', 0xffe4a8);
-            }
-            B.state = 'acting';
-            finishHero(hero, card);
-          }, G.easeOut);
-        }, G.easeOut);
-      } else if (card.heal && u.kind === 'hero' && d <= (card.range || 1)) {
-        if (hero.sprite) playAnim(hero, 'heal', true);
-        G.sfx.play('heal');
-        u.hp = Math.min(u.maxHp, u.hp + card.heal);
-        if (!u.alive) { u.alive = true; G.ui.toast(G.t(u.def.nameKey) + ' — back!', 1200); }
-        const { x, y } = G.hexToPx(u.col, u.row);
-        popText(x, y, '+' + card.heal, G.C.heroGreen);
-        refresh(u);
-        finishHero(hero, card);
-      }
-    } else if (B.state === 'select') {
-      if (u.kind === 'hero' && u.alive && !u.acted) {
-        B.activeHero = u;
-        G.sfx.play('blip');
-        showRing(u);
-        showHand(u);
-        setStep('card');
-      }
+      applyCardToTarget(hero, card, u);
+      return;
     }
-  }
-
-  function finishHero(hero, card) {
-    hero.acted = true;
-    if (card) B.lastCard = { card: card.echoOf ? G.CARDS.find(x => x.id === card.echoOf) : card };
-    B.activeHero = null;
-    B.pendingCard = null;
-    hideHand();
-    hideRing();
-    clearHighlights();
-    B.state = 'select';
-    drawInitiative();
-    // автопереключение на следующего героя — как в XCOM
-    const next = heroes.find(h => h.alive && !h.acted);
-    if (next) {
-      B.activeHero = next;
-      showRing(next);
-      showHand(next);
-      setStep('card');
-    } else {
-      setStep(null);
-      enemyPhase();
+    if (B.state === 'move' || B.state === 'act') {
+      // переключение на другого героя (если он ещё не отработал эту фазу)
+      if (u.kind === 'hero' && u.alive && u !== B.activeHero) {
+        const done = B.subphase === 'move' ? u.moved : u.acted;
+        if (!done) {
+          // вернуть текущего в очередь
+          if (B.activeHero) {
+            if (B.subphase === 'move') B.activeHero.moved = false;
+            else B.activeHero.acted = false;
+          }
+          hideHand(); clearHighlights();
+          B.activeHero = u;
+          if (B.subphase === 'move') {
+            showRing(u);
+            highlightCells(
+              G.hexReachable(u.col, u.row, u.move, occupied(u)).concat([{ col: u.col, row: u.row }]),
+              'move'
+            );
+            setStage(G.t('st_move', { n: G.t(u.def.nameKey) }));
+          } else {
+            showRing(u);
+            showHand(u);
+            setStage(G.t('st_act', { n: G.t(u.def.nameKey) }));
+          }
+          G.sfx.play('blip');
+        }
+      }
     }
   }
 
@@ -5933,17 +5999,15 @@ G.scenes.battle = function (params) {
 
     if (c.destroyed || B.over) return;
 
-    // новый раунд: итоги + смена фаз
+    // новый раунд: итоги + фазы игрока
     B.round++;
     roundLabel.text = G.t('round_n', { n: B.round });
     phaseLabel.text = G.t('phase_player');
     phaseLabel.style.fill = G.C.heroBlue;
     for (const h of heroes) { h.acted = false; if (h.alive) { h.shield = 0; refresh(h); } }
     dealHands();
-    B.state = 'select';
-    setStep('hero');
+    startPlayerPhase();
     drawPhaseBar();
-    drawInitiative();
     roundBanner(B.round, B.events.map(k => G.t(k, { n: B.bossDmg })).join(' · '));
   }
 
@@ -5955,7 +6019,7 @@ G.scenes.battle = function (params) {
   // --- Стадия разведки: брифинг волны ---
   function waveIntro() {
     B.state = 'intro';
-    setStep(null);
+    setStage(null);
     drawPhaseBar();
     const ov = new PIXI.Container();
     ov.zIndex = 85;
@@ -6032,10 +6096,7 @@ G.scenes.battle = function (params) {
 
   // вход в боевую фазу после брифинга
   function startWave() {
-    B.state = 'select';
-    setStep('hero');
-    drawPhaseBar();
-    drawInitiative();
+    startPlayerPhase();
   }
 
   // --- Итоги волны: панель со статистикой ---
@@ -6106,7 +6167,7 @@ G.scenes.battle = function (params) {
   };
 
   // отладочный доступ для автотестов
-  G.battleCtx = { B, heroes, playCard, onHexTap, onUnitTap, finishHero, enemyPhase, dealHands, startWave };
+  G.battleCtx = { B, heroes, playCard, onHexTap, onUnitTap, advanceMove, advanceAct, enemyPhase, dealHands, startWave };
 
   return c;
 };
