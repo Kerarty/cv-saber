@@ -41,6 +41,7 @@
   G.sceneName = null;
   G.setScene = function (name, params) {
     G.battleCtx = null;
+    G.fxSnow.reset();
     if (G.scene) {
       G.world.removeChild(G.scene);
       G.scene.destroy({ children: true });
