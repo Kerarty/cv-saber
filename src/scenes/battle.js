@@ -80,8 +80,8 @@ G.scenes.battle = function (params) {
     text: G.t(wave.hintKey),
     style: { fontFamily: G.FONT_BODY, fontSize: 13, fill: G.C.textDim },
   });
-  hintText.anchor.set(0.5, 0);
-  hintText.x = G.W / 2; hintText.y = 602;
+  hintText.anchor.set(1, 0);
+  hintText.x = G.W - 24; hintText.y = 40;
   c.addChild(waveLabel, roundLabel, phaseLabel, hintText);
 
   // Лента инициативы: герои слева, враги справа
@@ -302,7 +302,10 @@ G.scenes.battle = function (params) {
   }
 
   function clearHighlights() {
-    for (const { g } of B.hiViews) g.destroy();
+    for (const { g } of B.hiViews) {
+      if (g.parent) g.parent.removeChild(g);
+      g.destroy();
+    }
     B.hiViews = [];
   }
 
@@ -321,6 +324,7 @@ G.scenes.battle = function (params) {
 
   // Перерисовать юнита (hp/щит/состояние)
   function refresh(u) {
+    if (!u.view || u.view.destroyed) return;
     const { x, y } = G.hexToPx(u.col, u.row);
     u.view.x = x; u.view.y = y;
     drawUnitView(u);
@@ -656,6 +660,7 @@ G.scenes.battle = function (params) {
       const dist = G.hexDist(e.col, e.row, t.col, t.row);
 
       if (dist <= 1) {
+        if (c.destroyed || B.over) return;
         attackHero(e, t, dmg);
         await sleep(450);
       } else {
@@ -672,6 +677,7 @@ G.scenes.battle = function (params) {
           }
           refresh(e);
           if (G.hexDist(e.col, e.row, t.col, t.row) <= 1) {
+            if (c.destroyed || B.over) return;
             attackHero(e, t, dmg);
             await sleep(450);
           }
@@ -716,9 +722,11 @@ G.scenes.battle = function (params) {
   phaseLabel.text = G.t('phase_player');
   dealHands();
   drawInitiative();
-  if (waveIdx === 0) G.ui.toast(G.t('hint1'), 2600);
 
   c.tick = () => {};
+
+  // отладочный доступ для автотестов
+  G.battleCtx = { B, heroes, playCard, onHexTap, onUnitTap, finishHero, enemyPhase, dealHands };
 
   return c;
 };

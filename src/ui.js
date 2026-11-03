@@ -98,10 +98,10 @@ G.ui = {
     return c;
   },
 
-  // Тост-сообщение сверху по центру
+  // Тост-сообщение сверху по центру (в G.world — переживает смену сцены)
   toast(text, dur = 1600) {
     if (G._toast) {
-      G.scene.removeChild(G._toast);
+      G.world.removeChild(G._toast);
       G._toast.destroy({ children: true });
       G._toast = null;
     }
@@ -118,16 +118,15 @@ G.ui = {
       .stroke({ width: 1, color: G.C.gold, alpha: 0.7 });
     c.addChild(g, t);
     c.x = G.W / 2; c.y = 84;
-    c.zIndex = 60;
-    G.scene.addChild(c);
+    G.world.addChild(c);
     G._toast = c;
     G.tween(c, { y: 72 }, 200, () => {
       setTimeout(() => {
         if (G._toast === c) {
           G.tween(c, { alpha: 0 }, 300, () => {
-            G.scene.removeChild(c);
+            if (c.parent) G.world.removeChild(c);
             c.destroy({ children: true });
-            G._toast = null;
+            if (G._toast === c) G._toast = null;
           });
         }
       }, dur);
@@ -188,6 +187,7 @@ G.ui = {
 
   // Всплывающий текст урона/лечения
   popText(x, y, text, color) {
+    if (!G.scene) return;
     const t = new PIXI.Text({
       text,
       style: { fontFamily: G.FONT_TITLE, fontSize: 20, fill: color, stroke: { color: 0x000000, width: 3 } },
@@ -197,7 +197,8 @@ G.ui = {
     t.zIndex = 40;
     G.scene.addChild(t);
     G.tween(t, { y: y - 44, alpha: 0 }, 900, () => {
-      G.scene.removeChild(t);
+      if (t.destroyed) return;
+      if (t.parent) t.parent.removeChild(t);
       t.destroy();
     }, G.easeOut);
   },

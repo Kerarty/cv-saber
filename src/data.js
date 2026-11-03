@@ -102,7 +102,7 @@ G.progress = 0;
 G.stats = { rounds: 0, damage: 0, cards: 0, facts: 0 };
 
 // --- Гекс-математика (flat-top, odd-q offset) ---
-G.HEX = { size: 48, cols: 11, rows: 6, padX: 80, padY: 84 };
+G.HEX = { size: 48, cols: 11, rows: 6, padX: 200, padY: 84 };
 
 // Короткие подписи фактов для всплывающего урона
 G.SHORT = {

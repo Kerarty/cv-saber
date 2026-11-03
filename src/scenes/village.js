@@ -177,10 +177,10 @@ function drawBuilding(g, id, open) {
       break;
     case 'shipyard': // верфь: стапель с корпусом лодки
       g.rect(-60, 18, 120, 14).fill(woodDark);
-      g.moveTo(-52, 18).quadraticCurveTo(0, 52, 52, 18).lineTo(40, 14).lineTo(-40, 14).closePath().fill(wood);
-      g.rect(-3, -44, 6, 58).fill(woodDark);
-      if (open) g.rect(-26, -40, 52, 30).fill({ color: 0xcfc4a6, alpha: 0.9 });
-      g.rect(-14, -30, 28, 6).fill({ color: 0x8a2f2a, alpha: open ? 0.9 : 0.4 });
+      g.moveTo(-52, 14).quadraticCurveTo(0, 44, 52, 14).lineTo(40, 8).lineTo(-40, 8).closePath().fill(wood);
+      g.rect(-3, -52, 6, 62).fill(woodDark); // мачта от киля
+      if (open) g.rect(-26, -48, 52, 30).fill({ color: 0xcfc4a6, alpha: 0.9 });
+      g.rect(-14, -38, 28, 6).fill({ color: 0x8a2f2a, alpha: open ? 0.9 : 0.4 });
       break;
     case 'stone': // рунический камень
       g.poly([0, -66, 30, -30, 22, 40, -22, 40, -30, -30]).fill(open ? 0x4a5568 : 0x333c4a);
