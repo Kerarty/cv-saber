@@ -25,12 +25,15 @@ G.scenes.battle = function (params) {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const key = (col, row) => col + ',' + row;
 
-  // --- Фон поля ---
+  // --- Фон поля: градиент + виньетка ---
   const bg = new PIXI.Graphics();
-  bg.rect(0, 0, G.W, G.H).fill(0x0f1826);
+  bg.rect(0, 0, G.W, G.H).fill(G.viz.gradient(0, 0, 0, G.H, [
+    [0, 0x0a1220], [0.5, 0x101b2b], [1, 0x0c1522],
+  ]));
   bg.rect(0, 0, G.W, 60).fill(0x0b121d);      // верхняя плашка
   bg.rect(0, G.H - 128, G.W, 128).fill(0x0b121d); // нижняя плашка карт
   c.addChild(bg);
+  G.viz.vignette(c, 0.32);
 
   // --- Гексы ---
   const hexLayer = new PIXI.Container();
@@ -40,17 +43,42 @@ G.scenes.battle = function (params) {
     for (let row = 0; row < G.HEX.rows; row++) {
       const { x, y } = G.hexToPx(col, row);
       const g = new PIXI.Graphics();
-      g.poly(hexPoints(x, y)).fill(G.C.hexFill).stroke({ width: 1.5, color: G.C.hexBorder });
+      // лёгкая шахматная тонировка — поле не выглядит плоским
+      const base = (col + row) % 2 ? 0x16202e : 0x18232f;
+      g.poly(hexPoints(x, y)).fill(base).stroke({ width: 1.5, color: G.C.hexBorder });
       g.eventMode = 'static';
       g.on('pointertap', () => onHexTap(col, row));
+      g.on('pointerover', () => hexHover(col, row, true));
+      g.on('pointerout', () => hexHover(col, row, false));
       hexLayer.addChild(g);
       B.hexViews.set(key(col, row), g);
-      g.__x = x; g.__y = y;
+      g.__x = x; g.__y = y; g.__base = base; g.__hover = false;
     }
   }
 
-  function hexPoints(cx, cy) {
-    const s = G.HEX.size * 0.96;
+  // hover гекса: только если он сейчас валидная цель
+  function hexHover(col, row, on) {
+    const g = B.hexViews.get(key(col, row));
+    if (!g) return;
+    g.__hover = on;
+    redrawHex(g, hexHoverColor(col, row) || g.__base, G.C.hexBorder);
+  }
+
+  function hexHoverColor(col, row) {
+    if (B.state === 'moving' || B.state === 'acting') {
+      const hl = B.hiViews.length && B.hiViews.some(h => h.col === col && h.row === row);
+      if (hl) return 0x2d4a57;
+    }
+    return null;
+  }
+
+  function redrawHex(g, fill, border) {
+    g.clear();
+    g.poly(hexPoints(g.__x, g.__y)).fill(fill).stroke({ width: 1.5, color: border });
+  }
+
+  function hexPoints(cx, cy, scaleMul = 1) {
+    const s = G.HEX.size * 0.96 * scaleMul;
     const pts = [];
     for (let i = 0; i < 6; i++) {
       const a = Math.PI / 3 * i;
@@ -106,6 +134,50 @@ G.scenes.battle = function (params) {
     m.x = B.state === 'enemy' ? x - 8 : 24 + 0;
     m.y = 0;
     init.addChild(m);
+    drawZoneHud();
+  }
+
+  // Чеклист зон босса: требования и их HP
+  const zoneHud = new PIXI.Container();
+  zoneHud.x = G.W - 190; zoneHud.y = 78;
+  zoneHud.visible = false;
+  c.addChild(zoneHud);
+
+  function drawZoneHud() {
+    if (!wave.boss) return;
+    zoneHud.visible = true;
+    zoneHud.removeChildren();
+    const zones = B.units.filter(u => u.kind === 'zone');
+    const w = 168, rowH = 30, h = zones.length * rowH + 34;
+    const g = new PIXI.Graphics();
+    g.roundRect(0, 0, w, h, 10).fill({ color: G.C.panelDark, alpha: 0.92 });
+    g.roundRect(0, 0, w, h, 10).stroke({ width: 1.5, color: G.C.hexBorder });
+    const head = new PIXI.Text({
+      text: G.t('boss_name'),
+      style: { fontFamily: G.FONT_TITLE, fontSize: 13, fill: G.C.gold },
+    });
+    head.x = 12; head.y = 8;
+    zoneHud.addChild(g, head);
+    zones.forEach((z, i) => {
+      const faces = { mobile: 0x4a9db8, balance: 0xb8a24a, unity: 0x7ab55c, team: 0x9b6ab8 };
+      const col = faces[z.defId];
+      const y = 30 + i * rowH;
+      const name = new PIXI.Text({
+        text: (z.alive ? '• ' : '✓ ') + G.t(z.def.key),
+        style: {
+          fontFamily: G.FONT_BODY, fontSize: 13, fontWeight: 'bold',
+          fill: z.alive ? G.C.text : 0x6a7a6a,
+          stroke: { color: 0x0a0f18, width: 2 },
+        },
+      });
+      name.x = 12; name.y = y;
+      zoneHud.addChild(name);
+      const barW = 56;
+      const bar = new PIXI.Graphics();
+      bar.rect(w - barW - 14, y + 2, barW, 8).fill(0x1a1210);
+      bar.rect(w - barW - 14, y + 2, barW * Math.max(0, z.hp / z.maxHp), 8).fill(z.alive ? col : 0x3a4a3a);
+      zoneHud.addChild(bar);
+    });
   }
 
   // --- Нижняя панель: портрет героя, рука, пропуск ---
@@ -124,7 +196,7 @@ G.scenes.battle = function (params) {
 
     const cards = B.hands[hero.id];
     cards.forEach((card, i) => {
-      const cardV = G.ui.drawCard(card, i);
+      const cardV = G.ui.drawCard(card, i, hero.def.color);
       cardV.x = 24 + i * 190;
       cardV.y = 16;
       cardV.on('pointertap', () => playCard(hero, card));
@@ -163,23 +235,29 @@ G.scenes.battle = function (params) {
     const g = new PIXI.Graphics();
     const body = u.kind === 'hero' ? drawViking : (u.kind === 'zone' ? drawZoneFace : drawEnemy);
     body(g, u);
-    // полоска HP
-    const barW = 44;
+    // полоска HP: рамка + подложка + заливка
+    const barW = 46;
     const hpRatio = Math.max(0, u.hp / u.maxHp);
-    g.rect(-barW / 2, -46, barW, 6).fill(0x000000).rect(-barW / 2 + 1, -45, (barW - 2) * hpRatio, 4)
+    g.rect(-barW / 2 - 1, -49, barW + 2, 8).fill(0x0a0f18);
+    g.rect(-barW / 2, -48, barW, 6).fill(0x1a1210);
+    g.rect(-barW / 2, -48, barW * hpRatio, 6)
       .fill(u.kind === 'hero' ? G.C.heroGreen : (u.kind === 'zone' ? G.C.gold : G.C.enemy));
     // щит
     if (u.shield > 0) {
-      g.circle(barW / 2 + 4, -43, 7).fill(G.C.gold);
-      g.circle(barW / 2 + 4, -43, 4).fill(0xffe4a8);
+      g.circle(barW / 2 + 5, -45, 8).fill(0x0a0f18);
+      g.circle(barW / 2 + 5, -45, 7).fill(G.C.gold);
+      g.circle(barW / 2 + 5, -45, 4).fill(0xffe4a8);
     }
-    // имя
+    // имя с обводкой
     const label = new PIXI.Text({
       text: unitName(u),
-      style: { fontFamily: G.FONT_BODY, fontSize: 11, fill: G.C.textDim, fontWeight: 'bold' },
+      style: {
+        fontFamily: G.FONT_BODY, fontSize: 12, fill: G.C.text, fontWeight: 'bold',
+        stroke: { color: 0x0a0f18, width: 3 },
+      },
     });
     label.anchor.set(0.5);
-    label.y = 34;
+    label.y = 36;
     u.view.addChild(g, label);
     if (!u.alive) u.view.alpha = 0.35;
   }
@@ -190,64 +268,97 @@ G.scenes.battle = function (params) {
     return G.t(u.def.key);
   }
 
+  const OUTLINE = 0x0a0f18;
+
   function drawViking(g, u) {
     const col = u.def.color;
-    g.circle(0, 26, 16).fill({ color: 0x000000, alpha: 0.25 }); // тень
-    g.rect(-8, 0, 16, 22).fill(col);           // тело
-    g.circle(0, -8, 11).fill(0xe8c39e);        // голова
+    g.circle(0, 26, 17).fill({ color: 0x000000, alpha: 0.3 }); // тень
+    // плаща за спиной
+    g.poly([-10, -2, 10, -2, 14, 24, -14, 24]).fill({ color: col, alpha: 0.55 });
+    // тело с контуром
+    g.rect(-8, 0, 16, 22).fill(col).stroke({ width: 2, color: OUTLINE });
+    // ремень
+    g.rect(-8, 9, 16, 3).fill(0x3a2a1a);
+    g.rect(-2, 9, 4, 5).fill(0xb8964a); // пряжка
+    // голова
+    g.circle(0, -8, 11).fill(0xe8c39e).stroke({ width: 2, color: OUTLINE });
     g.arc(0, -2, 12, Math.PI * 0.15, Math.PI * 0.85).fill(0x8a5a2a); // борода
-    g.rect(-11, -22, 22, 8).fill(0x9aa7b5);    // шлем
-    g.moveTo(-11, -18).lineTo(-19, -28).lineTo(-13, -19).closePath().fill(0xd8d8d8); // рог L
-    g.moveTo(11, -18).lineTo(19, -28).lineTo(13, -19).closePath().fill(0xd8d8d8);    // рог R
-    if (u.id === 'berserk') { // топор
-      g.rect(12, -6, 3, 26).fill(0x6b4a2a);
-      g.poly([15, -6, 27, -2, 15, 4]).fill(0xb8c4d0);
-    } else if (u.id === 'skald') { // лира/струны
-      g.circle(-13, 4, 6).fill(0x8a5a2a);
-      g.circle(-13, 4, 2.5).fill(0xffe4a8);
+    g.rect(-11, -22, 22, 8).fill(0x9aa7b5).stroke({ width: 2, color: OUTLINE }); // шлем
+    g.circle(0, -18, 2).fill(0xd8d8d8); // заклёпка
+    g.moveTo(-11, -18).lineTo(-19, -28).lineTo(-13, -19).closePath().fill(0xd8d8d8).stroke({ width: 1.5, color: OUTLINE }); // рог L
+    g.moveTo(11, -18).lineTo(19, -28).lineTo(13, -19).closePath().fill(0xd8d8d8).stroke({ width: 1.5, color: OUTLINE });    // рог R
+    // глаза
+    g.circle(-4, -8, 1.6).fill(0x2a2018);
+    g.circle(4, -8, 1.6).fill(0x2a2018);
+    if (u.id === 'berserk') { // топор со сталью
+      g.rect(12, -6, 3.5, 26).fill(0x6b4a2a).stroke({ width: 1.5, color: OUTLINE });
+      g.poly([15, -6, 27, -2, 15, 4]).fill(0xb8c4d0).stroke({ width: 1.5, color: OUTLINE });
+      g.moveTo(16, -4).lineTo(24, -2).stroke({ width: 1, color: 0xeef4f8 });
+    } else if (u.id === 'skald') { // лира
+      g.circle(-14, 4, 7).fill(0x8a5a2a).stroke({ width: 1.5, color: OUTLINE });
+      g.circle(-14, 4, 3).fill(0x1a1210);
+      g.moveTo(-17, 1).lineTo(-11, 7).stroke({ width: 1, color: 0xffe4a8 });
+      g.moveTo(-17, 7).lineTo(-11, 1).stroke({ width: 1, color: 0xffe4a8 });
     } else { // молот
-      g.rect(-16, -8, 3, 26).fill(0x6b4a2a);
-      g.rect(-24, -14, 16, 9).fill(0x9aa7b5);
+      g.rect(-16, -8, 3.5, 26).fill(0x6b4a2a).stroke({ width: 1.5, color: OUTLINE });
+      g.rect(-25, -15, 17, 10).fill(0x9aa7b5).stroke({ width: 1.5, color: OUTLINE });
+      g.rect(-25, -11, 17, 2).fill(0xc9d4de);
     }
   }
 
   function drawEnemy(g, u) {
     const col = u.def.color;
-    g.circle(0, 26, 15).fill({ color: 0x000000, alpha: 0.25 });
+    g.circle(0, 26, 16).fill({ color: 0x000000, alpha: 0.3 });
     switch (u.defKey) {
-      case 'krynch': // кринч: капля с хитрой улыбкой
-        g.circle(0, 2, 17).fill(col);
+      case 'krynch': // кринч: капля с кофе — вечный overweight
+        g.circle(0, 2, 17).fill(col).stroke({ width: 2, color: OUTLINE });
         g.circle(-6, -4, 3).fill(0xffe4a8);
         g.circle(6, -4, 3).fill(0xffe4a8);
+        g.moveTo(-6, -4).lineTo(-3, -2).stroke({ width: 1.5, color: OUTLINE }); // хитрые брови
+        g.moveTo(6, -4).lineTo(3, -2).stroke({ width: 1.5, color: OUTLINE });
         g.arc(0, 4, 8, Math.PI * 0.15, Math.PI * 0.85).stroke({ width: 2.5, color: 0xffe4a8 });
+        // стакан кофе в руке
+        g.rect(14, 6, 9, 12).fill(0xe8e0d0).stroke({ width: 1.5, color: OUTLINE });
+        g.rect(14, 6, 9, 3).fill(0x8a5a2a);
+        g.moveTo(18, 2).quadraticCurveTo(20, 0, 18, -2).stroke({ width: 1.5, color: 0xbfc7cf }); // пар
         break;
-      case 'deadline': // дедлайн: песочные часы
-        g.poly([-14, -14, 14, -14, 2, 0, 14, 16, -14, 16, -2, 0]).fill(col);
-        g.rect(-14, -17, 28, 4).fill(0x8a2f2a);
-        g.rect(-14, 15, 28, 4).fill(0x8a2f2a);
+      case 'deadline': // дедлайн: песочные часы с бегущим песком
+        g.poly([-14, -14, 14, -14, 2, 0, 14, 16, -14, 16, -2, 0]).fill(col).stroke({ width: 2, color: OUTLINE });
+        g.rect(-14, -17, 28, 4).fill(0x8a2f2a).stroke({ width: 1.5, color: OUTLINE });
+        g.rect(-14, 15, 28, 4).fill(0x8a2f2a).stroke({ width: 1.5, color: OUTLINE });
         g.circle(0, 8, 3).fill(0xffe4a8);
+        g.circle(0, 8, 1.4).fill(0x8a2f2a); // циферблат-точка
         break;
-      default: // баг: жук
-        g.ellipse(0, 2, 14, 18).fill(col);
-        g.circle(0, -14, 8).fill(col);
+      default: // баг: жук с панцирем
+        g.ellipse(0, 2, 14, 18).fill(col).stroke({ width: 2, color: OUTLINE });
+        g.ellipse(0, 2, 8, 14).fill({ color: 0x8a2f2a, alpha: 0.5 }); // панцирная полоса
+        g.circle(0, -14, 8).fill(col).stroke({ width: 2, color: OUTLINE });
         g.circle(-5, -16, 2).fill(0xffe4a8);
         g.circle(5, -16, 2).fill(0xffe4a8);
+        g.moveTo(-8, -22).lineTo(-4, -19).stroke({ width: 2, color: OUTLINE }); // усики
+        g.moveTo(8, -22).lineTo(4, -19).stroke({ width: 2, color: OUTLINE });
         g.moveTo(0, -8).lineTo(0, 18).stroke({ width: 1.5, color: 0x7a2a22 });
         for (let i = -1; i <= 1; i++) {
-          g.moveTo(-13, i * 8).lineTo(-20, i * 8 + 4).stroke({ width: 2, color: 0x7a2a22 });
-          g.moveTo(13, i * 8).lineTo(20, i * 8 + 4).stroke({ width: 2, color: 0x7a2a22 });
+          g.moveTo(-13, i * 8).lineTo(-20, i * 8 + 4).stroke({ width: 2, color: 0x5a1f1a });
+          g.moveTo(13, i * 8).lineTo(20, i * 8 + 4).stroke({ width: 2, color: 0x5a1f1a });
         }
     }
   }
 
   function drawZoneFace(g, u) {
     const faces = { mobile: 0x4a9db8, balance: 0xb8a24a, unity: 0x7ab55c, team: 0x9b6ab8 };
+    const brows = { mobile: -1, balance: 1, unity: 0, team: -2 }; // характер маски
     const col = faces[u.defId] || G.C.enemy;
-    g.circle(0, 24, 18).fill({ color: 0x000000, alpha: 0.25 });
-    g.roundRect(-20, -16, 40, 42, 8).fill(0x2a3240);      // маска
-    g.roundRect(-20, -16, 40, 42, 8).stroke({ width: 2, color: col });
-    g.circle(-7, -2, 4).fill(col);
-    g.circle(7, -2, 4).fill(col);
+    g.circle(0, 24, 18).fill({ color: 0x000000, alpha: 0.3 });
+    g.roundRect(-20, -16, 40, 42, 8).fill(0x2a3240).stroke({ width: 2, color: OUTLINE });
+    g.roundRect(-16, -12, 32, 34, 6).stroke({ width: 1.5, color: col, alpha: 0.5 });
+    g.circle(-7, -2, 4.5).fill(0x10151f);
+    g.circle(7, -2, 4.5).fill(0x10151f);
+    g.circle(-7, -2, 2.5).fill(col);
+    g.circle(7, -2, 2.5).fill(col);
+    // брови по характеру требования
+    g.moveTo(-11, -8 + brows[u.defId]).lineTo(-3, -6).stroke({ width: 2, color: col });
+    g.moveTo(11, -8 + brows[u.defId]).lineTo(3, -6).stroke({ width: 2, color: col });
     g.moveTo(-8, 14).lineTo(8, 14).stroke({ width: 2.5, color: col });
   }
 
@@ -318,7 +429,7 @@ G.scenes.battle = function (params) {
         .stroke({ width: 2, color: mode === 'move' ? 0x59b7c9 : 0xd0685c });
       g.zIndex = 5;
       hexLayer.addChild(g);
-      B.hiViews.push({ g });
+      B.hiViews.push({ g, col: cell.col, row: cell.row });
     }
   }
 
@@ -333,6 +444,56 @@ G.scenes.battle = function (params) {
   function popText(x, y, text, color) {
     G.ui.popText(x, y - 30, text, color);
   }
+
+  // Вспышка удара: расходящееся белое кольцо
+  function hitFlash(x, y, color) {
+    const f = new PIXI.Graphics();
+    f.circle(0, 0, 7).fill({ color: 0xffffff, alpha: 0.9 });
+    f.circle(0, 0, 11).stroke({ width: 3, color: color || 0xffe4a8, alpha: 0.9 });
+    f.x = x; f.y = y;
+    f.zIndex = 30;
+    c.addChild(f);
+    G.tween(f, { alpha: 0, scale: 2.4 }, 240, () => {
+      if (f.parent) c.removeChild(f);
+      f.destroy();
+    }, G.easeOut);
+  }
+
+  // Баннер раунда по центру
+  function roundBanner(n) {
+    const t = new PIXI.Text({
+      text: G.t('round_n', { n }),
+      style: {
+        fontFamily: G.FONT_TITLE, fontSize: 46, fill: G.C.gold, letterSpacing: 4,
+        stroke: { color: 0x0a0f18, width: 6 },
+      },
+    });
+    t.anchor.set(0.5);
+    t.x = G.W / 2; t.y = 300;
+    t.zIndex = 70;
+    t.alpha = 0;
+    c.addChild(t);
+    G.tween(t, { alpha: 1, y: 288 }, 260, () => {
+      G.tween(t, { alpha: 0, y: 272 }, 500, () => {
+        if (t.parent) c.removeChild(t);
+        t.destroy();
+      }, G.easeOut);
+    }, G.easeOut);
+  }
+
+  // Кольцо выбора под активным героем
+  const ring = new PIXI.Graphics();
+  ring.visible = false;
+  ring.zIndex = 8;
+  hexLayer.addChild(ring);
+  function showRing(hero) {
+    ring.clear();
+    ring.poly(hexPoints(0, 0, 1.12)).stroke({ width: 3, color: G.C.gold, alpha: 0.95 });
+    ring.x = G.hexToPx(hero.col, hero.row).x;
+    ring.y = G.hexToPx(hero.col, hero.row).y;
+    ring.visible = true;
+  }
+  function hideRing() { ring.visible = false; }
 
   // --- Урон и смерть ---
   function applyDamage(target, dmg, sourceLabel, color) {
@@ -353,6 +514,7 @@ G.scenes.battle = function (params) {
       if (target.kind === 'hero') G.stats.damage += rest;
     }
     refresh(target);
+    if (target.kind === 'zone') drawZoneHud();
     if (target.hp <= 0) killUnit(target);
     return rest;
   }
@@ -563,6 +725,10 @@ G.scenes.battle = function (params) {
         B.state = 'anim';
         G.tween(hero.view, { x: G.hexToPx(col, row).x, y: G.hexToPx(col, row).y }, 260, () => {
           hero.col = col; hero.row = row;
+          showRing(hero);
+          // пыль из-под ног
+          const { x, y } = G.hexToPx(col, row);
+          G.fxParticles.burst(x, y + 22, 0x8a94a0, 6, { size: 2.5, speed: 55, ttl: 420, grav: 60 });
           doAct();
         }, G.easeOut);
       }
@@ -583,15 +749,28 @@ G.scenes.battle = function (params) {
         let dmg = card.dmg + (hero.bonus || 0);
         hero.bonus = 0;
         const short = G.SHORT[G.lang][card.echoOf || card.id] || '';
-        G.sfx.play('hit');
-        applyDamage(u, dmg, short, 0xff9d8a);
-        if (card.stun && u.alive) {
-          u.stunned = true;
-          G.sfx.play('stun');
-          const { x, y } = G.hexToPx(u.col, u.row);
-          popText(x, y - 26, '💫', 0xffe4a8);
-        }
-        finishHero(hero, card);
+        // выпад к цели, удар, возврат
+        B.state = 'anim';
+        hideRing();
+        const hx = hero.view.x, hy = hero.view.y;
+        const tx = u.view.x, ty = u.view.y;
+        G.tween(hero.view, { x: hx + (tx - hx) * 0.4, y: hy + (ty - hy) * 0.4 }, 110, () => {
+          G.sfx.play('hit');
+          G.fxShake.hit(card.dmg >= 4 ? 7 : 4);
+          hitFlash(tx, ty);
+          G.fxParticles.burst(tx, ty, 0xff9d8a, card.dmg >= 4 ? 14 : 9, { size: 3, speed: 120, ttl: 520 });
+          applyDamage(u, dmg, short, 0xff9d8a);
+          G.tween(hero.view, { x: hx, y: hy }, 170, () => {
+            if (card.stun && u.alive) {
+              u.stunned = true;
+              G.sfx.play('stun');
+              const { x, y } = G.hexToPx(u.col, u.row);
+              popText(x, y - 26, '💫', 0xffe4a8);
+            }
+            B.state = 'acting';
+            finishHero(hero, card);
+          }, G.easeOut);
+        }, G.easeOut);
       } else if (card.heal && u.kind === 'hero' && d <= (card.range || 1)) {
         G.sfx.play('heal');
         u.hp = Math.min(u.maxHp, u.hp + card.heal);
@@ -605,6 +784,7 @@ G.scenes.battle = function (params) {
       if (u.kind === 'hero' && u.alive && !u.acted) {
         B.activeHero = u;
         G.sfx.play('blip');
+        showRing(u);
         showHand(u);
       }
     }
@@ -616,6 +796,7 @@ G.scenes.battle = function (params) {
     B.activeHero = null;
     B.pendingCard = null;
     hideHand();
+    hideRing();
     clearHighlights();
     B.state = 'select';
     drawInitiative();
@@ -630,7 +811,7 @@ G.scenes.battle = function (params) {
     phaseLabel.text = G.t('phase_enemy');
     phaseLabel.style.fill = G.C.enemy;
     drawInitiative();
-    await sleep(500);
+    await sleep(350);
 
     for (const e of B.units.filter(u => u.kind === 'enemy')) {
       if (c.destroyed || B.over) return;
@@ -647,7 +828,7 @@ G.scenes.battle = function (params) {
         const { x, y } = G.hexToPx(e.col, e.row);
         popText(x, y, '+' + def.healSelf, G.C.enemy);
         refresh(e);
-        await sleep(220);
+        await sleep(150);
       }
       let dmg = e.dmg;
       if (def.grow) dmg += def.grow * Math.floor((B.round - 1) / 2);
@@ -662,7 +843,7 @@ G.scenes.battle = function (params) {
       if (dist <= 1) {
         if (c.destroyed || B.over) return;
         attackHero(e, t, dmg);
-        await sleep(450);
+        await sleep(320);
       } else {
         // подойти
         const path = G.hexPath(e.col, e.row, t.col, t.row, occupied(e));
@@ -673,13 +854,13 @@ G.scenes.battle = function (params) {
             e.col = step.col; e.row = step.row;
             const { x, y } = G.hexToPx(e.col, e.row);
             G.tween(e.view, { x, y }, 200);
-            await sleep(200);
+            await sleep(140);
           }
           refresh(e);
           if (G.hexDist(e.col, e.row, t.col, t.row) <= 1) {
             if (c.destroyed || B.over) return;
             attackHero(e, t, dmg);
-            await sleep(450);
+            await sleep(320);
           }
         }
       }
@@ -692,9 +873,9 @@ G.scenes.battle = function (params) {
         B.bossDmg = 1 + Math.floor(B.round / 2);
         const t = targets[Math.floor(Math.random() * targets.length)];
         G.sfx.play('boss');
-        await sleep(300);
+        await sleep(240);
         attackHero(null, t, B.bossDmg, G.t('boss_name'));
-        await sleep(500);
+        await sleep(350);
       }
     }
 
@@ -709,8 +890,7 @@ G.scenes.battle = function (params) {
     dealHands();
     B.state = 'select';
     drawInitiative();
-    // подсказка: чей герой готов
-    G.ui.toast(G.t('round_n', { n: B.round }), 900);
+    roundBanner(B.round);
   }
 
   function attackHero(source, hero, dmg, labelOverride) {
@@ -723,7 +903,9 @@ G.scenes.battle = function (params) {
   dealHands();
   drawInitiative();
 
-  c.tick = () => {};
+  c.tick = (dtMs) => {
+    if (ring.visible) ring.rotation += (dtMs / 1000) * 1.4;
+  };
 
   // отладочный доступ для автотестов
   G.battleCtx = { B, heroes, playCard, onHexTap, onUnitTap, finishHero, enemyPhase, dealHands };
@@ -731,32 +913,52 @@ G.scenes.battle = function (params) {
   return c;
 };
 
-// Карта способности (общая для панели руки)
-G.ui.drawCard = function (card, index) {
+// Иконки карт (эмодзи — нулевая цена, читаются мгновенно)
+G.CARD_ICONS = {
+  balance_lab: '⚖️', event_tuner: '📅', gwent_logic: '🃏',
+  echo_loop: '🌀', onefile: '📄', mvp: '⚡',
+  rune_sdk: '🛡️', kb472: '💾', code_review: '🔧',
+};
+
+// Карта способности v2: иконка, полоса героя, hover
+G.ui.drawCard = function (card, index, heroColor) {
   const cc = new PIXI.Container();
   cc.eventMode = 'static';
   cc.cursor = 'pointer';
-  const w = 176, h = 96;
+  const w = 176, h = 100;
   const g = new PIXI.Graphics();
-  g.roundRect(0, 0, w, h, 10).fill(G.C.panel);
-  g.roundRect(0, 0, w, h, 10).stroke({ width: 2, color: G.C.goldDark });
-  // фактурная полоска сверху
-  g.rect(0, 0, w, 18).fill({ color: 0x241c12, alpha: 1 });
+  const draw = (hover) => {
+    const yo = hover ? -4 : 0;
+    g.clear();
+    g.roundRect(0, yo, w, h, 10).fill(G.C.panel);
+    g.roundRect(0, yo, w, h, 10).stroke({ width: hover ? 2.5 : 2, color: hover ? G.C.gold : G.C.goldDark });
+    g.rect(0, yo, w, 20).fill({ color: 0x241c12, alpha: 1 });
+    g.rect(0, yo + 20, w, 2).fill({ color: heroColor || G.C.gold, alpha: 0.85 });
+  };
+  draw(false);
+  const icon = new PIXI.Text({
+    text: G.CARD_ICONS[card.id] || '⚔️',
+    style: { fontSize: 19 },
+  });
+  icon.anchor.set(0.5);
+  icon.x = w - 22; icon.y = 11;
   const name = new PIXI.Text({
     text: G.t('c_' + card.id),
     style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: G.C.gold, letterSpacing: 0.5 },
   });
-  name.x = 10; name.y = 2;
+  name.x = 10; name.y = 3;
   const desc = new PIXI.Text({
     text: G.t('c_' + card.id + '_d'),
     style: { fontFamily: G.FONT_BODY, fontSize: 13, fill: G.C.text },
   });
-  desc.x = 10; desc.y = 30;
+  desc.x = 10; desc.y = 32;
   const fact = new PIXI.Text({
     text: G.t('c_' + card.id + '_f'),
-    style: { fontFamily: G.FONT_BODY, fontSize: 11, fill: G.C.textDim, wordWrap: true, wordWrapWidth: w - 20 },
+    style: { fontFamily: G.FONT_BODY, fontSize: 12, fill: G.C.textDim, wordWrap: true, wordWrapWidth: w - 20, lineHeight: 15 },
   });
-  fact.x = 10; fact.y = 52;
-  cc.addChild(g, name, desc, fact);
+  fact.x = 10; fact.y = 56;
+  cc.addChild(g, icon, name, desc, fact);
+  cc.on('pointerover', () => { draw(true); cc.y = -4; });
+  cc.on('pointerout', () => { draw(false); cc.y = 0; });
   return cc;
 };

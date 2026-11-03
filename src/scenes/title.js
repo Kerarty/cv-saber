@@ -6,19 +6,35 @@ G.scenes = G.scenes || {};
 G.scenes.title = function () {
   const c = new PIXI.Container();
 
-  // Небо: три полосы глубины
+  // Небо: вертикальный градиент глубины
   const sky = new PIXI.Graphics();
-  sky.rect(0, 0, G.W, 300).fill(G.C.bg);
-  sky.rect(0, 300, G.W, 120).fill(G.C.bgHigh);
+  sky.rect(0, 0, G.W, 420).fill(G.viz.gradient(0, 0, 0, 420, [
+    [0, 0x070b13], [0.55, 0x0d1420], [1, 0x1a2c4d],
+  ]));
   c.addChild(sky);
 
-  // Звёзды
-  const stars = new PIXI.Graphics();
-  for (let i = 0; i < 50; i++) {
-    stars.circle(Math.random() * G.W, Math.random() * 280, Math.random() * 1.2 + 0.4)
-      .fill({ color: G.C.snow, alpha: 0.15 + Math.random() * 0.5 });
+  // Луна с гало — фокусная точка
+  const moonGlow = new PIXI.Graphics();
+  moonGlow.circle(1010, 140, 86).fill({ color: 0xcfe0f0, alpha: 0.06 });
+  moonGlow.circle(1010, 140, 62).fill({ color: 0xcfe0f0, alpha: 0.08 });
+  const moon = new PIXI.Graphics();
+  moon.circle(1010, 140, 38).fill(0xdfe9f2);
+  moon.circle(998, 128, 7).fill({ color: 0xc2cfdd, alpha: 0.7 });
+  moon.circle(1022, 152, 5).fill({ color: 0xc2cfdd, alpha: 0.6 });
+  moon.circle(1016, 122, 3.5).fill({ color: 0xc2cfdd, alpha: 0.6 });
+  c.addChild(moonGlow, moon);
+
+  // Звёзды: три слоя с разной фазой мерцания
+  const starLayers = [];
+  for (let l = 0; l < 3; l++) {
+    const g = new PIXI.Graphics();
+    for (let i = 0; i < 20; i++) {
+      g.circle(Math.random() * G.W, Math.random() * 300, Math.random() * 1.1 + 0.4)
+        .fill({ color: G.C.snow, alpha: 0.2 + Math.random() * 0.5 });
+    }
+    c.addChild(g);
+    starLayers.push(g);
   }
-  c.addChild(stars);
 
   // Горы: два силуэта
   const mountains = new PIXI.Graphics();
@@ -127,6 +143,10 @@ G.scenes.title = function () {
     }
     if (ship) ship.rotation = Math.sin(t * 1.6) * 0.02;
     if (torch) torch.alpha = 0.85 + 0.15 * Math.sin(t * 9);
+    // мерцание звёзд слоями
+    for (let l = 0; l < starLayers.length; l++) {
+      starLayers[l].alpha = 0.75 + 0.25 * Math.sin(t * (0.9 + l * 0.35) + l * 2);
+    }
   };
 
   return c;

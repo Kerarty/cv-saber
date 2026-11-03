@@ -132,6 +132,14 @@ G.scenes.victory = function () {
     const t = performance.now() / 1000;
     ship.rotation = Math.sin(t * 1.3) * 0.025;
     aurora.alpha = 0.75 + 0.25 * Math.sin(t * 0.7);
+    // конфетти из золотых хлопьев каждые ~1.2 сек
+    if (Math.floor(t * 0.8) !== Math.floor((t - dtMs / 1000) * 0.8)) {
+      G.fxParticles.burst(
+        G.W * (0.2 + Math.random() * 0.6), 160,
+        Math.random() > 0.5 ? G.C.gold : 0xdfe9f2, 8,
+        { square: true, size: 4, speed: 60, up: true, grav: 90, ttl: 1600 }
+      );
+    }
   };
 
   G.sfx.play('fanfare');

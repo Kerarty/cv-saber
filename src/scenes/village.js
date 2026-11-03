@@ -4,14 +4,26 @@ window.G = window.G || {};
 G.scenes.village = function (params) {
   const c = new PIXI.Container();
 
-  // Небо и земля
+  // Небо и земля: градиент + луна
   const bg = new PIXI.Graphics();
-  bg.rect(0, 0, G.W, 250).fill(G.C.bg);
-  bg.rect(0, 250, G.W, 90).fill(0x15202f);
+  bg.rect(0, 0, G.W, 340).fill(G.viz.gradient(0, 0, 0, 340, [
+    [0, 0x070b13], [0.6, 0x0d1420], [1, 0x16273f],
+  ]));
   bg.rect(0, 340, G.W, G.H - 340).fill(0x1a2738);
-  // снежная равнина
-  bg.ellipse(G.W / 2, 720, 900, 130).fill(0x243449);
+  // снежная равнина с намётом холмов
+  bg.ellipse(G.W / 2, 730, 940, 140).fill(0x243449);
+  bg.ellipse(200, 750, 420, 110).fill(0x28394f);
+  bg.ellipse(1100, 745, 380, 100).fill(0x20303f);
   c.addChild(bg);
+
+  const moonGlow = new PIXI.Graphics();
+  moonGlow.circle(180, 110, 70).fill({ color: 0xcfe0f0, alpha: 0.05 });
+  moonGlow.circle(180, 110, 48).fill({ color: 0xcfe0f0, alpha: 0.07 });
+  const moon = new PIXI.Graphics();
+  moon.circle(180, 110, 30).fill(0xdfe9f2);
+  moon.circle(170, 100, 5).fill({ color: 0xc2cfdd, alpha: 0.7 });
+  moon.circle(190, 120, 4).fill({ color: 0xc2cfdd, alpha: 0.6 });
+  c.addChild(moonGlow, moon);
 
   const stars = new PIXI.Graphics();
   for (let i = 0; i < 36; i++) {
@@ -164,12 +176,18 @@ function drawBuilding(g, id, open) {
   const wood = open ? 0x4a3a24 : 0x33291a;
   const woodDark = open ? 0x33291a : 0x241c12;
   const roof = open ? 0x6e2f26 : 0x3a2420;
+  const outline = 0x0a0f18;
+  // тень под постройкой
+  g.ellipse(0, 44, 70, 12).fill({ color: 0x000000, alpha: 0.3 });
   switch (id) {
     case 'forge': // кузница: дом с трубой и горном
-      g.rect(-46, -20, 92, 60).fill(wood);
-      g.poly([-58, -20, 0, -64, 58, -20]).fill(roof);
-      g.rect(18, -52, 12, 26).fill(woodDark); // труба
+      g.rect(-46, -20, 92, 60).fill(wood).stroke({ width: 2, color: outline });
+      g.poly([-58, -20, 0, -64, 58, -20]).fill(roof).stroke({ width: 2, color: outline });
+      g.rect(18, -52, 12, 26).fill(woodDark).stroke({ width: 2, color: outline });
       if (open) {
+        // тёплые окна
+        g.rect(-34, -6, 14, 16).fill(0xffd98a);
+        g.rect(24, -6, 14, 16).fill(0xffd98a);
         g.rect(-14, 8, 28, 32).fill(0x1a1210); // горн
         g.circle(0, 22, 9).fill(G.C.gold);
         g.circle(0, 22, 5).fill(0xffd98a);
@@ -177,13 +195,17 @@ function drawBuilding(g, id, open) {
       break;
     case 'shipyard': // верфь: стапель с корпусом лодки
       g.rect(-60, 18, 120, 14).fill(woodDark);
-      g.moveTo(-52, 14).quadraticCurveTo(0, 44, 52, 14).lineTo(40, 8).lineTo(-40, 8).closePath().fill(wood);
+      g.moveTo(-52, 14).quadraticCurveTo(0, 44, 52, 14).lineTo(40, 8).lineTo(-40, 8).closePath().fill(wood).stroke({ width: 2, color: outline });
       g.rect(-3, -52, 6, 62).fill(woodDark); // мачта от киля
-      if (open) g.rect(-26, -48, 52, 30).fill({ color: 0xcfc4a6, alpha: 0.9 });
-      g.rect(-14, -38, 28, 6).fill({ color: 0x8a2f2a, alpha: open ? 0.9 : 0.4 });
+      if (open) {
+        g.rect(-26, -48, 52, 30).fill({ color: 0xcfc4a6, alpha: 0.9 });
+        g.rect(-14, -38, 28, 6).fill({ color: 0x8a2f2a, alpha: 0.9 });
+        g.circle(-30, -46, 3).fill(0xffd98a); // фонарь на стапеле
+        g.circle(30, -46, 3).fill(0xffd98a);
+      }
       break;
     case 'stone': // рунический камень
-      g.poly([0, -66, 30, -30, 22, 40, -22, 40, -30, -30]).fill(open ? 0x4a5568 : 0x333c4a);
+      g.poly([0, -66, 30, -30, 22, 40, -22, 40, -30, -30]).fill(open ? 0x4a5568 : 0x333c4a).stroke({ width: 2, color: outline });
       g.poly([0, -52, 18, -28, 12, 26, -12, 26, -18, -28]).fill(open ? 0x39445a : 0x2a3240);
       if (open) {
         // руны светятся
@@ -192,12 +214,17 @@ function drawBuilding(g, id, open) {
       }
       break;
     case 'thing': // тинг: длинный дом с резными столбами
-      g.rect(-64, -18, 128, 52).fill(wood);
-      g.poly([-74, -18, 0, -60, 74, -18]).fill(roof);
+      g.rect(-64, -18, 128, 52).fill(wood).stroke({ width: 2, color: outline });
+      g.poly([-74, -18, 0, -60, 74, -18]).fill(roof).stroke({ width: 2, color: outline });
       g.rect(-8, 6, 16, 28).fill(woodDark);
-      for (let i = -2; i <= 2; i++) g.circle(i * 24, 4, 4).fill(open ? G.C.gold : 0x2a2118);
       if (open) {
+        // окна тинга
+        g.rect(-48, -4, 12, 14).fill(0xffd98a);
+        g.rect(36, -4, 12, 14).fill(0xffd98a);
+        for (let i = -2; i <= 2; i++) g.circle(i * 24, 4, 4).fill(G.C.gold);
         g.poly([0, -54, 8, -40, -8, -40]).fill(G.C.gold); // резная голова дракона на коньке
+      } else {
+        for (let i = -2; i <= 2; i++) g.circle(i * 24, 4, 4).fill(0x2a2118);
       }
       break;
   }

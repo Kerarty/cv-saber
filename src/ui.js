@@ -2,17 +2,23 @@
 window.G = window.G || {};
 
 G.ui = {
-  // Кнопка: контейнер с фоном, текстом и нажатием
+  // Кнопка: контейнер с фоном, тенью, hover/press состояниями
   button({ label, x, y, w = 260, h = 56, primary = false, small = false, onClick }) {
     const c = new PIXI.Container();
     c.x = x; c.y = y; c.eventMode = 'static'; c.cursor = 'pointer';
+    const shadow = new PIXI.Graphics();
+    shadow.roundRect(-w / 2 + 3, -h / 2 + 5, w, h, 10).fill({ color: 0x000000, alpha: 0.35 });
     const g = new PIXI.Graphics();
-    const draw = (pressed) => {
+    const draw = (state) => {
+      // state: 0 обычная, 1 нажата, 2 hover
       g.clear();
-      g.roundRect(-w / 2, -h / 2, w, h, 10).fill(primary ? G.C.gold : G.C.panel);
+      const bg = primary ? (state === 2 ? 0xf5b959 : G.C.gold) : (state === 2 ? 0x243044 : G.C.panel);
+      g.roundRect(-w / 2, -h / 2, w, h, 10).fill(bg);
       g.roundRect(-w / 2, -h / 2, w, h, 10).stroke({ width: 2, color: primary ? G.C.goldDark : G.C.hexBorder, alpha: 1 });
+      c.y = y + (state === 1 ? 2 : 0);
+      shadow.visible = state !== 1;
     };
-    draw(false);
+    draw(0);
     const t = new PIXI.Text({
       text: label,
       style: {
@@ -24,16 +30,18 @@ G.ui = {
       },
     });
     t.anchor.set(0.5);
-    c.addChild(g, t);
-    c.on('pointerdown', () => { G.sfx.play('blip'); draw(true); });
-    c.on('pointerup', () => draw(false));
-    c.on('pointerupoutside', () => draw(false));
+    c.addChild(shadow, g, t);
+    c.on('pointerover', () => draw(2));
+    c.on('pointerout', () => draw(0));
+    c.on('pointerdown', () => { G.sfx.play('blip'); draw(1); });
+    c.on('pointerup', () => draw(2));
+    c.on('pointerupoutside', () => draw(0));
     c.on('pointertap', () => onClick && onClick());
     c.refreshLabel = (v) => { t.text = v; };
     return c;
   },
 
-  // Панель-свиток: заголовок + строки + ссылка + закрытие
+  // Панель-свиток: заголовок + строки + ссылка + закрытие; тень и появление с масштабом
   panel({ x, y, w = 560, title, lines, link, onClose }) {
     const c = new PIXI.Container();
     c.x = x; c.y = y; c.zIndex = 50;
@@ -41,10 +49,12 @@ G.ui = {
     const pad = 28;
     const lineH = 34;
     const h = pad * 2 + 44 + lines.length * 58 + (link ? 40 : 0);
+    const shadow = new PIXI.Graphics();
+    shadow.roundRect(-w / 2 + 6, -h / 2 + 8, w, h, 14).fill({ color: 0x000000, alpha: 0.45 });
     const g = new PIXI.Graphics();
     g.roundRect(-w / 2, -h / 2, w, h, 14).fill({ color: G.C.panel, alpha: 0.98 });
     g.roundRect(-w / 2, -h / 2, w, h, 14).stroke({ width: 2, color: G.C.gold });
-    c.addChild(g);
+    c.addChild(shadow, g);
 
     const tt = new PIXI.Text({
       text: title,
@@ -94,7 +104,8 @@ G.ui = {
       c.addChild(btn);
     }
     c.alpha = 0;
-    G.tween(c, { alpha: 1 }, 180);
+    c.scale.set(0.95);
+    G.tween(c, { alpha: 1, scale: 1 }, 180, null, G.easeOut);
     return c;
   },
 
