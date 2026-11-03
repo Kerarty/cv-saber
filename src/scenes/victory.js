@@ -96,37 +96,32 @@ G.scenes.victory = function () {
   }
   c.addChild(panel);
 
-  // Кнопки: PDF, письмо, GitHub
-  const pdfBtn = G.ui.button({
-    label: '⬇ ' + G.t('sheet_pdf'),
-    x: G.W / 2 - 330, y: 620, w: 280, h: 56,
-    onClick: () => {
-      const a = document.createElement('a');
-      a.href = G.CONFIG.pdf;
-      a.download = 'CV_Yaroslav_Kukar.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    },
-  });
-  const mailBtn = G.ui.button({
-    label: '✉ ' + G.t('win_mail'),
-    x: G.W / 2, y: 620, w: 300, h: 56, primary: true,
-    onClick: () => {
-      const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
-      const body = encodeURIComponent(
-        'Здравствуйте!\n\nЯ прошёл рейд «I, Кандидат» — интерактивное резюме.\n' +
-        'Отчёт рейда: раундов — ' + G.stats.rounds + ', урона — ' + G.stats.damage + ', карт — ' + G.stats.cards + '.\n' +
-        'Портфолио: https://github.com/Kerarty\n'
-      );
-      location.href = 'mailto:' + G.CONFIG.email + '?subject=' + subject + '&body=' + body;
-    },
-  });
-  const ghBtn = G.ui.button({
-    label: G.t('win_github'),
-    x: G.W / 2 + 330, y: 620, w: 280, h: 56,
-    onClick: () => window.open(G.CONFIG.github, '_blank'),
-  });
+  // Кнопки: PDF, письмо, GitHub — ряд с центровкой по реальным ширинам
+  const rowBtns = [];
+  const mkBtn = (label, onClick, primary) => rowBtns.push(G.ui.button({
+    label, x: 0, y: 620, w: 10, h: 56, primary, onClick,
+  }));
+  mkBtn(G.t('sheet_pdf'), () => {
+    const a = document.createElement('a');
+    a.href = G.CONFIG.pdf;
+    a.download = 'CV_Yaroslav_Kukar.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }, false);
+  mkBtn('✉ ' + G.t('win_mail'), () => {
+    const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
+    const pdfUrl = location.href.replace(/[^/]*$/, '') + G.CONFIG.pdf;
+    const body = encodeURIComponent('Здравствуйте! Резюме (PDF): ' + pdfUrl + ' Портфолио: ' + G.CONFIG.github);
+    location.href = 'mailto:' + G.CONFIG.email + '?subject=' + subject + '&body=' + body;
+  }, true);
+  mkBtn(G.t('win_github'), () => window.open(G.CONFIG.github, '_blank'), false);
+  const gapV = 20;
+  const totalV = rowBtns.reduce((acc, b) => acc + b.width, 0) + gapV * (rowBtns.length - 1);
+  let vx = G.W / 2 - totalV / 2;
+  for (const b of rowBtns) { b.x = vx + b.width / 2; vx += b.width + gapV; }
+  c.addChild(...rowBtns);
+
   const again = G.ui.button({
     label: '↻', x: G.W - 40, y: 92, w: 44, h: 44, small: true,
     onClick: () => {
@@ -135,7 +130,7 @@ G.scenes.victory = function () {
       G.setScene('title');
     },
   });
-  c.addChild(mailBtn, ghBtn, again);
+  c.addChild(again);
 
   const langT = G.ui.langToggle();
   c.addChild(langT);

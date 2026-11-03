@@ -6,6 +6,19 @@ G.ui = {
   button({ label, x, y, w = 260, h = 56, primary = false, small = false, onClick }) {
     const c = new PIXI.Container();
     c.x = x; c.y = y; c.eventMode = 'static'; c.cursor = 'pointer';
+    const t = new PIXI.Text({
+      text: label,
+      style: {
+        fontFamily: primary ? G.FONT_TITLE : G.FONT_BODY,
+        fontSize: small ? 16 : 22,
+        fill: primary ? 0x1a1206 : G.C.text,
+        letterSpacing: primary ? 2 : 0.5,
+        fontWeight: 'bold',
+      },
+    });
+    t.anchor.set(0.5);
+    // пилюля растёт под текст: Ruslan Display шире системного
+    w = Math.max(w, t.width + (small ? 36 : 56));
     const shadow = new PIXI.Graphics();
     shadow.roundRect(-w / 2 + 3, -h / 2 + 5, w, h, 10).fill({ color: 0x000000, alpha: 0.35 });
     const g = new PIXI.Graphics();
@@ -19,17 +32,6 @@ G.ui = {
       shadow.visible = state !== 1;
     };
     draw(0);
-    const t = new PIXI.Text({
-      text: label,
-      style: {
-        fontFamily: primary ? G.FONT_TITLE : G.FONT_BODY,
-        fontSize: small ? 16 : 22,
-        fill: primary ? 0x1a1206 : G.C.text,
-        letterSpacing: primary ? 2 : 0.5,
-        fontWeight: 'bold',
-      },
-    });
-    t.anchor.set(0.5);
     c.addChild(shadow, g, t);
     c.on('pointerover', () => draw(2));
     c.on('pointerout', () => draw(0));
@@ -477,7 +479,7 @@ G.ui = {
 
     // пропуск: всё резюме одним экраном
     const skipBtn = G.ui.button({
-      label: G.t('sheet_all'), x: sx + 280, y: chipY + 44, w: 480, h: 44, small: true,
+      label: G.t('sheet_all'), x: 0, y: chipY + 44, w: 420, h: 44, small: true,
       onClick: () => {
         G.sfx.play('blip');
         // лист больше не нужен — резюме целиком заменяет его
@@ -492,31 +494,31 @@ G.ui = {
     c.addChild(skipBtn);
 
     // контакты: почта кандидата, PDF, GitHub — одной строкой по центру
-    const mailBtn = G.ui.button({
-      label: G.t('sheet_mail'), x: -212, y: chipY + 112, w: 250, h: 48, primary: true, small: true,
-      onClick: () => {
-        const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
-        const pdfUrl = location.href.replace(/[^/]*$/, '') + G.CONFIG.pdf;
-        const body = encodeURIComponent('Здравствуйте! Резюме (PDF): ' + pdfUrl + ' Портфолио: ' + G.CONFIG.github);
-        location.href = 'mailto:' + G.CONFIG.email + '?subject=' + subject + '&body=' + body;
-      },
-    });
-    const pdfBtn = G.ui.button({
-      label: G.t('sheet_pdf'), x: 22, y: chipY + 112, w: 180, h: 48, small: true,
-      onClick: () => {
-        const a = document.createElement('a');
-        a.href = G.CONFIG.pdf;
-        a.download = 'CV_Yaroslav_Kukar.pdf';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      },
-    });
-    const ghBtn = G.ui.button({
-      label: G.t('sheet_github'), x: 232, y: chipY + 112, w: 200, h: 48, small: true,
-      onClick: () => window.open(G.CONFIG.github, '_blank'),
-    });
-    c.addChild(mailBtn, pdfBtn, ghBtn);
+    // ряд контактов: собираем, меряем, центрируем
+    const contactBtns = [];
+    const mkContact = (label, onClick, primary) => contactBtns.push(G.ui.button({
+      label, x: 0, y: chipY + 112, w: 10, h: 48, primary, small: true, onClick,
+    }));
+    mkContact(G.t('sheet_mail'), () => {
+      const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
+      const pdfUrl = location.href.replace(/[^/]*$/, '') + G.CONFIG.pdf;
+      const body = encodeURIComponent('Здравствуйте! Резюме (PDF): ' + pdfUrl + ' Портфолио: ' + G.CONFIG.github);
+      location.href = 'mailto:' + G.CONFIG.email + '?subject=' + subject + '&body=' + body;
+    }, true);
+    mkContact(G.t('sheet_pdf'), () => {
+      const a = document.createElement('a');
+      a.href = G.CONFIG.pdf;
+      a.download = 'CV_Yaroslav_Kukar.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }, false);
+    mkContact(G.t('sheet_github'), () => window.open(G.CONFIG.github, '_blank'), false);
+    const gapC = 16;
+    const totalC = contactBtns.reduce((acc, b) => acc + b.width, 0) + gapC * (contactBtns.length - 1);
+    let cx2 = -totalC / 2;
+    for (const b of contactBtns) { b.x = cx2 + b.width / 2; cx2 += b.width + gapC; }
+    c.addChild(...contactBtns);
 
     if (onClose) c.addChild(G.ui.button({ label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true, onClick: onClose }));
     c.alpha = 0;
