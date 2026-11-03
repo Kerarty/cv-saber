@@ -12,7 +12,8 @@ G.scenes.battle = function (params) {
     units: [],
     hexViews: new Map(),   // 'col,row' -> Graphics
     hiViews: [],           // подсветки
-    state: 'select',       // select | moving | acting | enemy | over
+    state: 'intro',        // intro | select | moving | acting | anim | enemy | over
+    step: 'hero',          // стадия хода игрока: hero | card | move | act
     activeHero: null,
     pendingCard: null,
     hands: {},             // heroId -> [card, card]
@@ -20,7 +21,10 @@ G.scenes.battle = function (params) {
     bossDmg: 1,
     offerReady: false,
     over: false,
+    events: [],            // итоги раунда для баннера
   };
+  const waveDamage0 = G.stats.damage;
+  const waveCards0 = G.stats.cards;
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const key = (col, row) => col + ',' + row;
@@ -97,20 +101,70 @@ G.scenes.battle = function (params) {
     text: G.t('round_n', { n: 1 }),
     style: { fontFamily: G.FONT_BODY, fontSize: 17, fill: G.C.text },
   });
-  roundLabel.x = G.W / 2 - 40; roundLabel.y = 16;
+  roundLabel.x = G.W / 2 - 262; roundLabel.y = 16;
   const phaseLabel = new PIXI.Text({
     text: G.t('phase_player'),
     style: { fontFamily: G.FONT_BODY, fontSize: 17, fill: G.C.heroBlue, fontWeight: 'bold' },
   });
   phaseLabel.anchor.set(1, 0);
   phaseLabel.x = G.W - 24; phaseLabel.y = 16;
-  const hintText = new PIXI.Text({
-    text: G.t(wave.hintKey),
-    style: { fontFamily: G.FONT_BODY, fontSize: 13, fill: G.C.textDim },
-  });
-  hintText.anchor.set(1, 0);
-  hintText.x = G.W - 24; hintText.y = 40;
-  c.addChild(waveLabel, roundLabel, phaseLabel, hintText);
+  c.addChild(waveLabel, roundLabel, phaseLabel);
+
+  // Трекер фаз раунда: [Твой ход | Враги | Раунд]
+  const phaseBar = new PIXI.Container();
+  phaseBar.x = G.W / 2; phaseBar.y = 30;
+  c.addChild(phaseBar);
+
+  function drawPhaseBar() {
+    phaseBar.removeChildren();
+    const phases = [
+      { key: 'ph_player', on: B.state !== 'enemy' && B.state !== 'intro' },
+      { key: 'ph_enemy', on: B.state === 'enemy' },
+      { key: 'ph_round', on: false, vars: { n: B.round } },
+    ];
+    let px = 0;
+    const widths = [120, 104, 118];
+    phases.forEach((ph, i) => {
+      const w = widths[i];
+      const t = new PIXI.Text({
+        text: G.t(ph.key, ph.vars),
+        style: { fontFamily: G.FONT_BODY, fontSize: 13, fontWeight: 'bold', fill: ph.on ? 0x1a1206 : G.C.textDim },
+      });
+      t.anchor.set(0.5);
+      const g = new PIXI.Graphics();
+      g.roundRect(-w / 2, -14, w, 28, 14)
+        .fill({ color: ph.on ? G.C.gold : G.C.panelDark, alpha: ph.on ? 0.95 : 0.85 })
+        .stroke({ width: 1.5, color: ph.on ? G.C.goldDark : G.C.hexBorder });
+      const seg = new PIXI.Container();
+      seg.x = px + w / 2;
+      seg.addChild(g, t);
+      phaseBar.addChild(seg);
+      px += w + 10;
+    });
+    phaseBar.x = G.W / 2 - px / 2 + 60; // центрируем блок
+  }
+
+  // Пилюля текущей стадии хода игрока
+  const stagePill = new PIXI.Container();
+  stagePill.x = G.W / 2; stagePill.y = 40;
+  c.addChild(stagePill);
+
+  function setStep(step) {
+    B.step = step;
+    stagePill.removeChildren();
+    if (B.state !== 'select' && B.state !== 'moving' && B.state !== 'acting') { stagePill.visible = false; return; }
+    stagePill.visible = true;
+    const t = new PIXI.Text({
+      text: G.t('step_' + step),
+      style: { fontFamily: G.FONT_BODY, fontSize: 13, fill: G.C.textDim },
+    });
+    t.anchor.set(0.5);
+    const g = new PIXI.Graphics();
+    g.roundRect(-t.width / 2 - 14, -12, t.width + 28, 24, 12)
+      .fill({ color: 0x0b121d, alpha: 0.9 })
+      .stroke({ width: 1, color: G.C.hexBorder });
+    stagePill.addChild(g, t);
+  }
 
   // Лента инициативы: герои слева, враги справа
   const init = new PIXI.Container();
@@ -459,8 +513,8 @@ G.scenes.battle = function (params) {
     }, G.easeOut);
   }
 
-  // Баннер раунда по центру
-  function roundBanner(n) {
+  // Баннер раунда по центру (+итоги прошедшего раунда)
+  function roundBanner(n, summary) {
     const t = new PIXI.Text({
       text: G.t('round_n', { n }),
       style: {
@@ -479,6 +533,26 @@ G.scenes.battle = function (params) {
         t.destroy();
       }, G.easeOut);
     }, G.easeOut);
+    if (summary) {
+      const st = new PIXI.Text({
+        text: summary,
+        style: {
+          fontFamily: G.FONT_BODY, fontSize: 15, fill: G.C.text,
+          stroke: { color: 0x0a0f18, width: 3 },
+        },
+      });
+      st.anchor.set(0.5);
+      st.x = G.W / 2; st.y = 316;
+      st.zIndex = 70;
+      st.alpha = 0;
+      c.addChild(st);
+      G.tween(st, { alpha: 1 }, 300, () => {
+        G.tween(st, { alpha: 0 }, 450, () => {
+          if (st.parent) c.removeChild(st);
+          st.destroy();
+        }, G.easeOut);
+      }, G.easeOut);
+    }
   }
 
   // Кольцо выбора под активным героем
@@ -580,14 +654,6 @@ G.scenes.battle = function (params) {
     }
   }
 
-  function waveClear() {
-    G.sfx.play('chime');
-    G.stats.rounds += B.round;
-    G.progress = waveIdx + 1;
-    G.ui.toast(G.t('wave_clear'), 1800);
-    setTimeout(() => { if (!c.destroyed) G.setScene('village', { unlocked: G.progress }); }, 1800);
-  }
-
   function showDefeat() {
     const p = new PIXI.Container();
     p.zIndex = 80;
@@ -681,6 +747,7 @@ G.scenes.battle = function (params) {
       cells.push({ col: hero.col, row: hero.row }); // остаться на месте
       highlightCells(cells, 'move');
       B.state = 'moving';
+      setStep('move');
     } else if (actual.dmg > 0 || needTarget) {
       enterActing();
     } else {
@@ -692,6 +759,7 @@ G.scenes.battle = function (params) {
     const hero = B.activeHero;
     const card = B.pendingCard;
     B.state = 'acting';
+    setStep('act');
     const targets = B.units.filter(u => {
       if (!u.alive || u === hero) return false;
       const d = G.hexDist(hero.col, hero.row, u.col, u.row);
@@ -708,7 +776,7 @@ G.scenes.battle = function (params) {
   }
 
   function onHexTap(col, row) {
-    if (B.over) return;
+    if (B.over || B.state === 'intro' || B.state === 'anim') return;
     if (B.state === 'moving') {
       const hero = B.activeHero;
       const card = B.pendingCard;
@@ -740,7 +808,7 @@ G.scenes.battle = function (params) {
   }
 
   function onUnitTap(u) {
-    if (B.over) return;
+    if (B.over || B.state === 'intro' || B.state === 'anim') return;
     if (B.state === 'acting') {
       const hero = B.activeHero;
       const card = B.pendingCard;
@@ -786,6 +854,7 @@ G.scenes.battle = function (params) {
         G.sfx.play('blip');
         showRing(u);
         showHand(u);
+        setStep('card');
       }
     }
   }
@@ -799,6 +868,7 @@ G.scenes.battle = function (params) {
     hideRing();
     clearHighlights();
     B.state = 'select';
+    setStep('hero');
     drawInitiative();
     const left = heroes.filter(h => h.alive && !h.acted);
     if (left.length === 0) enemyPhase();
@@ -831,7 +901,10 @@ G.scenes.battle = function (params) {
         await sleep(150);
       }
       let dmg = e.dmg;
-      if (def.grow) dmg += def.grow * Math.floor((B.round - 1) / 2);
+      if (def.grow) {
+        dmg += def.grow * Math.floor((B.round - 1) / 2);
+        if (!B.events.includes('sum_deadline')) B.events.push('sum_deadline');
+      }
 
       // ближайший живой герой
       const targets = heroes.filter(h => h.alive);
@@ -845,15 +918,18 @@ G.scenes.battle = function (params) {
         attackHero(e, t, dmg);
         await sleep(320);
       } else {
-        // подойти
+        // подойти, но не вставать на клетку цели или других юнитов
         const path = G.hexPath(e.col, e.row, t.col, t.row, occupied(e));
         if (path) {
-          const steps = path.slice(0, e.move);
+          const steps = path.slice(0, e.move)
+            .filter(st => !(st.col === t.col && st.row === t.row));
           for (const step of steps) {
-            if (c.destroyed) return;
+            if (c.destroyed || B.over) return;
+            if (G.hexDist(e.col, e.row, t.col, t.row) <= 1) break; // уже рядом
+            if (unitAt(step.col, step.row)) break; // путь перегорожен
             e.col = step.col; e.row = step.row;
             const { x, y } = G.hexToPx(e.col, e.row);
-            G.tween(e.view, { x, y }, 200);
+            G.tween(e.view, { x, y }, 140);
             await sleep(140);
           }
           refresh(e);
@@ -871,6 +947,7 @@ G.scenes.battle = function (params) {
       const targets = heroes.filter(h => h.alive);
       if (targets.length > 0) {
         B.bossDmg = 1 + Math.floor(B.round / 2);
+        if (!B.events.includes('sum_boss')) B.events.push('sum_boss');
         const t = targets[Math.floor(Math.random() * targets.length)];
         G.sfx.play('boss');
         await sleep(240);
@@ -881,7 +958,7 @@ G.scenes.battle = function (params) {
 
     if (c.destroyed || B.over) return;
 
-    // новый раунд
+    // новый раунд: итоги + смена фаз
     B.round++;
     roundLabel.text = G.t('round_n', { n: B.round });
     phaseLabel.text = G.t('phase_player');
@@ -889,8 +966,10 @@ G.scenes.battle = function (params) {
     for (const h of heroes) { h.acted = false; if (h.alive) { h.shield = 0; refresh(h); } }
     dealHands();
     B.state = 'select';
+    setStep('hero');
+    drawPhaseBar();
     drawInitiative();
-    roundBanner(B.round);
+    roundBanner(B.round, B.events.map(k => G.t(k, { n: B.bossDmg })).join(' · '));
   }
 
   function attackHero(source, hero, dmg, labelOverride) {
@@ -898,17 +977,150 @@ G.scenes.battle = function (params) {
     applyDamage(hero, dmg, short, 0xff6a5a);
   }
 
+  // --- Стадия разведки: брифинг волны ---
+  function waveIntro() {
+    B.state = 'intro';
+    setStep(null);
+    drawPhaseBar();
+    const ov = new PIXI.Container();
+    ov.zIndex = 85;
+    ov.eventMode = 'static';
+    const dim = new PIXI.Graphics();
+    dim.rect(0, 0, G.W, G.H).fill({ color: 0x060a12, alpha: 0.72 });
+    ov.addChild(dim);
+    const pw = 620, ph = wave.boss ? 300 : 262;
+    const pg = new PIXI.Graphics();
+    pg.roundRect(G.W / 2 - pw / 2, G.H / 2 - ph / 2 - 20, pw, ph, 16)
+      .fill({ color: G.C.panelDark, alpha: 0.98 })
+      .roundRect(G.W / 2 - pw / 2, G.H / 2 - ph / 2 - 20, pw, ph, 16)
+      .stroke({ width: 2.5, color: G.C.gold });
+    ov.addChild(pg);
+    const head = new PIXI.Text({
+      text: G.t(wave.nameKey),
+      style: { fontFamily: G.FONT_TITLE, fontSize: 30, fill: G.C.gold, letterSpacing: 2 },
+    });
+    head.anchor.set(0.5, 0);
+    head.x = G.W / 2; head.y = G.H / 2 - ph / 2 + 4;
+    const hint = new PIXI.Text({
+      text: G.t(wave.hintKey),
+      style: { fontFamily: G.FONT_BODY, fontSize: 15, fill: G.C.textDim, wordWrap: true, wordWrapWidth: pw - 80, align: 'center' },
+    });
+    hint.anchor.set(0.5, 0);
+    hint.x = G.W / 2; hint.y = G.H / 2 - ph / 2 + 46;
+    ov.addChild(head, hint);
+
+    // ростер противника
+    const roster = new PIXI.Container();
+    roster.x = G.W / 2; roster.y = G.H / 2 - ph / 2 + 96;
+    const foes = B.units.filter(u => u.kind === 'enemy' || u.kind === 'zone');
+    const byName = new Map();
+    for (const f of foes) {
+      const k = unitName(f);
+      const cur = byName.get(k) || { count: 0, hp: f.maxHp };
+      cur.count++;
+      byName.set(k, cur);
+    }
+    let ry = 0;
+    for (const [name, info] of byName) {
+      const t = new PIXI.Text({
+        text: (info.count > 1 ? info.count + ' × ' : '') + name + '  —  ' + G.t('roster_hp', { n: info.hp }),
+        style: { fontFamily: G.FONT_BODY, fontSize: 16, fill: G.C.text },
+      });
+      t.x = -80; t.y = ry;
+      const dot = new PIXI.Graphics();
+      dot.circle(-96, ry + 9, 5).fill(G.C.enemy);
+      roster.addChild(dot, t);
+      ry += 34;
+    }
+    if (wave.boss) {
+      const bt = new PIXI.Text({
+        text: G.t('hint3'),
+        style: { fontFamily: G.FONT_BODY, fontSize: 13, fill: G.C.textDim },
+      });
+      bt.y = ry + 4;
+      roster.addChild(bt);
+    }
+    ov.addChild(roster);
+
+    const start = G.ui.button({
+      label: G.t('intro_battle'), x: G.W / 2, y: G.H / 2 + ph / 2 - 58, w: 260, h: 56, primary: true,
+      onClick: () => {
+        G.sfx.play(wave.boss ? 'boss' : 'blip');
+        c.removeChild(ov);
+        ov.destroy({ children: true });
+        startWave();
+      },
+    });
+    ov.addChild(start);
+    c.addChild(ov);
+  }
+
+  // вход в боевую фазу после брифинга
+  function startWave() {
+    B.state = 'select';
+    setStep('hero');
+    drawPhaseBar();
+    drawInitiative();
+  }
+
+  // --- Итоги волны: панель со статистикой ---
+  function waveClear() {
+    G.sfx.play('chime');
+    G.stats.rounds += B.round;
+    G.progress = waveIdx + 1;
+    const ov = new PIXI.Container();
+    ov.zIndex = 85;
+    ov.eventMode = 'static';
+    const dim = new PIXI.Graphics();
+    dim.rect(0, 0, G.W, G.H).fill({ color: 0x060a12, alpha: 0.6 });
+    ov.addChild(dim);
+    const pw = 480, ph = 260;
+    const pg = new PIXI.Graphics();
+    pg.roundRect(G.W / 2 - pw / 2, G.H / 2 - ph / 2, pw, ph, 16)
+      .fill({ color: G.C.panelDark, alpha: 0.98 })
+      .roundRect(G.W / 2 - pw / 2, G.H / 2 - ph / 2, pw, ph, 16)
+      .stroke({ width: 2.5, color: G.C.gold });
+    ov.addChild(pg);
+    const head = new PIXI.Text({
+      text: G.t('wave_clear_title'),
+      style: { fontFamily: G.FONT_TITLE, fontSize: 30, fill: G.C.gold, letterSpacing: 2 },
+    });
+    head.anchor.set(0.5, 0);
+    head.x = G.W / 2; head.y = G.H / 2 - ph / 2 + 24;
+    ov.addChild(head);
+    const rows = [
+      G.t('wc_rounds', { n: B.round }),
+      G.t('wc_damage', { n: G.stats.damage - waveDamage0 }),
+      G.t('wc_cards', { n: G.stats.cards - waveCards0 }),
+    ];
+    rows.forEach((r, i) => {
+      const t = new PIXI.Text({
+        text: r,
+        style: { fontFamily: G.FONT_BODY, fontSize: 17, fill: G.C.text },
+      });
+      t.x = G.W / 2 - 130; t.y = G.H / 2 - ph / 2 + 84 + i * 34;
+      ov.addChild(t);
+    });
+    const cont = G.ui.button({
+      label: G.t('wc_cont'), x: G.W / 2, y: G.H / 2 + ph / 2 - 52, w: 260, h: 50, primary: true,
+      onClick: () => G.setScene('village', { unlocked: G.progress }),
+    });
+    ov.addChild(cont);
+    c.addChild(ov);
+  }
+
   // --- Старт раунда 1 ---
   phaseLabel.text = G.t('phase_player');
   dealHands();
   drawInitiative();
+  waveIntro();
 
   c.tick = (dtMs) => {
     if (ring.visible) ring.rotation += (dtMs / 1000) * 1.4;
   };
 
   // отладочный доступ для автотестов
-  G.battleCtx = { B, heroes, playCard, onHexTap, onUnitTap, finishHero, enemyPhase, dealHands };
+  G.battleCtx = { B, heroes, playCard, onHexTap, onUnitTap, finishHero, enemyPhase, dealHands, startWave };
 
   return c;
 };
