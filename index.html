@@ -3737,19 +3737,30 @@ G.scenes.title = function () {
     starLayers.push(g);
   }
 
-  // Горы: два силуэта
+  // Горы: два силуэта со снежными вершинами
   const mountains = new PIXI.Graphics();
-  const ridge = (baseY, amp, step, color, alpha) => {
+  const caps = new PIXI.Graphics();
+  const ridge = (baseY, amp, step, color, alpha, snow) => {
     const pts = [0, baseY + amp];
+    const peaks = [];
     for (let x = 0; x <= G.W + step; x += step) {
-      pts.push(x, baseY - Math.abs(Math.sin(x * 0.013) * amp * (0.4 + 0.6 * Math.abs(Math.sin(x * 0.004)))));
+      const y = baseY - Math.abs(Math.sin(x * 0.013) * amp * (0.4 + 0.6 * Math.abs(Math.sin(x * 0.004))));
+      pts.push(x, y);
+      if (y < baseY - amp * 0.45) peaks.push([x, y]);
     }
     pts.push(G.W, baseY + amp, G.W, G.H, 0, G.H);
     mountains.poly(pts).fill({ color, alpha });
+    if (snow) {
+      // шапки на самых высоких пиках
+      for (const [px, py] of peaks) {
+        caps.poly([px - 16, py + 14, px, py, px + 16, py + 14, px + 7, py + 9, px - 5, py + 12])
+          .fill({ color: 0xdfe9f2, alpha: 0.22 });
+      }
+    }
   };
-  ridge(360, 130, 90, 0x101a2a, 1);
-  ridge(400, 90, 70, 0x0e1624, 1);
-  c.addChild(mountains);
+  ridge(360, 130, 90, 0x101a2a, 1, true);
+  ridge(400, 90, 70, 0x0e1624, 1, false);
+  c.addChild(mountains, caps);
 
   // Вода
   const water = new PIXI.Graphics();
@@ -3758,12 +3769,12 @@ G.scenes.title = function () {
   const shimmer = new PIXI.Graphics();
   c.addChild(shimmer);
 
-  // Драккар: плывёт слева направо, покачивается
+  // Драккар: плывёт слева и пришвартовывается у пирса (ниже кнопок)
   const ship = G.ui.drawDrakkar(1);
-  ship.x = -120; ship.y = 520;
+  ship.x = -120; ship.y = 585;
   c.addChild(ship);
-  G.tween(ship, { x: G.W / 2 - 60 }, 5200, null, G.easeInOut);
-  ship.scale.set(1.15);
+  G.tween(ship, { x: 985 }, 5600, null, G.easeInOut);
+  ship.scale.set(1.05);
 
   // Причал справа
   const pier = new PIXI.Graphics();
@@ -3781,23 +3792,40 @@ G.scenes.title = function () {
     style: { fontFamily: G.FONT_TITLE, fontSize: 92, fill: G.C.gold, letterSpacing: 6, stroke: { color: 0x000000, width: 5 } },
   });
   title.anchor.set(0.5);
-  title.x = G.W / 2; title.y = 208;
+  title.x = G.W / 2; title.y = 196;
   c.addChild(title);
 
+  // Подзаголовок с декоративными штрихами по бокам
   const sub = new PIXI.Text({
     text: G.t('title_sub'),
     style: { fontFamily: G.FONT_BODY, fontSize: 22, fill: G.C.text, letterSpacing: 2 },
   });
   sub.anchor.set(0.5);
-  sub.x = G.W / 2; sub.y = 268;
+  sub.x = G.W / 2; sub.y = 252;
   c.addChild(sub);
+  const rules = new PIXI.Graphics();
+  const ruleY = 252;
+  const ruleHalf = (G.t('title_sub').length * 6.2) + 30;
+  rules.moveTo(G.W / 2 - ruleHalf - 90, ruleY).lineTo(G.W / 2 - ruleHalf, ruleY)
+    .stroke({ width: 2, color: G.C.gold, alpha: 0.55 });
+  rules.moveTo(G.W / 2 + ruleHalf, ruleY).lineTo(G.W / 2 + ruleHalf + 90, ruleY)
+    .stroke({ width: 2, color: G.C.gold, alpha: 0.55 });
+  rules.circle(G.W / 2 - ruleHalf - 12, ruleY, 2.5).fill(G.C.gold);
+  rules.circle(G.W / 2 + ruleHalf + 12, ruleY, 2.5).fill(G.C.gold);
+  c.addChild(rules);
 
-  // Бейдж времени загрузки (появляется с задержкой — как в плейблах)
-  const badge = new PIXI.Text({
+  // Бейдж времени загрузки — аккуратная пилюля с рамкой
+  const badge = new PIXI.Container();
+  const badgeTxt = new PIXI.Text({
     text: G.t('title_load', { n: G.loadSec }),
-    style: { fontFamily: G.FONT_BODY, fontSize: 14, fill: G.C.textDim },
+    style: { fontFamily: G.FONT_BODY, fontSize: 13.5, fill: G.C.textDim },
   });
-  badge.anchor.set(0.5);
+  badgeTxt.anchor.set(0.5);
+  const badgeG = new PIXI.Graphics();
+  badgeG.roundRect(-badgeTxt.width / 2 - 16, -14, badgeTxt.width + 32, 28, 14)
+    .fill({ color: 0x0d1420, alpha: 0.75 })
+    .stroke({ width: 1, color: G.C.hexBorder });
+  badge.addChild(badgeG, badgeTxt);
   badge.x = G.W / 2; badge.y = 300;
   badge.alpha = 0;
   setTimeout(() => { if (!badge.destroyed) G.tween(badge, { alpha: 1 }, 500); }, 900);
@@ -3805,11 +3833,11 @@ G.scenes.title = function () {
 
   // Кнопки
   const btnPlay = G.ui.button({
-    label: G.t('title_play'), x: G.W / 2, y: 408, w: 320, h: 62, primary: true,
+    label: G.t('title_play'), x: G.W / 2, y: 398, w: 320, h: 62, primary: true,
     onClick: () => G.setScene('village'),
   });
   const btnResume = G.ui.button({
-    label: G.t('title_resume'), x: G.W / 2, y: 488, w: 320, h: 52,
+    label: G.t('title_resume'), x: G.W / 2, y: 474, w: 320, h: 52,
     onClick: () => G.setScene('village', { showAll: true }),
   });
   // Кнопки поднимаются из воды
@@ -3841,6 +3869,12 @@ G.scenes.title = function () {
       const w = 60 + ((i * 97) % 120);
       const x = ((i * 211 + t * 22 * (1 + (i % 3) * 0.4)) % (G.W + 200)) - 100;
       shimmer.rect(x, y, w, 2).fill({ color: G.C.heroBlue, alpha: 0.07 + 0.05 * Math.sin(t * 2 + i) });
+    }
+    // отражение луны: дрожащий столб света
+    for (let i = 0; i < 9; i++) {
+      const y = 490 + i * 22;
+      const w = 46 - i * 3.4 + 8 * Math.sin(t * 1.7 + i);
+      shimmer.rect(1010 - w / 2, y, w, 3).fill({ color: 0xdfe9f2, alpha: 0.1 - i * 0.009 });
     }
     if (ship) ship.rotation = Math.sin(t * 1.6) * 0.02;
     if (torch) torch.alpha = 0.85 + 0.15 * Math.sin(t * 9);
@@ -3952,12 +3986,16 @@ G.scenes.village = function (params) {
     const dim = open ? 1 : 0.45;
     drawBuilding(g, b.id, open);
 
-    // табличка с названием раздела
+    // табличка с названием раздела — текст на деревянной подложке
     const label = new PIXI.Text({
       text: G.t(def.titleKey).split('·')[0].trim(),
       style: { fontFamily: G.FONT_BODY, fontSize: 15, fill: open ? G.C.text : G.C.textDim, fontWeight: 'bold' },
     });
     label.anchor.set(0.5, 0);
+    const plate = new PIXI.Graphics();
+    plate.roundRect(-label.width / 2 - 12, 70, label.width + 24, 26, 6)
+      .fill({ color: 0x2c2216, alpha: 0.92 })
+      .stroke({ width: 1.5, color: 0x4a3a24 });
     label.y = 74;
 
     // замок на закрытой
@@ -3981,7 +4019,7 @@ G.scenes.village = function (params) {
       torches.push(flame);
     }
 
-    bld.addChild(g, label, lock);
+    bld.addChild(g, plate, label, lock);
     if (torch) bld.addChild(torch);
 
     bld.on('pointertap', () => {
@@ -4002,15 +4040,15 @@ G.scenes.village = function (params) {
     c.addChild(bld);
   }
 
-  // Причал с драккаром — кнопка в бой
+  // Причал с драккаром — левый угол, вдали от кнопок
   const dock = new PIXI.Container();
-  dock.x = 400; dock.y = 610;
+  dock.x = 130; dock.y = 616;
   const pierG = new PIXI.Graphics();
   pierG.rect(-90, 8, 200, 12).fill(0x3a2d1c);
   pierG.rect(-78, 18, 10, 26).fill(0x2c2216);
   pierG.rect(56, 18, 10, 26).fill(0x2c2216);
-  const ship = G.ui.drawDrakkar(0.85);
-  ship.y = -12;
+  const ship = G.ui.drawDrakkar(0.75);
+  ship.y = -14;
   dock.addChild(pierG, ship);
   c.addChild(dock);
 

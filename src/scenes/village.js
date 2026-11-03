@@ -76,12 +76,16 @@ G.scenes.village = function (params) {
     const dim = open ? 1 : 0.45;
     drawBuilding(g, b.id, open);
 
-    // табличка с названием раздела
+    // табличка с названием раздела — текст на деревянной подложке
     const label = new PIXI.Text({
       text: G.t(def.titleKey).split('·')[0].trim(),
       style: { fontFamily: G.FONT_BODY, fontSize: 15, fill: open ? G.C.text : G.C.textDim, fontWeight: 'bold' },
     });
     label.anchor.set(0.5, 0);
+    const plate = new PIXI.Graphics();
+    plate.roundRect(-label.width / 2 - 12, 70, label.width + 24, 26, 6)
+      .fill({ color: 0x2c2216, alpha: 0.92 })
+      .stroke({ width: 1.5, color: 0x4a3a24 });
     label.y = 74;
 
     // замок на закрытой
@@ -105,7 +109,7 @@ G.scenes.village = function (params) {
       torches.push(flame);
     }
 
-    bld.addChild(g, label, lock);
+    bld.addChild(g, plate, label, lock);
     if (torch) bld.addChild(torch);
 
     bld.on('pointertap', () => {
@@ -126,15 +130,15 @@ G.scenes.village = function (params) {
     c.addChild(bld);
   }
 
-  // Причал с драккаром — кнопка в бой
+  // Причал с драккаром — левый угол, вдали от кнопок
   const dock = new PIXI.Container();
-  dock.x = 400; dock.y = 610;
+  dock.x = 130; dock.y = 616;
   const pierG = new PIXI.Graphics();
   pierG.rect(-90, 8, 200, 12).fill(0x3a2d1c);
   pierG.rect(-78, 18, 10, 26).fill(0x2c2216);
   pierG.rect(56, 18, 10, 26).fill(0x2c2216);
-  const ship = G.ui.drawDrakkar(0.85);
-  ship.y = -12;
+  const ship = G.ui.drawDrakkar(0.75);
+  ship.y = -14;
   dock.addChild(pierG, ship);
   c.addChild(dock);
 
