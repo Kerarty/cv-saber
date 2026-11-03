@@ -29,6 +29,13 @@ G.scenes.village = function (params) {
   moon.circle(190, 120, 4).fill({ color: 0xc2cfdd, alpha: 0.6 });
   c.addChild(moonGlow, moon);
 
+  // закрыть открытые панели/листы — чтобы не наслаивались
+  function closeOverlays() {
+    for (const k of [...c.children]) {
+      if (k.zIndex >= 50) { c.removeChild(k); k.destroy({ children: true }); }
+    }
+  }
+
   const stars = new PIXI.Graphics();
   for (let i = 0; i < 36; i++) {
     stars.circle(Math.random() * G.W, Math.random() * 220, Math.random() * 1.1 + 0.4)
@@ -117,6 +124,7 @@ G.scenes.village = function (params) {
     bld.on('pointertap', () => {
       if (!open) { G.sfx.play('thud'); G.ui.toast(G.t('village_locked', { n: b.need })); return; }
       G.sfx.play('blip');
+      closeOverlays();
       const p = G.ui.buildingPanel({
         title: G.t(def.titleKey),
         facts: def.facts,
@@ -162,6 +170,7 @@ G.scenes.village = function (params) {
     label: G.t('village_sheet'), x: G.W / 2 - 260, y: G.H - 46, w: 300, h: 58,
     onClick: () => {
       G.sfx.play('blip');
+      closeOverlays();
       const p = G.ui.characterSheet({
         onClose: () => { c.removeChild(p); p.destroy({ children: true }); },
       });
@@ -174,6 +183,8 @@ G.scenes.village = function (params) {
   if (params.showAll && !params.sheetShown) {
     setTimeout(() => {
       if (c.destroyed) return;
+      // «Резюме целиком» уже открыт (например, через «Пропустить») — лист не нужен
+      if (G.scene && G.scene.children.some(k => k.zIndex === 70)) return;
       const p = G.ui.characterSheet({
         onClose: () => { c.removeChild(p); p.destroy({ children: true }); },
       });

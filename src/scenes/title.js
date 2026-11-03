@@ -145,7 +145,10 @@ G.scenes.title = function () {
   // Кнопки поднимаются из воды
   [btnPlay, btnResume].forEach((b, i) => {
     b.y += 40; b.alpha = 0;
-    setTimeout(() => G.tween(b, { y: b.y - 40, alpha: 1 }, 400), 500 + i * 150);
+    setTimeout(() => {
+      if (b.destroyed) return; // сцена уже сменилась
+      G.tween(b, { y: b.y - 40, alpha: 1 }, 400);
+    }, 500 + i * 150);
   });
   c.addChild(btnPlay, btnResume);
 

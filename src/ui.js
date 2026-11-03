@@ -480,10 +480,13 @@ G.ui = {
       label: G.t('sheet_all'), x: sx + 280, y: chipY + 44, w: 480, h: 44, small: true,
       onClick: () => {
         G.sfx.play('blip');
+        // лист больше не нужен — резюме целиком заменяет его
+        if (c.parent) c.parent.removeChild(c);
+        c.destroy({ children: true });
         const fr = G.ui.fullResume({
-          onClose: () => { c.removeChild(fr); fr.destroy({ children: true }); },
+          onClose: () => { if (fr.parent) fr.parent.removeChild(fr); fr.destroy({ children: true }); },
         });
-        c.addChild(fr);
+        G.scene.addChild(fr);
       },
     });
     c.addChild(skipBtn);

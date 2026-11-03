@@ -3825,10 +3825,13 @@ G.ui = {
       label: G.t('sheet_all'), x: sx + 280, y: chipY + 44, w: 480, h: 44, small: true,
       onClick: () => {
         G.sfx.play('blip');
+        // лист больше не нужен — резюме целиком заменяет его
+        if (c.parent) c.parent.removeChild(c);
+        c.destroy({ children: true });
         const fr = G.ui.fullResume({
-          onClose: () => { c.removeChild(fr); fr.destroy({ children: true }); },
+          onClose: () => { if (fr.parent) fr.parent.removeChild(fr); fr.destroy({ children: true }); },
         });
-        c.addChild(fr);
+        G.scene.addChild(fr);
       },
     });
     c.addChild(skipBtn);
@@ -4181,7 +4184,10 @@ G.scenes.title = function () {
   // Кнопки поднимаются из воды
   [btnPlay, btnResume].forEach((b, i) => {
     b.y += 40; b.alpha = 0;
-    setTimeout(() => G.tween(b, { y: b.y - 40, alpha: 1 }, 400), 500 + i * 150);
+    setTimeout(() => {
+      if (b.destroyed) return; // сцена уже сменилась
+      G.tween(b, { y: b.y - 40, alpha: 1 }, 400);
+    }, 500 + i * 150);
   });
   c.addChild(btnPlay, btnResume);
 
@@ -4278,6 +4284,13 @@ G.scenes.village = function (params) {
   moon.circle(190, 120, 4).fill({ color: 0xc2cfdd, alpha: 0.6 });
   c.addChild(moonGlow, moon);
 
+  // закрыть открытые панели/листы — чтобы не наслаивались
+  function closeOverlays() {
+    for (const k of [...c.children]) {
+      if (k.zIndex >= 50) { c.removeChild(k); k.destroy({ children: true }); }
+    }
+  }
+
   const stars = new PIXI.Graphics();
   for (let i = 0; i < 36; i++) {
     stars.circle(Math.random() * G.W, Math.random() * 220, Math.random() * 1.1 + 0.4)
@@ -4366,6 +4379,7 @@ G.scenes.village = function (params) {
     bld.on('pointertap', () => {
       if (!open) { G.sfx.play('thud'); G.ui.toast(G.t('village_locked', { n: b.need })); return; }
       G.sfx.play('blip');
+      closeOverlays();
       const p = G.ui.buildingPanel({
         title: G.t(def.titleKey),
         facts: def.facts,
@@ -4411,6 +4425,7 @@ G.scenes.village = function (params) {
     label: G.t('village_sheet'), x: G.W / 2 - 260, y: G.H - 46, w: 300, h: 58,
     onClick: () => {
       G.sfx.play('blip');
+      closeOverlays();
       const p = G.ui.characterSheet({
         onClose: () => { c.removeChild(p); p.destroy({ children: true }); },
       });
@@ -4423,6 +4438,8 @@ G.scenes.village = function (params) {
   if (params.showAll && !params.sheetShown) {
     setTimeout(() => {
       if (c.destroyed) return;
+      // «Резюме целиком» уже открыт (например, через «Пропустить») — лист не нужен
+      if (G.scene && G.scene.children.some(k => k.zIndex === 70)) return;
       const p = G.ui.characterSheet({
         onClose: () => { c.removeChild(p); p.destroy({ children: true }); },
       });
