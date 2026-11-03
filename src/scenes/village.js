@@ -132,6 +132,13 @@ G.scenes.village = function (params) {
     c.addChild(bld);
   }
 
+  // пропсы: бочки у верфи и тинга
+  const props = new PIXI.Graphics();
+  drawBarrel(props, 590, 520);
+  drawBarrel(props, 612, 542);
+  drawBarrel(props, 975, 530);
+  c.addChild(props);
+
   // Причал с драккаром — левый угол, вдали от кнопок
   const dock = new PIXI.Container();
   dock.x = 130; dock.y = 616;
@@ -203,61 +210,103 @@ G.scenes.village = function (params) {
   return c;
 };
 
-// Процедурные постройки деревни
+// Процедурные постройки деревни v2: черепица, штендеры, снег, пропсы
 function drawBuilding(g, id, open) {
   const wood = open ? 0x4a3a24 : 0x33291a;
   const woodDark = open ? 0x33291a : 0x241c12;
   const roof = open ? 0x6e2f26 : 0x3a2420;
+  const roofLight = open ? 0x833b30 : 0x4a2d28;
   const outline = 0x0a0f18;
-  // тень под постройкой
-  g.ellipse(0, 44, 70, 12).fill({ color: 0x000000, alpha: 0.3 });
+  g.ellipse(0, 44, 72, 12).fill({ color: 0x000000, alpha: 0.3 });
+  g.ellipse(0, 42, 58, 9).fill({ color: 0xdfe9f2, alpha: 0.14 });
+
+  const shingles = (x0, y0, x1, y1, rows) => {
+    for (let r = 1; r <= rows; r++) {
+      const yy = y0 + (y1 - y0) * (r / rows);
+      g.moveTo(x0, yy).lineTo(x1, yy).stroke({ width: 1.5, color: roofLight, alpha: 0.7 });
+    }
+  };
+
   switch (id) {
-    case 'forge': // кузница: дом с трубой и горном
+    case 'forge':
       g.rect(-46, -20, 92, 60).fill(wood).stroke({ width: 2, color: outline });
+      g.moveTo(-46, -20).lineTo(-30, 40).moveTo(46, -20).lineTo(30, 40).moveTo(-46, 8).lineTo(46, 8)
+        .stroke({ width: 3, color: woodDark });
       g.poly([-58, -20, 0, -64, 58, -20]).fill(roof).stroke({ width: 2, color: outline });
+      shingles(-44, -34, 44, -34, 2);
       g.rect(18, -52, 12, 26).fill(woodDark).stroke({ width: 2, color: outline });
+      g.moveTo(-46, -22).quadraticCurveTo(0, -60, 46, -22).lineTo(38, -20).quadraticCurveTo(0, -52, -38, -20)
+        .closePath().fill({ color: 0xdfe9f2, alpha: 0.75 });
       if (open) {
-        // тёплые окна
-        g.rect(-34, -6, 14, 16).fill(0xffd98a);
-        g.rect(24, -6, 14, 16).fill(0xffd98a);
-        g.rect(-14, 8, 28, 32).fill(0x1a1210); // горн
+        g.rect(-34, -6, 14, 16).fill(0xffd98a).stroke({ width: 1, color: outline });
+        g.rect(24, -6, 14, 16).fill(0xffd98a).stroke({ width: 1, color: outline });
+        g.rect(-14, 8, 28, 32).fill(0x1a1210);
         g.circle(0, 22, 9).fill(G.C.gold);
         g.circle(0, 22, 5).fill(0xffd98a);
+        g.roundRect(-8, -16, 16, 10, 2).fill(0x241c12).stroke({ width: 1, color: G.C.goldDark });
+        g.moveTo(-3, -8).lineTo(3, -8).lineTo(-1, -11).lineTo(5, -11).stroke({ width: 1.2, color: G.C.gold });
       }
       break;
-    case 'shipyard': // верфь: стапель с корпусом лодки
+    case 'shipyard':
       g.rect(-60, 18, 120, 14).fill(woodDark);
-      g.moveTo(-52, 14).quadraticCurveTo(0, 44, 52, 14).lineTo(40, 8).lineTo(-40, 8).closePath().fill(wood).stroke({ width: 2, color: outline });
-      g.rect(-3, -52, 6, 62).fill(woodDark); // мачта от киля
+      g.moveTo(-52, 14).quadraticCurveTo(0, 44, 52, 14).lineTo(40, 8).lineTo(-40, 8).closePath()
+        .fill(wood).stroke({ width: 2, color: outline });
+      g.rect(-3, -52, 6, 62).fill(woodDark);
       if (open) {
         g.rect(-26, -48, 52, 30).fill({ color: 0xcfc4a6, alpha: 0.9 });
         g.rect(-14, -38, 28, 6).fill({ color: 0x8a2f2a, alpha: 0.9 });
-        g.circle(-30, -46, 3).fill(0xffd98a); // фонарь на стапеле
+        g.moveTo(-26, -48).lineTo(-8, -6).moveTo(26, -48).lineTo(8, -6)
+          .stroke({ width: 1, color: 0x8a7a5a, alpha: 0.8 });
+        g.circle(-30, -46, 3).fill(0xffd98a);
         g.circle(30, -46, 3).fill(0xffd98a);
       }
+      g.rect(58, 4, 14, 14).fill(0x5a452c).stroke({ width: 1.5, color: outline });
+      g.moveTo(58, 11).lineTo(72, 11).stroke({ width: 1, color: 0x3a2d1c });
+      g.rect(50, -8, 12, 12).fill(0x6b5433).stroke({ width: 1.5, color: outline });
       break;
-    case 'stone': // рунический камень
-      g.poly([0, -66, 30, -30, 22, 40, -22, 40, -30, -30]).fill(open ? 0x4a5568 : 0x333c4a).stroke({ width: 2, color: outline });
+    case 'stone':
+      g.poly([0, -66, 30, -30, 22, 40, -22, 40, -30, -30]).fill(open ? 0x4a5568 : 0x333c4a)
+        .stroke({ width: 2, color: outline });
       g.poly([0, -52, 18, -28, 12, 26, -12, 26, -18, -28]).fill(open ? 0x39445a : 0x2a3240);
+      g.moveTo(-26, -34).quadraticCurveTo(0, -52, 26, -34).lineTo(20, -30).quadraticCurveTo(0, -46, -20, -30)
+        .closePath().fill({ color: 0xdfe9f2, alpha: 0.6 });
       if (open) {
-        // руны светятся
         g.moveTo(-6, -34).lineTo(6, -34).lineTo(-4, -22).lineTo(8, -22).stroke({ width: 3, color: G.C.gold });
         g.moveTo(-8, -6).lineTo(6, -6).lineTo(-6, 10).lineTo(8, 10).stroke({ width: 3, color: G.C.gold });
       }
+      g.circle(-34, 38, 6).fill(0x39465c).stroke({ width: 1, color: outline });
+      g.circle(-40, 42, 4.5).fill(0x2a3648).stroke({ width: 1, color: outline });
+      g.circle(34, 40, 5).fill(0x39465c).stroke({ width: 1, color: outline });
       break;
-    case 'thing': // тинг: длинный дом с резными столбами
+    case 'thing':
       g.rect(-64, -18, 128, 52).fill(wood).stroke({ width: 2, color: outline });
+      g.moveTo(-64, -2).lineTo(64, -2).stroke({ width: 3, color: woodDark });
       g.poly([-74, -18, 0, -60, 74, -18]).fill(roof).stroke({ width: 2, color: outline });
+      shingles(-56, -34, 56, -34, 2);
       g.rect(-8, 6, 16, 28).fill(woodDark);
       if (open) {
-        // окна тинга
-        g.rect(-48, -4, 12, 14).fill(0xffd98a);
-        g.rect(36, -4, 12, 14).fill(0xffd98a);
+        g.rect(-48, -4, 12, 14).fill(0xffd98a).stroke({ width: 1, color: outline });
+        g.rect(36, -4, 12, 14).fill(0xffd98a).stroke({ width: 1, color: outline });
         for (let i = -2; i <= 2; i++) g.circle(i * 24, 4, 4).fill(G.C.gold);
-        g.poly([0, -54, 8, -40, -8, -40]).fill(G.C.gold); // резная голова дракона на коньке
+        g.poly([0, -54, 8, -40, -8, -40]).fill(G.C.gold);
+        g.moveTo(-30, -44).lineTo(-30, -60).stroke({ width: 2, color: 0x2c2216 });
+        g.poly([-30, -60, -16, -56, -30, -52]).fill(0x8a2f2a);
+        g.moveTo(30, -44).lineTo(30, -60).stroke({ width: 2, color: 0x2c2216 });
+        g.poly([30, -60, 44, -56, 30, -52]).fill(0x8a2f2a);
+        g.rect(-28, 40, 56, 6).fill(0x5a452c).stroke({ width: 1.5, color: outline });
+        g.rect(-24, 46, 5, 8).fill(0x3a2d1c);
+        g.rect(19, 46, 5, 8).fill(0x3a2d1c);
       } else {
         for (let i = -2; i <= 2; i++) g.circle(i * 24, 4, 4).fill(0x2a2118);
       }
       break;
   }
+}
+
+// Бочка-пропс
+function drawBarrel(g, x, y) {
+  g.rect(x - 7, y - 10, 14, 20).fill(0x6b5433).stroke({ width: 1.5, color: 0x0a0f18 });
+  g.rect(x - 7, y - 6, 14, 3).fill(0x4a3a24);
+  g.rect(x - 7, y + 3, 14, 3).fill(0x4a3a24);
+  g.ellipse(x, y - 10, 7, 2.5).fill(0x8a6d43);
 }

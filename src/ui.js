@@ -291,6 +291,7 @@ G.ui = {
       .stroke({ width: 2, color: G.C.goldDark, alpha: 0.55 });
     flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(-w / 2 + 96, -h / 2 + 56)
       .stroke({ width: 3, color: G.C.gold });
+    G.ui.fancyFrame(g, w, h);
     const grain = G.viz.grain(w, h, 0.04);
     grain.x = -w / 2; grain.y = -h / 2;
     c.addChild(shadow, g, grain, tt, flour);

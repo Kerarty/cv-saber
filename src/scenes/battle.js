@@ -165,7 +165,8 @@ G.scenes.battle = function (params) {
     text: G.t('round_n', { n: 1 }),
     style: { fontFamily: G.FONT_BODY, fontSize: 17, fill: G.C.text },
   });
-  roundLabel.x = G.W / 2 - 262; roundLabel.y = 16;
+  roundLabel.anchor.set(1, 0);
+  roundLabel.x = G.W - 24; roundLabel.y = 40;
   const phaseLabel = new PIXI.Text({
     text: G.t('phase_player'),
     style: { fontFamily: G.FONT_BODY, fontSize: 17, fill: G.C.heroBlue, fontWeight: 'bold' },
@@ -441,6 +442,7 @@ G.scenes.battle = function (params) {
     });
     label.anchor.set(0.5);
     label.y = 36;
+    if (u.kind === 'hero') u.body.addChild(drawWeapon(u));
     u.body.addChild(g, label);
   }
 
@@ -454,62 +456,101 @@ G.scenes.battle = function (params) {
 
   function drawViking(g, u) {
     const col = u.def.color;
-    g.circle(0, 26, 17).fill({ color: 0x000000, alpha: 0.3 }); // тень
-    // плаща за спиной
-    g.poly([-10, -2, 10, -2, 14, 24, -14, 24]).fill({ color: col, alpha: 0.55 });
-    // тело с контуром
-    g.rect(-8, 0, 16, 22).fill(col).stroke({ width: 2, color: OUTLINE });
-    // ремень
-    g.rect(-8, 9, 16, 3).fill(0x3a2a1a);
-    g.rect(-2, 9, 4, 5).fill(0xb8964a); // пряжка
+    const colDark = u.def.color && (u.id === 'berserk' ? 0x3a7a92 : u.id === 'skald' ? 0x5c8f44 : 0x96803a);
+    g.circle(0, 26, 17).fill({ color: 0x000000, alpha: 0.3 });
+    // плащ
+    g.poly([-11, -2, 11, -2, 15, 25, -15, 25]).fill({ color: col, alpha: 0.55 });
+    // тело: два тона + кольчужные ряды
+    g.rect(-8, 0, 16, 11).fill(col).stroke({ width: 2, color: OUTLINE });
+    g.rect(-8, 11, 16, 11).fill(colDark || col).stroke({ width: 2, color: OUTLINE });
+    g.moveTo(-9, 6).lineTo(9, 6).moveTo(-9, 16).lineTo(9, 16).stroke({ width: 1, color: 0x000000, alpha: 0.35 });
+    // меховой воротник
+    g.arc(0, 1, 10, Math.PI * 1.05, Math.PI * 1.95).fill(0xd8cfc0);
     // голова
-    g.circle(0, -8, 11).fill(0xe8c39e).stroke({ width: 2, color: OUTLINE });
-    g.arc(0, -2, 12, Math.PI * 0.15, Math.PI * 0.85).fill(0x8a5a2a); // борода
-    g.rect(-11, -22, 22, 8).fill(0x9aa7b5).stroke({ width: 2, color: OUTLINE }); // шлем
-    g.circle(0, -18, 2).fill(0xd8d8d8); // заклёпка
-    g.moveTo(-11, -18).lineTo(-19, -28).lineTo(-13, -19).closePath().fill(0xd8d8d8).stroke({ width: 1.5, color: OUTLINE }); // рог L
-    g.moveTo(11, -18).lineTo(19, -28).lineTo(13, -19).closePath().fill(0xd8d8d8).stroke({ width: 1.5, color: OUTLINE });    // рог R
+    g.circle(0, -8, 11.5).fill(0xe8c39e).stroke({ width: 2, color: OUTLINE });
+    // борода с косами
+    g.moveTo(-12, -3).arc(0, -3, 12, Math.PI * 0.1, Math.PI * 0.9).closePath().fill(0x8a5a2a);
+    g.circle(-6.5, 9, 2.6).fill(0x8a5a2a).stroke({ width: 1, color: OUTLINE });
+    g.circle(6.5, 9, 2.6).fill(0x8a5a2a).stroke({ width: 1, color: OUTLINE });
     // глаза
-    g.circle(-4, -8, 1.6).fill(0x2a2018);
-    g.circle(4, -8, 1.6).fill(0x2a2018);
-    if (u.id === 'berserk') { // топор со сталью
-      g.rect(12, -6, 3.5, 26).fill(0x6b4a2a).stroke({ width: 1.5, color: OUTLINE });
-      g.poly([15, -6, 27, -2, 15, 4]).fill(0xb8c4d0).stroke({ width: 1.5, color: OUTLINE });
-      g.moveTo(16, -4).lineTo(24, -2).stroke({ width: 1, color: 0xeef4f8 });
+    g.circle(-4, -9, 1.6).fill(0x2a2018);
+    g.circle(4, -9, 1.6).fill(0x2a2018);
+    // шлем: купол с бликом, обод, наносник, заклёпки
+    g.moveTo(-12.5, -11).arc(0, -11, 12.5, Math.PI, 0).closePath().fill(0x9aa7b5).stroke({ width: 2, color: OUTLINE });
+    g.moveTo(-9, -19).quadraticCurveTo(0, -22, 9, -19).stroke({ width: 1.5, color: 0xd8d8d8, alpha: 0.8 });
+    g.rect(-12.5, -13.5, 25, 4.5).fill(0x8794a3).stroke({ width: 1.5, color: OUTLINE });
+    g.rect(-1.5, -9, 3, 6).fill(0x8794a3); // наносник
+    g.circle(0, -19, 1.7).fill(0xd8d8d8);
+    // рога с полосами у основания
+    g.moveTo(-12, -17).quadraticCurveTo(-24, -23, -22, -35).lineTo(-17, -33)
+      .quadraticCurveTo(-19, -25, -11.5, -19).closePath().fill(0xd8d8d8).stroke({ width: 1.5, color: OUTLINE });
+    g.moveTo(12, -17).quadraticCurveTo(24, -23, 22, -35).lineTo(17, -33)
+      .quadraticCurveTo(19, -25, 11.5, -19).closePath().fill(0xd8d8d8).stroke({ width: 1.5, color: OUTLINE });
+  }
+
+  // Оружие — отдельный узел: замах при атаке
+  function drawWeapon(u) {
+    const wp = new PIXI.Container();
+    const g = new PIXI.Graphics();
+    if (u.id === 'berserk') { // топор: рукоять вниз от точки хвата
+      wp.x = 13; wp.y = -7;
+      g.rect(-1.75, 0, 3.5, 26).fill(0x6b4a2a).stroke({ width: 1.5, color: OUTLINE });
+      g.poly([-2, 0, 13, 4, -2, 11]).fill(0xb8c4d0).stroke({ width: 1.5, color: OUTLINE });
+      g.moveTo(0, 2).lineTo(9, 4.5).stroke({ width: 1, color: 0xeef4f8 });
+    } else if (u.id === 'smith') { // молот
+      wp.x = -15; wp.y = -9;
+      g.rect(-1.75, 0, 3.5, 26).fill(0x6b4a2a).stroke({ width: 1.5, color: OUTLINE });
+      g.rect(-10, -8, 20, 9).fill(0x9aa7b5).stroke({ width: 1.5, color: OUTLINE });
+      g.rect(-10, -5, 20, 2).fill(0xc9d4de);
     } else if (u.id === 'skald') { // лира
-      g.circle(-14, 4, 7).fill(0x8a5a2a).stroke({ width: 1.5, color: OUTLINE });
-      g.circle(-14, 4, 3).fill(0x1a1210);
-      g.moveTo(-17, 1).lineTo(-11, 7).stroke({ width: 1, color: 0xffe4a8 });
-      g.moveTo(-17, 7).lineTo(-11, 1).stroke({ width: 1, color: 0xffe4a8 });
-    } else { // молот
-      g.rect(-16, -8, 3.5, 26).fill(0x6b4a2a).stroke({ width: 1.5, color: OUTLINE });
-      g.rect(-25, -15, 17, 10).fill(0x9aa7b5).stroke({ width: 1.5, color: OUTLINE });
-      g.rect(-25, -11, 17, 2).fill(0xc9d4de);
+      wp.x = -15; wp.y = 2;
+      g.circle(0, 0, 7.5).fill(0x8a5a2a).stroke({ width: 1.5, color: OUTLINE });
+      g.circle(0, 0, 3).fill(0x1a1210);
+      g.moveTo(-4, -4).lineTo(4, 4).moveTo(-4, 4).lineTo(4, -4).stroke({ width: 1, color: 0xffe4a8 });
     }
+    wp.addChild(g);
+    wp.pivot.set(0, 0);
+    u.weapon = wp;
+    return wp;
   }
 
   function drawEnemy(g, u) {
     const col = u.def.color;
     g.circle(0, 26, 16).fill({ color: 0x000000, alpha: 0.3 });
     switch (u.defKey) {
-      case 'krynch': // кринч: капля с кофе — вечный overweight
+      case 'krynch': // кринч: офисный планктон с кофе
         g.circle(0, 2, 17).fill(col).stroke({ width: 2, color: OUTLINE });
-        g.circle(-6, -4, 3).fill(0xffe4a8);
-        g.circle(6, -4, 3).fill(0xffe4a8);
-        g.moveTo(-6, -4).lineTo(-3, -2).stroke({ width: 1.5, color: OUTLINE }); // хитрые брови
-        g.moveTo(6, -4).lineTo(3, -2).stroke({ width: 1.5, color: OUTLINE });
-        g.arc(0, 4, 8, Math.PI * 0.15, Math.PI * 0.85).stroke({ width: 2.5, color: 0xffe4a8 });
-        // стакан кофе в руке
-        g.rect(14, 6, 9, 12).fill(0xe8e0d0).stroke({ width: 1.5, color: OUTLINE });
-        g.rect(14, 6, 9, 3).fill(0x8a5a2a);
-        g.moveTo(18, 2).quadraticCurveTo(20, 0, 18, -2).stroke({ width: 1.5, color: 0xbfc7cf }); // пар
+        // воротник и галстук
+        g.poly([-7, 8, 0, 12, 7, 8, 0, 11]).fill(0xe8e0d0);
+        g.poly([0, 11, 3.5, 16, 0, 24, -3.5, 16]).fill(0x8a2f2a);
+        // очки
+        g.circle(-6, -4, 4).stroke({ width: 1.5, color: 0xd8d8d8 });
+        g.circle(6, -4, 4).stroke({ width: 1.5, color: 0xd8d8d8 });
+        g.moveTo(-2, -4).lineTo(2, -4).stroke({ width: 1.5, color: 0xd8d8d8 });
+        g.circle(-6, -4, 1.6).fill(0xffe4a8);
+        g.circle(6, -4, 1.6).fill(0xffe4a8);
+        g.moveTo(-6, -9).lineTo(-2, -7).stroke({ width: 1.5, color: OUTLINE });
+        g.moveTo(6, -9).lineTo(2, -7).stroke({ width: 1.5, color: OUTLINE });
+        g.arc(0, 5, 6, Math.PI * 0.15, Math.PI * 0.85).stroke({ width: 2, color: 0xffe4a8 });
+        // стакан кофе с паром
+        g.rect(15, 6, 9, 12).fill(0xe8e0d0).stroke({ width: 1.5, color: OUTLINE });
+        g.rect(15, 6, 9, 3).fill(0x8a5a2a);
+        g.moveTo(19, 2).quadraticCurveTo(21, 0, 19, -2).stroke({ width: 1.5, color: 0xbfc7cf });
         break;
-      case 'deadline': // дедлайн: песочные часы с бегущим песком
-        g.poly([-14, -14, 14, -14, 2, 0, 14, 16, -14, 16, -2, 0]).fill(col).stroke({ width: 2, color: OUTLINE });
-        g.rect(-14, -17, 28, 4).fill(0x8a2f2a).stroke({ width: 1.5, color: OUTLINE });
-        g.rect(-14, 15, 28, 4).fill(0x8a2f2a).stroke({ width: 1.5, color: OUTLINE });
-        g.circle(0, 8, 3).fill(0xffe4a8);
-        g.circle(0, 8, 1.4).fill(0x8a2f2a); // циферблат-точка
+      case 'deadline': // дедлайн: часы со стрелками и стресс-метками
+        g.circle(0, 2, 17).fill(col).stroke({ width: 2, color: OUTLINE });
+        g.circle(0, 2, 12).fill(0x241c12).stroke({ width: 1.5, color: 0x8a2f2a });
+        g.moveTo(0, 2).lineTo(0, -6).stroke({ width: 2, color: 0xffe4a8 });   // минутная
+        g.moveTo(0, 2).lineTo(6, 2).stroke({ width: 2, color: 0xffe4a8 });    // часовая
+        g.circle(0, 2, 1.8).fill(0xffe4a8);
+        for (let i = 0; i < 4; i++) {
+          const a = Math.PI / 2 * i;
+          g.moveTo(Math.cos(a) * 9, 2 + Math.sin(a) * 9).lineTo(Math.cos(a) * 11.5, 2 + Math.sin(a) * 11.5)
+            .stroke({ width: 1.5, color: 0x8a2f2a });
+        }
+        // стресс: «!» над головой
+        g.moveTo(16, -14).lineTo(18, -20).stroke({ width: 2, color: 0xffe4a8 });
+        g.circle(19, -16.5, 1.2).fill(0xffe4a8);
         break;
       default: // баг: жук с панцирем
         g.ellipse(0, 2, 14, 18).fill(col).stroke({ width: 2, color: OUTLINE });
@@ -950,6 +991,11 @@ G.scenes.battle = function (params) {
         hideRing();
         const hx = hero.view.x, hy = hero.view.y;
         const tx = u.view.x, ty = u.view.y;
+        if (hero.weapon) {
+          G.tween(hero.weapon, { rotation: -1.25 }, 110, () => {
+            G.tween(hero.weapon, { rotation: 0.15 }, 260, null, G.easeOut);
+          }, G.easeOut);
+        }
         G.tween(hero.view, { x: hx + (tx - hx) * 0.4, y: hy + (ty - hy) * 0.4 }, 110, () => {
           G.sfx.play('hit');
           G.fxShake.hit(card.dmg >= 4 ? 7 : 4);
