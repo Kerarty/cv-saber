@@ -291,7 +291,9 @@ G.ui = {
       .stroke({ width: 2, color: G.C.goldDark, alpha: 0.55 });
     flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(-w / 2 + 96, -h / 2 + 56)
       .stroke({ width: 3, color: G.C.gold });
-    c.addChild(shadow, g, tt, flour);
+    const grain = G.viz.grain(w, h, 0.04);
+    grain.x = -w / 2; grain.y = -h / 2;
+    c.addChild(shadow, g, grain, tt, flour);
 
     // карточки с каскадным появлением
     facts.forEach((f, i) => {
@@ -343,7 +345,9 @@ G.ui = {
     g.roundRect(-w / 2, -h / 2, w, h, 18).stroke({ width: 2.5, color: G.C.gold });
     g.roundRect(-w / 2 + 10, -h / 2 + 10, w - 20, h - 20, 12).stroke({ width: 1, color: G.C.goldDark, alpha: 0.4 });
     c.addChild(shadow, g);
-
+    const grain = G.viz.grain(w, h, 0.045);
+    grain.x = -w / 2; grain.y = -h / 2;
+    c.addChild(shadow, g, grain);
     // аватар: викинг с кольчугой, косами и щитом
     const avatar = new PIXI.Container();
     avatar.x = -w / 2 + 140; avatar.y = -30;
@@ -601,7 +605,9 @@ G.ui.fullResume = function ({ onClose }) {
   g.roundRect(-w / 2, -h / 2, w, h, 18).fill({ color: 0x131b29, alpha: 0.99 });
   g.roundRect(-w / 2, -h / 2, w, h, 18).stroke({ width: 2.5, color: G.C.gold });
   g.roundRect(-w / 2 + 10, -h / 2 + 10, w - 20, h - 20, 12).stroke({ width: 1, color: G.C.goldDark, alpha: 0.4 });
-  c.addChild(shadow, g);
+  const grain = G.viz.grain(w, h, 0.045);
+  grain.x = -w / 2; grain.y = -h / 2;
+  c.addChild(shadow, g, grain);
 
   const head = new PIXI.Text({
     text: G.t('fr_title'),

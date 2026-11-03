@@ -24,6 +24,9 @@ G.scenes.title = function () {
   moon.circle(1016, 122, 3.5).fill({ color: 0xc2cfdd, alpha: 0.6 });
   c.addChild(moonGlow, moon);
 
+  // Северное сияние за звёздами
+  const aur = G.viz.aurora(c, { y: 30, alpha: 0.13, index: c.children.length - 1 });
+
   // Звёзды: три слоя с разной фазой мерцания
   const starLayers = [];
   for (let l = 0; l < 3; l++) {
@@ -160,6 +163,7 @@ G.scenes.title = function () {
 
   // Анимация воды и покачивания
   c.tick = (dtMs) => {
+    aur.update();
     const dt = dtMs / 1000;
     shimmer.clear();
     const t = performance.now() / 1000;

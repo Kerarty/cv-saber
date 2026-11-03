@@ -16,7 +16,7 @@ G.T = {
     shield: 'щит',
 
     // Титульный экран
-    title_name: 'I, КАНДИДАТ',
+    title_name: 'Я, КАНДИДАТ',
     title_sub: 'Тактическое резюме для Saber Minsk',
     title_play: 'В РЕЙД',
     title_resume: 'СРАЗУ К РЕЗЮМЕ',

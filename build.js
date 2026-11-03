@@ -20,7 +20,7 @@ const ORDER = [
 
 let html = read('index.template.html');
 const pixi = read('src/vendor/pixi.min.js');
-const css = read('src/style.css');
+const css = read('src/style.css') + '\n' + (exists('src/fonts/fonts.css') ? read('src/fonts/fonts.css') : '');
 const game = ORDER.filter(exists).map(f => `/* ==== ${f} ==== */\n` + read(f)).join('\n');
 
 html = html.replace('/*STYLE_CSS*/', () => css);

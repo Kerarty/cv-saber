@@ -2,6 +2,16 @@
 (async function () {
   G.bootT = performance.now();
 
+  // веб-шрифты должны загрузиться до первого PIXI.Text
+  if (document.fonts && document.fonts.load) {
+    try {
+      await Promise.all([
+        document.fonts.load('20px "Ruslan Display"'),
+        document.fonts.load('20px "Yeseva One"'),
+      ]);
+    } catch (e) { /* без сети — останутся системные шрифты */ }
+  }
+
   const app = new PIXI.Application();
   await app.init({
     width: G.W,

@@ -42,6 +42,54 @@ G.viz = {
     for (const [offset, color] of stops) gr.addColorStop(offset, color);
     return gr;
   },
+  // Зернистая текстура для панелей (псевдопергамент)
+  grain(w, h, alpha = 0.05) {
+    const g = new PIXI.Graphics();
+    for (let i = 0; i < 34; i++) {
+      const x = Math.random() * w, y = Math.random() * h, len = 24 + Math.random() * 90;
+      g.moveTo(x, y).lineTo(x + len, y + (Math.random() - 0.5) * 3)
+        .stroke({ width: 1, color: 0xffffff, alpha: alpha * (0.4 + Math.random() * 0.6) });
+    }
+    for (let i = 0; i < 26; i++) {
+      g.circle(Math.random() * w, Math.random() * h, 0.7 + Math.random())
+        .fill({ color: 0xffffff, alpha: alpha * 0.7 });
+    }
+    return g;
+  },
+
+  // Северное сияние: три дышащих ленты
+  aurora(parent, opts = {}) {
+    const bands = [];
+    const colors = opts.colors || [0x3d8a6e, 0x3d6e8a, 0x6e5a8a];
+    for (let i = 0; i < colors.length; i++) {
+      const g = new PIXI.Graphics();
+      if (opts.index !== undefined) parent.addChildAt(g, opts.index);
+      else parent.addChild(g);
+      bands.push({
+        g, color: colors[i],
+        phase: Math.random() * 10, speed: 0.13 + i * 0.05,
+        yBase: (opts.y || 50) + i * 36, amp: 26 + i * 9,
+        alpha: (opts.alpha || 0.1) * (1 - i * 0.22),
+      });
+    }
+    return {
+      update() {
+        const t = performance.now() / 1000;
+        for (const b of bands) {
+          b.g.clear();
+          const pts = [];
+          for (let x = 0; x <= G.W + 40; x += 40) {
+            pts.push(x, b.yBase + Math.sin(x * 0.004 + b.phase + t * b.speed) * b.amp
+              + Math.sin(x * 0.011 - t * b.speed * 1.7) * 10);
+          }
+          const poly = pts.slice();
+          for (let i = pts.length - 2; i >= 0; i -= 2) poly.push(pts[i], pts[i + 1] + 62);
+          b.g.poly(poly).fill({ color: b.color, alpha: b.alpha * (0.8 + 0.2 * Math.sin(t * 0.5 + b.phase)) });
+        }
+      },
+    };
+  },
+
   // Виньетка по краям экрана: 4 линейных градиента (rgba-строки — числа без альфы)
   vignette(container, alpha = 0.4) {
     const v = new PIXI.Container();

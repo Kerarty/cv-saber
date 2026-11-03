@@ -29,7 +29,8 @@ G.C = {
   panelDark: 0x141c29,
 };
 
-G.FONT_TITLE = 'Impact, "Arial Black", sans-serif';
+G.FONT_TITLE = '"Ruslan Display", Impact, "Arial Black", sans-serif';
+G.FONT_SERIF = '"Yeseva One", Georgia, serif';
 G.FONT_BODY = '"Trebuchet MS", Verdana, sans-serif';
 
 // Логическое поле 1280x720

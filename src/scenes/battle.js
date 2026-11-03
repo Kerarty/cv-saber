@@ -37,6 +37,25 @@ G.scenes.battle = function (params) {
   bg.rect(0, 0, G.W, 60).fill(0x0b121d);      // верхняя плашка
   bg.rect(0, G.H - 128, G.W, 128).fill(0x0b121d); // нижняя плашка карт
   c.addChild(bg);
+
+  // Скалы за полем и туман
+  const scenery = new PIXI.Graphics();
+  const ridge = (baseY, amp, step, color) => {
+    const pts = [0, baseY + amp];
+    for (let x = 0; x <= G.W + step; x += step) {
+      pts.push(x, baseY - Math.abs(Math.sin(x * 0.012) * amp * (0.35 + 0.65 * Math.abs(Math.sin(x * 0.005)))));
+    }
+    pts.push(G.W, baseY + amp, G.W, G.H, 0, G.H);
+    scenery.poly(pts).fill(color);
+  };
+  ridge(150, 66, 80, 0x0c1524);
+  ridge(185, 48, 64, 0x0a111d);
+  c.addChild(scenery);
+  const fog = new PIXI.Graphics();
+  fog.rect(0, 130, G.W, 120).fill(G.viz.gradient(0, 130, 0, 250, [
+    [0, 'rgba(140,170,200,0.09)'], [1, 'rgba(140,170,200,0)'],
+  ]));
+  c.addChild(fog);
   G.viz.vignette(c, 0.32);
 
   // --- Гексы ---
@@ -58,6 +77,51 @@ G.scenes.battle = function (params) {
       B.hexViews.set(key(col, row), g);
       g.__x = x; g.__y = y; g.__base = base; g.__hover = false;
     }
+  }
+
+  // Декор поля: камни, снежные пятна, трещины — на случайных гексах
+  const deco = new PIXI.Container();
+  deco.zIndex = 1;
+  hexLayer.addChild(deco);
+  const poolC = G.hexToPx(5, 2);
+  const lightPool = new PIXI.Graphics();
+  for (let i = 0; i < 4; i++) {
+    lightPool.circle(poolC.x, poolC.y, 240 - i * 52).fill({ color: 0xb8d4e8, alpha: 0.016 });
+  }
+  lightPool.eventMode = 'none';
+  lightPool.zIndex = 2;
+  hexLayer.addChild(lightPool);
+  for (let i = 0; i < 11; i++) {
+    const col = 1 + Math.floor(Math.random() * (G.HEX.cols - 2));
+    const row = Math.floor(Math.random() * G.HEX.rows);
+    const { x, y } = G.hexToPx(col, row);
+    const kind = Math.floor(Math.random() * 3);
+    const d = new PIXI.Graphics();
+    if (kind === 0) { // камни
+      d.poly([x - 9, y + 10, x - 4, y + 2, x + 3, y + 1, x + 9, y + 10])
+        .fill(0x2a3648).stroke({ width: 1, color: 0x1a2432 });
+      d.poly([x - 2, y + 3, x + 2, y + 2, x + 5, y + 8, x - 4, y + 9]).fill(0x39465c);
+    } else if (kind === 1) { // снег
+      d.ellipse(x - 4, y + 12, 12, 3.5).fill({ color: 0xdfe9f2, alpha: 0.16 });
+      d.ellipse(x + 8, y + 6, 8, 2.6).fill({ color: 0xdfe9f2, alpha: 0.12 });
+    } else { // трещина
+      d.moveTo(x - 10, y + 4).lineTo(x - 2, y + 9).lineTo(x + 4, y + 5).lineTo(x + 11, y + 10)
+        .stroke({ width: 1, color: 0x0e1826 });
+    }
+    deco.addChild(d);
+  }
+
+  // Светлячки над полем
+  const flies = [];
+  const flyLayer = new PIXI.Container();
+  flyLayer.eventMode = 'none';
+  flyLayer.zIndex = 30;
+  c.addChild(flyLayer);
+  for (let i = 0; i < 12; i++) {
+    const fg = new PIXI.Graphics();
+    fg.circle(0, 0, 1.4).fill(G.C.gold);
+    flyLayer.addChild(fg);
+    flies.push({ g: fg, cx: 140 + Math.random() * 1000, cy: 140 + Math.random() * 400, phase: Math.random() * 6.28 });
   }
 
   // hover гекса: только если он сейчас валидная цель
@@ -334,7 +398,7 @@ G.scenes.battle = function (params) {
   function makeUnit(o) {
     const u = Object.assign({
       kind: 'enemy', hp: 1, maxHp: 1, shield: 0, alive: true, stunned: false,
-      acted: false, bonus: 0, move: 0, dmg: 0,
+      acted: false, bonus: 0, move: 0, dmg: 0, bobPhase: Math.random() * 6.28,
     }, o);
     u.view = new PIXI.Container();
     u.view.eventMode = 'static';
@@ -349,7 +413,8 @@ G.scenes.battle = function (params) {
   }
 
   function drawUnitView(u) {
-    u.view.removeChildren();
+    if (!u.body) { u.body = new PIXI.Container(); u.view.addChild(u.body); }
+    u.body.removeChildren();
     const g = new PIXI.Graphics();
     const body = u.kind === 'hero' ? drawViking : (u.kind === 'zone' ? drawZoneFace : drawEnemy);
     body(g, u);
@@ -376,8 +441,7 @@ G.scenes.battle = function (params) {
     });
     label.anchor.set(0.5);
     label.y = 36;
-    u.view.addChild(g, label);
-    if (!u.alive) u.view.alpha = 0.35;
+    u.body.addChild(g, label);
   }
 
   function unitName(u) {
@@ -1214,7 +1278,18 @@ G.scenes.battle = function (params) {
   waveIntro();
 
   c.tick = (dtMs) => {
+    const t = performance.now() / 1000;
     if (ring.visible) ring.rotation += (dtMs / 1000) * 1.4;
+    // дыхание юнитов
+    for (const u of B.units) {
+      if (u.body && u.alive) u.body.y = Math.sin(t * 2.3 + u.bobPhase) * 1.8;
+    }
+    // светлячки
+    for (const f of flies) {
+      f.g.x = f.cx + Math.sin(t * 0.6 + f.phase) * 34;
+      f.g.y = f.cy + Math.cos(t * 0.8 + f.phase) * 20;
+      f.g.alpha = 0.22 + 0.22 * Math.sin(t * 1.8 + f.phase);
+    }
   };
 
   // отладочный доступ для автотестов

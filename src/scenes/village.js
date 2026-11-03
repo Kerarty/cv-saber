@@ -18,6 +18,8 @@ G.scenes.village = function (params) {
   bg.ellipse(1100, 745, 380, 100).fill(0x20303f);
   c.addChild(bg);
 
+  const aur = G.viz.aurora(c, { y: 22, alpha: 0.1, index: c.children.length - 1 });
+
   const moonGlow = new PIXI.Graphics();
   moonGlow.circle(180, 110, 70).fill({ color: 0xcfe0f0, alpha: 0.05 });
   moonGlow.circle(180, 110, 48).fill({ color: 0xcfe0f0, alpha: 0.07 });
@@ -181,13 +183,20 @@ G.scenes.village = function (params) {
     setTimeout(() => { if (!c.destroyed) G.ui.toast(G.t('village_unlocked', { n: G.t(def.titleKey).split('·')[0].trim() }), 2200); }, 400);
   }
 
-  // Анимация: качание драккара, мерцание факелов
+  // Анимация: качание драккара, мерцание факелов, дым из кузницы
+  let lastSmoke = 0;
   c.tick = (dtMs) => {
+    aur.update();
     const t = performance.now() / 1000;
     ship.rotation = Math.sin(t * 1.4) * 0.03;
     for (let i = 0; i < torches.length; i++) {
       torches[i].alpha = 0.8 + 0.2 * Math.sin(t * (7 + i) + i * 2);
       torches[i].scale.set(1 + 0.08 * Math.sin(t * 11 + i));
+    }
+    // дымок из трубы кузницы
+    if (t - lastSmoke > 0.6) {
+      lastSmoke = t;
+      G.fxParticles.burst(274, 372, 0x8a94a0, 1, { size: 3.5, speed: 8, up: true, grav: -14, ttl: 1900 });
     }
   };
 
