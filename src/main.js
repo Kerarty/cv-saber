@@ -18,8 +18,9 @@
   G.world = new PIXI.Container();
   app.stage.addChild(G.world);
 
-  // Снег — глобальный слой поверх сцен
+  // Снег — глобальный слой поверх сцен; частицы — ещё выше
   G.fxSnow.init(app.stage);
+  G.fxParticles.init(app.stage);
   app.stage.addChild((G.muteBtn = G.ui.muteButton()));
 
   // Letterbox-масштабирование под любой экран
@@ -31,6 +32,7 @@
     G.world.scale.set(s);
     G.world.x = (vw - G.W * s) / 2;
     G.world.y = (vh - G.H * s) / 2;
+    G.fxShake.base = { x: G.world.x, y: G.world.y };
     G.muteBtn.y = Math.max(34, 34 / s);
   }
   window.addEventListener('resize', resize);
@@ -74,6 +76,8 @@
     }
     G.tweensTick(ticker.deltaMS);
     G.fxSnow.tick(ticker.deltaMS);
+    G.fxParticles.tick(ticker.deltaMS);
+    G.fxShake.tick(G.world, ticker.deltaMS);
     if (G.scene && G.scene.tick) G.scene.tick(ticker.deltaMS);
   });
 

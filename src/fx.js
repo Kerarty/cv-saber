@@ -29,6 +29,105 @@ G.tweensTick = function (dtMs) {
 G.easeOut = p => 1 - Math.pow(1 - p, 3);
 G.easeInOut = p => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
 
+// --- Визуальные хелперы ---
+G.viz = {
+  // Градиент, устойчивый к сменам API Pixi 8.x
+  gradient(x0, y0, x1, y1, stops) {
+    let gr;
+    try {
+      gr = new PIXI.FillGradient({ start: { x: x0, y: y0 }, end: { x: x1, y: y1 } });
+    } catch (e) {
+      gr = new PIXI.FillGradient(x0, y0, x1, y1);
+    }
+    for (const [offset, color] of stops) gr.addColorStop(offset, color);
+    return gr;
+  },
+  // Виньетка по краям экрана: 4 линейных градиента (rgba-строки — числа без альфы)
+  vignette(container, alpha = 0.4) {
+    const v = new PIXI.Container();
+    const W = G.W, H = G.H, d = 190;
+    const a = Math.round(alpha * 100) / 100;
+    const solid = 'rgba(0,0,0,' + a + ')';
+    const zero = 'rgba(0,0,0,0)';
+    const top = new PIXI.Graphics();
+    top.rect(0, 0, W, d).fill(this.gradient(0, 0, 0, d, [[0, solid], [1, zero]]));
+    const bottom = new PIXI.Graphics();
+    bottom.rect(0, H - d, W, d).fill(this.gradient(0, H - d, 0, H, [[0, zero], [1, solid]]));
+    const left = new PIXI.Graphics();
+    left.rect(0, 0, d, H).fill(this.gradient(0, 0, d, 0, [[0, solid], [1, zero]]));
+    const right = new PIXI.Graphics();
+    right.rect(W - d, 0, d, H).fill(this.gradient(W - d, 0, W, 0, [[0, zero], [1, solid]]));
+    v.addChild(top, bottom, left, right);
+    v.eventMode = 'none';
+    container.addChild(v);
+    return v;
+  },
+};
+
+// --- Частицы: искры, пыль, конфетти ---
+G.fxParticles = {
+  layer: null,
+  list: [],
+  init(stage) {
+    this.layer = new PIXI.Container();
+    this.layer.eventMode = 'none';
+    stage.addChild(this.layer);
+  },
+  burst(x, y, color, n = 10, opts = {}) {
+    if (!this.layer) return;
+    for (let i = 0; i < n; i++) {
+      const g = new PIXI.Graphics();
+      const r = (opts.size || 3) * (0.5 + Math.random());
+      if (opts.square) g.rect(-r, -r, r * 2, r * 2).fill(color);
+      else g.circle(0, 0, r).fill(color);
+      g.x = x; g.y = y;
+      const a = Math.random() * Math.PI * 2;
+      const sp = (opts.speed || 90) * (0.4 + Math.random() * 0.8);
+      this.layer.addChild(g);
+      this.list.push({
+        g,
+        vx: Math.cos(a) * sp,
+        vy: (opts.up ? -Math.abs(Math.sin(a)) * sp : Math.sin(a) * sp) - (opts.up ? 40 : 0),
+        grav: opts.grav === undefined ? 160 : opts.grav,
+        life: 0, ttl: (opts.ttl || 700) * (0.6 + Math.random() * 0.7),
+      });
+    }
+  },
+  tick(dtMs) {
+    const dt = dtMs / 1000;
+    for (let i = this.list.length - 1; i >= 0; i--) {
+      const p = this.list[i];
+      p.life += dtMs;
+      p.vy += p.grav * dt;
+      p.g.x += p.vx * dt;
+      p.g.y += p.vy * dt;
+      p.g.alpha = Math.max(0, 1 - p.life / p.ttl);
+      if (p.life >= p.ttl) {
+        p.g.destroy();
+        this.list.splice(i, 1);
+      }
+    }
+  },
+};
+
+// --- Тряска экрана ---
+G.fxShake = {
+  power: 0,
+  base: { x: 0, y: 0 },
+  hit(p = 6) {
+    this.power = Math.max(this.power, p);
+  },
+  tick(world, dtMs) {
+    if (this.power <= 0.2) {
+      if (this.power > 0) { this.power = 0; world.x = this.base.x; world.y = this.base.y; }
+      return;
+    }
+    this.power *= Math.pow(0.92, dtMs / 16.6);
+    world.x = this.base.x + (Math.random() - 0.5) * this.power;
+    world.y = this.base.y + (Math.random() - 0.5) * this.power;
+  },
+};
+
 // --- Снег (глобальный слой поверх сцен) ---
 G.fxSnow = {
   layer: null,
