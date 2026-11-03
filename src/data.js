@@ -102,7 +102,21 @@ G.progress = 0;
 G.stats = { rounds: 0, damage: 0, cards: 0, facts: 0 };
 
 // --- Гекс-математика (flat-top, odd-q offset) ---
-G.HEX = { size: 46, cols: 11, rows: 6, padX: 60, padY: 90 };
+G.HEX = { size: 48, cols: 11, rows: 6, padX: 80, padY: 84 };
+
+// Короткие подписи фактов для всплывающего урона
+G.SHORT = {
+  ru: {
+    balance_lab: 'баланс-лаба', event_tuner: 'ивент-тюнер', gwent_logic: 'гвинт-логика',
+    echo_loop: 'эхо', onefile: 'однофайловик', mvp: 'MVP',
+    rune_sdk: 'рунный SDK', kb472: '472 КБ', code_review: 'код-ревью', offer: 'оффер',
+  },
+  en: {
+    balance_lab: 'balance lab', event_tuner: 'event tuner', gwent_logic: 'gwent logic',
+    echo_loop: 'echo', onefile: 'single file', mvp: 'MVP',
+    rune_sdk: 'rune SDK', kb472: '472 KB', code_review: 'code review', offer: 'offer',
+  },
+};
 
 G.hexToPx = function (col, row) {
   const s = G.HEX.size;
