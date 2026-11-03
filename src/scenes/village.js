@@ -81,9 +81,30 @@ G.scenes.village = function (params) {
     bld.eventMode = 'static';
     bld.cursor = 'pointer';
 
+    // спрайтовое здание (Tiny Swords) или процедурный фолбэк
+    const BT = { forge: 'b_barracks', shipyard: 'b_house', stone: 'b_tower', thing: 'b_monastery' };
+    let sprBuilt = false;
+    if (G.TEX && G.TEX[BT[b.id]]) {
+      const t = G.TEX[BT[b.id]];
+      const sp = new PIXI.Sprite(t.frames[0]);
+      sp.anchor.set(0.5, 1);
+      const sc = 170 / t.frames[0].height;
+      sp.scale.set(sc, sc);
+      sp.y = 42;
+      sp.alpha = open ? 1 : 0.45;
+      bld.addChild(sp);
+      sprBuilt = true;
+      // тёплый свет у открытой постройки
+      if (open) {
+        const glow = new PIXI.Graphics();
+        glow.circle(0, 20, 60).fill({ color: G.C.gold, alpha: 0.06 });
+        glow.circle(0, 20, 40).fill({ color: G.C.gold, alpha: 0.05 });
+        bld.addChildAt(glow, 0);
+      }
+    }
     const g = new PIXI.Graphics();
-    const dim = open ? 1 : 0.45;
-    drawBuilding(g, b.id, open);
+    if (!sprBuilt) drawBuilding(g, b.id, open);
+    else { g.ellipse(0, 44, 62, 10).fill({ color: 0x000000, alpha: 0.25 }); }
 
     // табличка с названием раздела — текст на деревянной подложке
     const label = new PIXI.Text({
@@ -140,12 +161,28 @@ G.scenes.village = function (params) {
     c.addChild(bld);
   }
 
-  // пропсы: бочки у верфи и тинга
+  // пропсы: бочки, деревья, камни
   const props = new PIXI.Graphics();
   drawBarrel(props, 590, 520);
   drawBarrel(props, 612, 542);
   drawBarrel(props, 975, 530);
   c.addChild(props);
+  if (G.TEX) {
+    const put = (name, x, y, hgt) => {
+      const t = G.TEX[name];
+      if (!t) return;
+      const sp = new PIXI.Sprite(t.frames[0]);
+      sp.anchor.set(0.5, 1);
+      sp.scale.set(hgt / t.frames[0].height, hgt / t.frames[0].height);
+      sp.x = x; sp.y = y;
+      c.addChild(sp);
+    };
+    put('tree1', 60, 430, 150);
+    put('tree1', 1200, 420, 130);
+    put('rock1', 680, 560, 40);
+    put('rock2', 1100, 555, 36);
+    put('rock3', 320, 555, 34);
+  }
 
   // Причал с драккаром — левый угол, вдали от кнопок
   const dock = new PIXI.Container();

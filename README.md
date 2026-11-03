@@ -57,7 +57,9 @@ node build.js   # инлайнит src/ + PixiJS в index.html
 - PixiJS 8 — рендер (инлайн в HTML, без CDN)
 - чистый JavaScript, без сборщиков и фреймворков
 - WebAudio — процедурный звук
-- Canvas-арт рисуется кодом: ни одного внешнего ассета
+- спрайты юнитов и зданий — [Tiny Swords](https://pixeltroop.itch.io/tiny-swords) от pixeltroop (free license), вшиты base64
+- шрифты Ruslan Display и Yeseva One (SIL OFL) — base64
+- остальной арт рисуется кодом: процедурные эффекты, интерфейс, босс
 
 ## Структура
 

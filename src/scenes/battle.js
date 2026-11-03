@@ -97,7 +97,16 @@ G.scenes.battle = function (params) {
     const { x, y } = G.hexToPx(col, row);
     const kind = Math.floor(Math.random() * 3);
     const d = new PIXI.Graphics();
-    if (kind === 0) { // камни
+    if (kind === 0) { // камни: спрайт или процедурка
+      if (G.TEX && G.TEX['rock' + (1 + i % 3)]) {
+        const rsp = new PIXI.Sprite(G.TEX['rock' + (1 + i % 3)].frames[0]);
+        rsp.anchor.set(0.5, 0.5);
+        rsp.scale.set(0.55, 0.55);
+        rsp.x = x; rsp.y = y + 6;
+        rsp.alpha = 0.85;
+        deco.addChild(rsp);
+        continue;
+      }
       d.poly([x - 9, y + 10, x - 4, y + 2, x + 3, y + 1, x + 9, y + 10])
         .fill(0x2a3648).stroke({ width: 1, color: 0x1a2432 });
       d.poly([x - 2, y + 3, x + 2, y + 2, x + 5, y + 8, x - 4, y + 9]).fill(0x39465c);
@@ -109,6 +118,20 @@ G.scenes.battle = function (params) {
         .stroke({ width: 1, color: 0x0e1826 });
     }
     deco.addChild(d);
+  }
+
+  // Деревья по краям поля: отдельные кадры из листа
+  if (G.TEX && G.TEX.tree1) {
+    [[96, 210, 150, 0], [1180, 200, 140, 2], [50, 560, 120, 3], [1225, 545, 135, 4]].forEach(([tx, ty, hgt, fi]) => {
+      const fr = G.TEX.tree1.frames[fi % G.TEX.tree1.frames.length];
+      const tsp = new PIXI.Sprite(fr);
+      tsp.anchor.set(0.5, 0.9);
+      tsp.scale.set(hgt / fr.height, hgt / fr.height);
+      tsp.x = tx; tsp.y = ty;
+      tsp.alpha = 0.92;
+      tsp.zIndex = 0;
+      hexLayer.addChild(tsp);
+    });
   }
 
   // Светлячки над полем
@@ -286,11 +309,20 @@ G.scenes.battle = function (params) {
         g.circle(0, 0, 14).fill(0x141c29);
         g.circle(0, 0, 14).stroke({ width: 2, color: s.status === 'done' ? 0x2a3240 : col, alpha: s.status === 'done' ? 0.6 : 1 });
       }
-      const ic = new PIXI.Text({
-        text: QUEUE_ICONS[s.u.id?.split('_')[0]] || QUEUE_ICONS[s.u.defKey] || '❓',
-        style: { fontSize: 13 },
-      });
-      ic.anchor.set(0.5);
+      let ic = null;
+      const sdef = (G.TEX && Object.keys(G.TEX).length) ? unitSpriteDef(s.u) : null;
+      if (sdef && G.TEX[sdef.idle]) {
+        ic = new PIXI.Sprite(G.TEX[sdef.idle].frames[0]);
+        ic.anchor.set(0.5);
+        const sc = 34 / G.TEX[sdef.idle].fw;
+        ic.scale.set(s.status === 'done' ? -sc : sc, sc);
+      } else {
+        ic = new PIXI.Text({
+          text: QUEUE_ICONS[s.u.id?.split('_')[0]] || QUEUE_ICONS[s.u.defKey] || '❓',
+          style: { fontSize: 13 },
+        });
+        ic.anchor.set(0.5);
+      }
       ic.alpha = s.status === 'done' ? 0.4 : 1;
       if (s.status === 'done') {
         const done = new PIXI.Text({
@@ -416,22 +448,40 @@ G.scenes.battle = function (params) {
   function drawUnitView(u) {
     if (!u.body) { u.body = new PIXI.Container(); u.view.addChild(u.body); }
     u.body.removeChildren();
-    const g = new PIXI.Graphics();
-    const body = u.kind === 'hero' ? drawViking : (u.kind === 'zone' ? drawZoneFace : drawEnemy);
-    body(g, u);
-    // полоска HP: рамка + подложка + заливка
+    const sdef = (G.TEX && Object.keys(G.TEX).length) ? unitSpriteDef(u) : null;
+    if (sdef && G.TEX[sdef.idle]) {
+      // спрайтовый юнит
+      const t = G.TEX[sdef.idle];
+      const sp = new PIXI.Sprite(t.frames[0]);
+      sp.anchor.set(0.5, 0.86);
+      const flip = u.kind === 'enemy' ? -1 : 1;
+      sp.scale.set(flip * sdef.scale, sdef.scale);
+      u.sprite = sp;
+      u.anim = { frames: t.frames, i: 0, t: 0, fps: 8, loop: true, onDone: null };
+      u.body.addChild(sp);
+    } else {
+      // процедурный фолбэк
+      u.sprite = null;
+      const g = new PIXI.Graphics();
+      const body = u.kind === 'hero' ? drawViking : (u.kind === 'zone' ? drawZoneFace : drawEnemy);
+      body(g, u);
+      if (u.kind === 'hero') u.body.addChild(drawWeapon(u));
+      u.body.addChild(g);
+    }
+    // полоска HP: рамка + подложка + заливка (общая для обоих режимов)
+    const bar = new PIXI.Graphics();
     const barW = 46;
     const hpRatio = Math.max(0, u.hp / u.maxHp);
-    g.rect(-barW / 2 - 1, -49, barW + 2, 8).fill(0x0a0f18);
-    g.rect(-barW / 2, -48, barW, 6).fill(0x1a1210);
-    g.rect(-barW / 2, -48, barW * hpRatio, 6)
+    bar.rect(-barW / 2 - 1, -49, barW + 2, 8).fill(0x0a0f18);
+    bar.rect(-barW / 2, -48, barW, 6).fill(0x1a1210);
+    bar.rect(-barW / 2, -48, barW * hpRatio, 6)
       .fill(u.kind === 'hero' ? G.C.heroGreen : (u.kind === 'zone' ? G.C.gold : G.C.enemy));
-    // щит
     if (u.shield > 0) {
-      g.circle(barW / 2 + 5, -45, 8).fill(0x0a0f18);
-      g.circle(barW / 2 + 5, -45, 7).fill(G.C.gold);
-      g.circle(barW / 2 + 5, -45, 4).fill(0xffe4a8);
+      bar.circle(barW / 2 + 5, -45, 8).fill(0x0a0f18);
+      bar.circle(barW / 2 + 5, -45, 7).fill(G.C.gold);
+      bar.circle(barW / 2 + 5, -45, 4).fill(0xffe4a8);
     }
+    u.body.addChild(bar);
     // имя с обводкой
     const label = new PIXI.Text({
       text: unitName(u),
@@ -442,8 +492,7 @@ G.scenes.battle = function (params) {
     });
     label.anchor.set(0.5);
     label.y = 36;
-    if (u.kind === 'hero') u.body.addChild(drawWeapon(u));
-    u.body.addChild(g, label);
+    u.body.addChild(label);
   }
 
   function unitName(u) {
@@ -453,6 +502,54 @@ G.scenes.battle = function (params) {
   }
 
   const OUTLINE = 0x0a0f18;
+
+  // Спрайты юнитов (Tiny Swords) + процедурный фолбэк
+  const UNIT_SPRITE_DEF = {
+    berserk: { idle: 'hero_warrior_idle', atk: 'hero_warrior_atk', scale: 0.52 },
+    skald: { idle: 'hero_archer_idle', atk: 'hero_archer_shoot', scale: 0.5 },
+    smith: { idle: 'hero_monk_idle', heal: 'hero_monk_heal', scale: 0.5 },
+    bug: { idle: 'foe_pawn_idle', scale: 0.46 },
+    krynch: { idle: 'foe_warrior_idle', atk: 'foe_warrior_atk', scale: 0.52 },
+    deadline: { idle: 'foe_lancer_idle', atk: 'foe_lancer_atk', scale: 0.3 },
+  };
+
+  function unitSpriteDef(u) {
+    return UNIT_SPRITE_DEF[u.kind === 'hero' ? u.id : u.defKey] || null;
+  }
+
+  function playAnim(u, name, once) {
+    const d = unitSpriteDef(u);
+    if (!d || !u.sprite || !G.TEX) return;
+    const tex = G.TEX[d[name] || d.idle];
+    if (!tex) return;
+    u.anim.frames = tex.frames;
+    u.anim.i = 0; u.anim.t = 0;
+    u.anim.fps = once ? 13 : 8;
+    u.anim.loop = !once;
+    u.anim.onDone = once ? () => playAnim(u, 'idle', false) : null;
+  }
+
+  function tickAnims(dtMs) {
+    for (const u of B.units) {
+      if (!u.anim || !u.sprite) continue;
+      u.anim.t += dtMs;
+      const step = 1000 / u.anim.fps;
+      while (u.anim.t > step) {
+        u.anim.t -= step;
+        u.anim.i++;
+        if (u.anim.i >= u.anim.frames.length) {
+          if (u.anim.loop) u.anim.i = 0;
+          else {
+            u.anim.i = u.anim.frames.length - 1;
+            const cb = u.anim.onDone;
+            u.anim.onDone = null;
+            if (cb) cb();
+          }
+        }
+        u.sprite.texture = u.anim.frames[Math.min(u.anim.i, u.anim.frames.length - 1)];
+      }
+    }
+  }
 
   function drawViking(g, u) {
     const col = u.def.color;
@@ -991,7 +1088,8 @@ G.scenes.battle = function (params) {
         hideRing();
         const hx = hero.view.x, hy = hero.view.y;
         const tx = u.view.x, ty = u.view.y;
-        if (hero.weapon) {
+        if (hero.sprite) playAnim(hero, 'atk', true);
+        else if (hero.weapon) {
           G.tween(hero.weapon, { rotation: -1.25 }, 110, () => {
             G.tween(hero.weapon, { rotation: 0.15 }, 260, null, G.easeOut);
           }, G.easeOut);
@@ -1014,6 +1112,7 @@ G.scenes.battle = function (params) {
           }, G.easeOut);
         }, G.easeOut);
       } else if (card.heal && u.kind === 'hero' && d <= (card.range || 1)) {
+        if (hero.sprite) playAnim(hero, 'heal', true);
         G.sfx.play('heal');
         u.hp = Math.min(u.maxHp, u.hp + card.heal);
         if (!u.alive) { u.alive = true; G.ui.toast(G.t(u.def.nameKey) + ' — back!', 1200); }
@@ -1326,9 +1425,9 @@ G.scenes.battle = function (params) {
   c.tick = (dtMs) => {
     const t = performance.now() / 1000;
     if (ring.visible) ring.rotation += (dtMs / 1000) * 1.4;
-    // дыхание юнитов
+    tickAnims(dtMs);
     for (const u of B.units) {
-      if (u.body && u.alive) u.body.y = Math.sin(t * 2.3 + u.bobPhase) * 1.8;
+      if (u.body && u.alive) u.body.y = Math.sin(t * 2.3 + u.bobPhase) * 1.2;
     }
     // светлячки
     for (const f of flies) {

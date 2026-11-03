@@ -8,6 +8,7 @@ const exists = f => fs.existsSync(path.join(__dirname, f));
 // Порядок важен: словари и данные → эффекты → ui → сцены → бутстрап
 const ORDER = [
   'src/i18n.js',
+  'src/assets/atlas.js',
   'src/data.js',
   'src/fx.js',
   'src/ui.js',

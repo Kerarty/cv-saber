@@ -28,6 +28,33 @@
   G.world = new PIXI.Container();
   app.stage.addChild(G.world);
 
+  // Атлас Tiny Swords: base64 -> текстуры; юнитовые листы нарезаются на кадры
+  G.TEX = {};
+  const UNIT_SHEETS = new Set([
+    'hero_warrior_idle', 'hero_warrior_atk', 'hero_warrior_run', 'hero_monk_idle', 'hero_monk_heal',
+    'hero_archer_idle', 'hero_archer_shoot',
+    'foe_pawn_idle', 'foe_warrior_idle', 'foe_warrior_atk', 'foe_lancer_idle', 'foe_lancer_atk',
+    'tree1',
+  ]);
+  if (window.G.ASSET_DATA) {
+    for (const [name, a] of Object.entries(G.ASSET_DATA)) {
+      try {
+        const base = await PIXI.Assets.load(a.src);
+        if (UNIT_SHEETS.has(name)) {
+          const n = Math.max(1, Math.round(a.w / a.h));
+          G.TEX[name] = {
+            frames: Array.from({ length: n }, (_, i) => new PIXI.Texture({
+              source: base.source, frame: new PIXI.Rectangle(i * a.h, 0, a.h, a.h),
+            })),
+            fw: a.h,
+          };
+        } else {
+          G.TEX[name] = { frames: [base], fw: a.w };
+        }
+      } catch (e) { /* ассет не загрузился — останется процедурный фолбэк */ }
+    }
+  }
+
   // Снег — глобальный слой поверх сцен; частицы — ещё выше
   G.fxSnow.init(app.stage);
   G.fxParticles.init(app.stage);

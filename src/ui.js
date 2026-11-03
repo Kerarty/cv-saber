@@ -230,9 +230,9 @@ G.ui = {
     // заголовок и описание
     const title = new PIXI.Text({
       text: L.t,
-      style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: G.C.gold, letterSpacing: 0.3 },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: G.C.gold, letterSpacing: 0.3, wordWrap: true, wordWrapWidth: w - 150, breakWords: true, lineHeight: 17 },
     });
-    title.x = 54; title.y = 10;
+    title.x = 54; title.y = 8;
     const desc = new PIXI.Text({
       text: L.d,
       style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fill: G.C.text, wordWrap: true, wordWrapWidth: w - 68, lineHeight: 16 },
@@ -548,6 +548,19 @@ G.ui = {
 };
 
 
+// Деревянная рама с золотыми уголками для больших панелей
+G.ui.fancyFrame = function (g, w, h) {
+  g.roundRect(-w / 2 - 5, -h / 2 - 5, w + 10, h + 10, 15).stroke({ width: 8, color: 0x3a2d1c });
+  g.roundRect(-w / 2 - 5, -h / 2 - 5, w + 10, h + 10, 15).stroke({ width: 2, color: 0x59452c });
+  const br = (cx, cy, sx, sy) => {
+    g.moveTo(cx + 20 * sx, cy).lineTo(cx, cy).lineTo(cx, cy + 20 * sy)
+      .stroke({ width: 3, color: G.C.gold, alpha: 0.9 });
+    g.circle(cx + 6 * sx, cy + 6 * sy, 2).fill(G.C.goldDark);
+  };
+  br(-w / 2 - 5, -h / 2 - 5, 1, 1); br(w / 2 + 5, -h / 2 - 5, -1, 1);
+  br(-w / 2 - 5, h / 2 + 5, 1, -1); br(w / 2 + 5, h / 2 + 5, -1, -1);
+};
+
 // Компактная строка факта для «Резюме целиком»
 G.ui.factRow = function (fact, w = 400) {
   const L = fact[G.lang] || fact.ru;
@@ -557,15 +570,15 @@ G.ui.factRow = function (fact, w = 400) {
   const g = new PIXI.Graphics();
   const draw = (hover) => {
     g.clear();
-    g.roundRect(0, 0, w, 58, 8).fill(hover ? 0x20304a : G.C.panel);
-    g.roundRect(0, 0, w, 58, 8).stroke({ width: 1.5, color: hover ? G.C.gold : G.C.hexBorder });
+    g.roundRect(0, 0, w, 70, 8).fill(hover ? 0x20304a : G.C.panel);
+    g.roundRect(0, 0, w, 70, 8).stroke({ width: 1.5, color: hover ? G.C.gold : G.C.hexBorder });
     g.circle(24, 29, 14).fill(0x141c29);
     g.circle(24, 29, 14).stroke({ width: 1, color: G.C.goldDark, alpha: 0.6 });
   };
   draw(false);
   const icon = new PIXI.Text({ text: fact.icon, style: { fontSize: 14 } });
   icon.anchor.set(0.5);
-  icon.x = 24; icon.y = 29;
+  icon.x = 24; icon.y = 35;
   const title = new PIXI.Text({
     text: L.t,
     style: { fontFamily: G.FONT_TITLE, fontSize: 13.5, fill: G.C.gold },
@@ -575,7 +588,7 @@ G.ui.factRow = function (fact, w = 400) {
     text: L.d,
     style: { fontFamily: G.FONT_BODY, fontSize: 11, fill: G.C.textDim, wordWrap: true, wordWrapWidth: w - 175, lineHeight: 13 },
   });
-  desc.x = 46; desc.y = 27;
+  desc.x = 46; desc.y = 29;
   const chipText = new PIXI.Text({
     text: L.s,
     style: { fontFamily: G.FONT_TITLE, fontSize: 11, fill: 0xffe4a8 },
@@ -584,7 +597,7 @@ G.ui.factRow = function (fact, w = 400) {
   chip.roundRect(w - chipText.width - 20, 18, chipText.width + 14, 21, 10)
     .fill({ color: 0x241c12 })
     .stroke({ width: 1, color: G.C.goldDark });
-  chipText.x = w - chipText.width - 13; chipText.y = 23;
+  chipText.x = w - chipText.width - 13; chipText.y = 29;
   cc.addChild(g, icon, title, desc, chip, chipText);
   if (fact.link) {
     const arr = new PIXI.Text({ text: '↗', style: { fontSize: 11, fill: G.C.heroBlue } });
