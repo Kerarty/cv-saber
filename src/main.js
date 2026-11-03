@@ -34,7 +34,7 @@
     'hero_warrior_idle', 'hero_warrior_atk', 'hero_warrior_run', 'hero_monk_idle', 'hero_monk_heal',
     'hero_archer_idle', 'hero_archer_shoot',
     'foe_pawn_idle', 'foe_warrior_idle', 'foe_warrior_atk', 'foe_lancer_idle', 'foe_lancer_atk',
-    'tree1',
+    'tree1', 'sheep_idle',
   ]);
   if (window.G.ASSET_DATA) {
     for (const [name, a] of Object.entries(G.ASSET_DATA)) {

@@ -167,6 +167,18 @@ G.scenes.village = function (params) {
   drawBarrel(props, 612, 542);
   drawBarrel(props, 975, 530);
   c.addChild(props);
+  let sheep = null;
+  if (G.TEX && G.TEX.sheep_idle) {
+    sheep = new PIXI.Container();
+    const shSp = new PIXI.Sprite(G.TEX.sheep_idle.frames[0]);
+    shSp.anchor.set(0.5, 1);
+    shSp.scale.set(0.55, 0.55);
+    sheep.addChild(shSp);
+    sheep.x = 700; sheep.y = 558;
+    sheep.anim = { frames: G.TEX.sheep_idle.frames, i: 0, t: 0, fps: 3.5, sp: shSp };
+    c.addChild(sheep);
+  }
+
   if (G.TEX) {
     const put = (name, x, y, hgt) => {
       const t = G.TEX[name];
@@ -252,6 +264,18 @@ G.scenes.village = function (params) {
     if (t - lastSmoke > 0.6) {
       lastSmoke = t;
       G.fxParticles.burst(274, 372, 0x8a94a0, 1, { size: 3.5, speed: 8, up: true, grav: -14, ttl: 1900 });
+    }
+    // овца: щиплет траву и бродит
+    if (sheep) {
+      const a = sheep.anim;
+      a.t += dtMs;
+      const step = 1000 / a.fps;
+      while (a.t > step) {
+        a.t -= step;
+        a.i = (a.i + 1) % a.frames.length;
+        a.sp.texture = a.frames[a.i];
+      }
+      sheep.x = 700 + Math.sin(t * 0.25) * 30;
     }
   };
 

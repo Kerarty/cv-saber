@@ -230,9 +230,9 @@ G.ui = {
     // заголовок и описание
     const title = new PIXI.Text({
       text: L.t,
-      style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: G.C.gold, letterSpacing: 0.3, wordWrap: true, wordWrapWidth: w - 150, breakWords: true, lineHeight: 17 },
+      style: { fontFamily: G.FONT_SERIF, fontSize: 15, fill: G.C.gold },
     });
-    title.x = 54; title.y = 8;
+    title.x = 54; title.y = 9;
     const desc = new PIXI.Text({
       text: L.d,
       style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fill: G.C.text, wordWrap: true, wordWrapWidth: w - 68, lineHeight: 16 },
@@ -285,9 +285,10 @@ G.ui = {
     // заголовок с подчёркиванием-росчерком
     const tt = new PIXI.Text({
       text: title,
-      style: { fontFamily: G.FONT_TITLE, fontSize: 24, fill: G.C.gold, letterSpacing: 1 },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 21, fill: G.C.gold, letterSpacing: 1 },
     });
     tt.x = -w / 2 + 26; tt.y = -h / 2 + 20;
+    if (tt.width > w - 52) w = tt.width + 92; // панель подрастает под заголовок
     const flour = new PIXI.Graphics();
     flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(w / 2 - 26, -h / 2 + 56)
       .stroke({ width: 2, color: G.C.goldDark, alpha: 0.55 });
@@ -581,14 +582,14 @@ G.ui.factRow = function (fact, w = 400) {
   icon.x = 24; icon.y = 35;
   const title = new PIXI.Text({
     text: L.t,
-    style: { fontFamily: G.FONT_TITLE, fontSize: 13.5, fill: G.C.gold },
+    style: { fontFamily: G.FONT_SERIF, fontSize: 13, fill: G.C.gold, wordWrap: true, wordWrapWidth: w - 190, lineHeight: 14 },
   });
   title.x = 46; title.y = 8;
   const desc = new PIXI.Text({
     text: L.d,
-    style: { fontFamily: G.FONT_BODY, fontSize: 11, fill: G.C.textDim, wordWrap: true, wordWrapWidth: w - 175, lineHeight: 13 },
+    style: { fontFamily: G.FONT_BODY, fontSize: 11, fill: G.C.textDim, wordWrap: true, wordWrapWidth: w - 60, lineHeight: 14 },
   });
-  desc.x = 46; desc.y = 29;
+  desc.x = 46; desc.y = 28 + (title.height > 15 ? 13 : 0);
   const chipText = new PIXI.Text({
     text: L.s,
     style: { fontFamily: G.FONT_TITLE, fontSize: 11, fill: 0xffe4a8 },
@@ -610,13 +611,13 @@ G.ui.factRow = function (fact, w = 400) {
   return cc;
 };
 
-// «Резюме целиком»: все разделы на одном экране
+// «Резюме целиком»: три колонки, все разделы на одном экране
 G.ui.fullResume = function ({ onClose }) {
   const c = new PIXI.Container();
   c.zIndex = 70;
   c.eventMode = 'static';
-  const w = 900, h = 640;
-  c.x = G.W / 2; c.y = G.H / 2 - 10;
+  const w = 1100, h = 560;
+  c.x = G.W / 2; c.y = G.H / 2;
 
   const shadow = new PIXI.Graphics();
   shadow.roundRect(-w / 2 + 8, -h / 2 + 10, w, h, 18).fill({ color: 0x000000, alpha: 0.55 });
@@ -632,69 +633,70 @@ G.ui.fullResume = function ({ onClose }) {
     text: G.t('fr_title'),
     style: { fontFamily: G.FONT_TITLE, fontSize: 26, fill: G.C.gold, letterSpacing: 1.5 },
   });
-  head.x = -w / 2 + 36; head.y = -h / 2 + 22;
+  head.x = -w / 2 + 36; head.y = -h / 2 + 20;
   const flour = new PIXI.Graphics();
-  flour.moveTo(-w / 2 + 36, -h / 2 + 60).lineTo(w / 2 - 36, -h / 2 + 60)
+  flour.moveTo(-w / 2 + 36, -h / 2 + 58).lineTo(w / 2 - 36, -h / 2 + 58)
     .stroke({ width: 2, color: G.C.goldDark, alpha: 0.5 });
-  flour.moveTo(-w / 2 + 36, -h / 2 + 60).lineTo(-w / 2 + 130, -h / 2 + 60)
+  flour.moveTo(-w / 2 + 36, -h / 2 + 58).lineTo(-w / 2 + 130, -h / 2 + 58)
     .stroke({ width: 3, color: G.C.gold });
   c.addChild(head, flour);
 
-  const cols = [[G.BUILDINGS[0], G.BUILDINGS[1]], [G.BUILDINGS[2], G.BUILDINGS[3]]];
-  const colX = [-w / 2 + 36, 24];
+  // три колонки: [кузница+верфь] [камень] [тинг + контакты]
+  const cols = [[G.BUILDINGS[0], G.BUILDINGS[1]], [G.BUILDINGS[2]], [G.BUILDINGS[3]]];
+  const colX = [-w / 2 + 34, -w / 2 + 34 + 352, -w / 2 + 34 + 704];
+  const colW = 330;
   let rowIdx = 0;
   cols.forEach((sections, ci) => {
-    let y = -h / 2 + 82;
+    let y = -h / 2 + 76;
     for (const def of sections) {
       const short = G.t(def.titleKey).split('·').pop().trim();
       const st = new PIXI.Text({
         text: short,
-        style: { fontFamily: G.FONT_TITLE, fontSize: 16, fill: G.C.gold, letterSpacing: 1 },
+        style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: G.C.gold, letterSpacing: 1 },
       });
       st.x = colX[ci]; st.y = y;
       const line = new PIXI.Graphics();
-      line.moveTo(colX[ci], y + 24).lineTo(colX[ci] + 400, y + 24)
+      line.moveTo(colX[ci], y + 22).lineTo(colX[ci] + colW, y + 22)
         .stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.45 });
       c.addChild(st, line);
-      y += 32;
+      y += 30;
       for (const f of def.facts) {
-        const row = G.ui.factRow(f, 400);
+        const row = G.ui.factRow(f, colW);
         row.x = colX[ci]; row.y = y;
         row.alpha = 0;
         c.addChild(row);
-        const delay = 200 + rowIdx * 55;
+        const delay = 200 + rowIdx * 45;
         setTimeout(() => { if (!row.destroyed) G.tween(row, { alpha: 1 }, 240, null, G.easeOut); }, delay);
         rowIdx++;
-        y += 66;
+        y += 72;
       }
-      y += 12;
+      y += 10;
+    }
+    // контакты в третьей колонке
+    if (ci === 2) {
+      const contacts = [
+        { label: G.t('sheet_mail'), primary: true, onClick: () => {
+            const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
+            location.href = 'mailto:' + G.CONFIG.email + '?subject=' + subject;
+          } },
+        { label: G.t('sheet_pdf'), primary: false, onClick: () => {
+            const a = document.createElement('a');
+            a.href = G.CONFIG.pdf;
+            a.download = 'CV_Yaroslav_Kukar.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          } },
+        { label: G.t('sheet_github'), primary: false, onClick: () => window.open(G.CONFIG.github, '_blank') },
+      ];
+      for (const cinfo of contacts) {
+        y += 6;
+        const b = G.ui.button({ label: cinfo.label, x: colX[2] + colW / 2, y: y + 22, w: colW, h: 46, primary: cinfo.primary, small: true, onClick: cinfo.onClick });
+        c.addChild(b);
+        y += 52;
+      }
     }
   });
-
-  // контакты внизу
-  const mailBtn = G.ui.button({
-    label: G.t('sheet_mail'), x: -212, y: h / 2 - 76, w: 250, h: 48, primary: true, small: true,
-    onClick: () => {
-      const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
-      location.href = 'mailto:' + G.CONFIG.email + '?subject=' + subject;
-    },
-  });
-  const pdfBtn = G.ui.button({
-    label: G.t('sheet_pdf'), x: 22, y: h / 2 - 76, w: 180, h: 48, small: true,
-    onClick: () => {
-      const a = document.createElement('a');
-      a.href = G.CONFIG.pdf;
-      a.download = 'CV_Yaroslav_Kukar.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    },
-  });
-  const ghBtn = G.ui.button({
-    label: G.t('sheet_github'), x: 232, y: h / 2 - 76, w: 200, h: 48, small: true,
-    onClick: () => window.open(G.CONFIG.github, '_blank'),
-  });
-  c.addChild(mailBtn, pdfBtn, ghBtn);
 
   if (onClose) c.addChild(G.ui.button({ label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true, onClick: onClose }));
   c.alpha = 0;

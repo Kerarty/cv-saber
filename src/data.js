@@ -100,13 +100,13 @@ G.BUILDINGS = [
     facts: [
       {
         id: 'echoloop', icon: '🌀', link: 'https://github.com/Kerarty/echoloop-playble',
-        ru: { t: 'echoloop-playble', d: 'Головоломка, собранная вокруг одной механики: действия игрока возвращаются эхом. 8 уровней — кривая обучения: каждый уровень учит новой грани петли, без туториального текста', s: '8 уровней · Unity 6 + URP' },
-        en: { t: 'echoloop-playble', d: 'A puzzle built around one mechanic: player actions return as echoes. 8 levels teach each facet of the loop through play, no tutorial text', s: '8 levels · Unity 6 + URP' },
+        ru: { t: 'echoloop-playble', d: 'Головоломка вокруг одной механики: действия игрока возвращаются эхом. 8 уровней учат петле через игру, без туториалов', s: '8 уровней · Unity 6 + URP' },
+        en: { t: 'echoloop-playble', d: 'A puzzle around one mechanic: player actions return as echoes. 8 levels teach the loop through play, no tutorials', s: '8 levels · Unity 6 + URP' },
       },
       {
         id: 'unity', icon: '⚙️',
-        ru: { t: 'Стек Unity', d: 'Проектирую фичи от схемы до плейтеста: сцены, префабы, физика, URP-постобработка — вижу связь дизайна механики и её реализации', s: 'Unity 6' },
-        en: { t: 'Unity stack', d: 'Design features from sketch to playtest: scenes, prefabs, physics, URP post — I see how mechanic design maps to implementation', s: 'Unity 6' },
+        ru: { t: 'Стек Unity', d: 'Проектирую фичи от схемы до плейтеста: сцены, префабы, физика, URP — вижу связь механики и реализации', s: 'Unity 6' },
+        en: { t: 'Unity stack', d: 'Design from sketch to playtest: scenes, prefabs, physics, URP — I see how mechanics map to implementation', s: 'Unity 6' },
       },
     ],
   },
@@ -116,18 +116,18 @@ G.BUILDINGS = [
     facts: [
       {
         id: 'mobrush', icon: '🏃', link: 'https://github.com/Kerarty/playable-ad-mob-rush',
-        ru: { t: 'playable-ad-mob-rush', d: 'Плейбл как дизайн-задача: core читается за 15 секунд без текста, онбординг — первым касанием, ретеншен-петля на 30 секунд. Графика и звук процедурные', s: '472 КБ · MRAID' },
-        en: { t: 'playable-ad-mob-rush', d: 'A playable as a design brief: core reads in 15 seconds with no text, onboarding is the first touch, 30-second retention loop. Procedural art & sound', s: '472 KB · MRAID' },
+        ru: { t: 'playable-ad-mob-rush', d: 'Core читается за 15 секунд без текста, онбординг — первым касанием, ретеншен-петля на 30 секунд. Графика и звук процедурные', s: '472 КБ · MRAID' },
+        en: { t: 'playable-ad-mob-rush', d: 'Core reads in 15 seconds, no text; onboarding is the first touch; a 30-second retention loop. Procedural art & sound', s: '472 KB · MRAID' },
       },
       {
         id: 'kitty', icon: '🐱', link: 'https://github.com/Kerarty/splash-kitty-playable-ad',
-        ru: { t: 'splash-kitty', d: 'Физическая головоломка на matter.js: один вход, мягкий фейл и петля «ещё раз» — классическая конверсионная механика плейбла', s: '684 КБ · 0 запросов' },
-        en: { t: 'splash-kitty', d: 'A matter.js physics toy: one input, soft fail, and an "again" loop — the classic playable conversion mechanic', s: '684 KB · 0 requests' },
+        ru: { t: 'splash-kitty', d: 'Физическая головоломка на matter.js: один вход, мягкий фейл и петля «ещё раз» — конверсионная механика плейбла', s: '684 КБ · 0 запросов' },
+        en: { t: 'splash-kitty', d: 'A matter.js physics toy: one input, soft fail, an "again" loop — the classic playable conversion mechanic', s: '684 KB · 0 requests' },
       },
       {
         id: 'sdk', icon: '🧩', link: 'https://github.com/Kerarty/playble-ads',
-        ru: { t: 'playble-ads SDK', d: 'Движко-независимый SDK с адаптерами рекламных сетей — понимаю плейблы не только как дизайн, но и как бизнес-модель', s: 'MIT' },
-        en: { t: 'playble-ads SDK', d: 'Engine-agnostic SDK with ad-network adapters — I understand playables as a business model, not just a design task', s: 'MIT' },
+        ru: { t: 'playble-ads SDK', d: 'Движко-независимый SDK с адаптерами рекламных сетей — понимаю плейблы и как бизнес-модель', s: 'MIT' },
+        en: { t: 'playble-ads SDK', d: 'Engine-agnostic SDK with ad-network adapters — playables as a business model, not just design', s: 'MIT' },
       },
     ],
   },
@@ -137,28 +137,28 @@ G.BUILDINGS = [
     facts: [
       {
         id: 'balab', icon: '⚖️', link: 'https://github.com/Kerarty/cv-top-games',
-        ru: { t: 'Баланс-лаборатория', d: 'Интерактивный стенд merge-автобатлера: моделирую бои, тюню характеристики и сразу вижу влияние правок на исход — баланс как работа с данными', s: 'merge-автобатлер' },
-        en: { t: 'Balance lab', d: 'An interactive merge-autobattler stand: simulate fights, tune stats and instantly see the outcome — balance as data work', s: 'merge autobattler' },
+        ru: { t: 'Баланс-лаба', d: 'Стенд merge-автобатлера: моделирую бои, тюню характеристики и сразу вижу влияние правок на исход', s: 'merge-автобатлер' },
+        en: { t: 'Balance lab', d: 'A merge-autobattler stand: simulate fights, tune stats, instantly see the outcome — balance as data work', s: 'merge autobattler' },
       },
       {
         id: 'gametech', icon: '📅', link: 'https://github.com/Kerarty/cv-gametech',
-        ru: { t: 'Тюнер ивентов', d: 'Конструктор liveops-ивентов: таблицы контента с формулами наград, экономика ивента и влияние правок на прогрессию игрока', s: 'liveops' },
-        en: { t: 'Event tuner', d: 'A liveops event constructor: content tables with reward formulas, event economy, and how tweaks ripple into progression', s: 'liveops' },
+        ru: { t: 'Тюнер ивентов', d: 'Конструктор liveops-ивентов: таблицы контента с формулами наград и экономика ивента', s: 'liveops' },
+        en: { t: 'Event tuner', d: 'A liveops constructor: content tables with reward formulas and the event economy', s: 'liveops' },
       },
       {
         id: 'eridora', icon: '🏰',
-        ru: { t: 'Варгейм «Королевства Эридора»', d: 'Настольная пошаговая тактика на 4 фракции с нуля: боевые механики, захват территорий, баланс юнитов. Провёл 15+ плейтест-сессий и итерировал по обратной связи', s: '15+ плейтестов' },
-        en: { t: '"Kingdoms of Eridor" wargame', d: 'A tabletop turn-based tactics for 4 factions from scratch: combat mechanics, territory capture, unit balance. Ran 15+ playtest sessions and iterated on feedback', s: '15+ playtests' },
+        ru: { t: 'Варгейм «Эридора»', d: 'Настольная тактика на 4 фракции: боевые механики, захват территорий, баланс юнитов. 15+ плейтестов и итерации по фидбеку', s: '15+ плейтестов' },
+        en: { t: '"Eridor" wargame', d: 'A tabletop tactics for 4 factions: combat, territory capture, unit balance. 15+ playtests, iterated on feedback', s: '15+ playtests' },
       },
       {
         id: 'gdd', icon: '📐',
-        ru: { t: 'GDD стратегии', d: 'Концепт-документ компьютерной стратегии с градостроительным симулятором: механики, прогрессия, баланс ресурсов, арт-стиль — структурирован под передачу команде', s: 'полный GDD' },
-        en: { t: 'Strategy GDD', d: 'A concept document for a city-builder strategy: mechanics, progression, resource balance, art direction — structured for hand-off to a dev team', s: 'full GDD' },
+        ru: { t: 'GDD стратегии', d: 'Концепт-документ стратегии с градостроителем: механики, прогрессия, баланс ресурсов — под передачу команде', s: 'полный GDD' },
+        en: { t: 'Strategy GDD', d: 'A strategy concept doc: mechanics, progression, resource balance — structured for team hand-off', s: 'full GDD' },
       },
       {
         id: 'lesta', icon: '🎯', link: 'https://github.com/Kerarty/cv-lesta',
-        ru: { t: 'Баланс на Three.js', d: 'Игровое резюме с фокусом на боевых характеристиках: размены, контрпики и читаемость чисел в веб-формате', s: 'Three.js' },
-        en: { t: 'Balance on Three.js', d: 'A game resume focused on combat stats: trades, counter-picks and number readability in the browser', s: 'Three.js' },
+        ru: { t: 'Баланс на Three.js', d: 'Боевые характеристики на Three.js: размены, контрпики и читаемость чисел в веб-формате', s: 'Three.js' },
+        en: { t: 'Balance on Three.js', d: 'Combat stats on Three.js: trades, counter-picks and number readability in the browser', s: 'Three.js' },
       },
     ],
   },
@@ -168,8 +168,8 @@ G.BUILDINGS = [
     facts: [
       {
         id: 'cvs', icon: '🎮', link: 'https://github.com/Kerarty',
-        ru: { t: 'Резюме-игры', d: 'Под каждую студию — свой жанр и сеттинг. Эта — пошаговая тактика в сеттинге I, Viking, с механиками Gloomhaven и free-aim из Phoenix Point', s: '12+' },
-        en: { t: 'Résumé games', d: 'A genre and setting for every studio. This one: turn-based tactics in the I, Viking setting, with Gloomhaven mechanics and Phoenix Point free-aim', s: '12+' },
+        ru: { t: 'Резюме-игры', d: 'Под каждую студию — свой жанр. Эта — тактика в сеттинге I, Viking: механики Gloomhaven, free-aim из Phoenix Point', s: '12+' },
+        en: { t: 'Résumé games', d: 'A genre for every studio. This one: tactics in the I, Viking setting — Gloomhaven mechanics, Phoenix Point free-aim', s: '12+' },
       },
       {
         id: 'lang', icon: '🌍',

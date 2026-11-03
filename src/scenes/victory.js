@@ -63,6 +63,7 @@ G.scenes.victory = function () {
   const pg = new PIXI.Graphics();
   pg.roundRect(-pw / 2, -ph / 2, pw, ph, 14).fill({ color: G.C.panel, alpha: 0.96 });
   pg.roundRect(-pw / 2, -ph / 2, pw, ph, 14).stroke({ width: 2, color: G.C.gold });
+  G.ui.fancyFrame(pg, pw, ph);
   panel.addChild(pg);
   const pt = new PIXI.Text({
     text: G.t('win_report'),
