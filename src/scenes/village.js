@@ -3,6 +3,8 @@ window.G = window.G || {};
 
 G.scenes.village = function (params) {
   const c = new PIXI.Container();
+  // «Сразу к резюме»: все постройки открыты (до их создания!)
+  if (params.showAll && G.progress === 0) G.previewAll = true;
 
   // Небо и земля: градиент + луна
   const bg = new PIXI.Graphics();
@@ -64,7 +66,7 @@ G.scenes.village = function (params) {
 
   for (const b of layout) {
     const def = G.BUILDINGS.find(x => x.id === b.id);
-    const open = G.progress >= b.need;
+    const open = G.previewAll || G.progress >= b.need;
     const bld = new PIXI.Container();
     bld.x = b.x; bld.y = b.y;
     bld.eventMode = 'static';
@@ -108,11 +110,10 @@ G.scenes.village = function (params) {
 
     bld.on('pointertap', () => {
       if (!open) { G.sfx.play('thud'); G.ui.toast(G.t('village_locked', { n: b.need })); return; }
-      G.sfx.play('chime');
-      const p = G.ui.panel({
-        x: G.W / 2, y: 380, w: 620,
+      G.sfx.play('blip');
+      const p = G.ui.buildingPanel({
         title: G.t(def.titleKey),
-        lines: def.lines,
+        facts: def.facts,
         link: def.link,
         onClose: () => {
           c.removeChild(p);
@@ -141,13 +142,31 @@ G.scenes.village = function (params) {
   const isBoss = nextWave === 3;
   const raidBtn = G.ui.button({
     label: isBoss ? G.t('village_final') : G.t('village_raid') + ' · ' + G.t('village_wave', { n: nextWave }),
-    x: G.W / 2, y: G.H - 46, w: 380, h: 58, primary: true,
+    x: G.W / 2 + 160, y: G.H - 46, w: 380, h: 58, primary: true,
     onClick: () => G.setScene('battle', { wave: G.progress }),
   });
-  c.addChild(raidBtn);
+  const sheetBtn = G.ui.button({
+    label: G.t('village_sheet'), x: G.W / 2 - 260, y: G.H - 46, w: 300, h: 58,
+    onClick: () => {
+      G.sfx.play('blip');
+      const p = G.ui.characterSheet({
+        onClose: () => { c.removeChild(p); p.destroy({ children: true }); },
+      });
+      c.addChild(p);
+    },
+  });
+  c.addChild(raidBtn, sheetBtn);
 
-  // «Сразу к резюме»: если пришли с титула — показать все постройки открытыми в этой сессии просмотра
-  if (params.showAll && G.progress === 0) G.previewAll = true;
+  // вошли через «Сразу к резюме» — сразу показать лист кандидата
+  if (params.showAll && !params.sheetShown) {
+    setTimeout(() => {
+      if (c.destroyed) return;
+      const p = G.ui.characterSheet({
+        onClose: () => { c.removeChild(p); p.destroy({ children: true }); },
+      });
+      c.addChild(p);
+    }, 500);
+  }
 
   const langT = G.ui.langToggle();
   c.addChild(langT);

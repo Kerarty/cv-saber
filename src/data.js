@@ -89,13 +89,105 @@ G.WAVES = [
   },
 ];
 
-// --- Постройки деревни: разделы резюме ---
+// --- Постройки деревни: разделы резюме (карточки фактов) ---
 G.BUILDINGS = [
-  { id: 'forge', titleKey: 'forge_title', lines: ['forge_1', 'forge_2'], link: 'https://github.com/Kerarty/echoloop-playble' },
-  { id: 'shipyard', titleKey: 'shipyard_title', lines: ['shipyard_1', 'shipyard_2', 'shipyard_3'], link: 'https://github.com/Kerarty/playable-ad-mob-rush' },
-  { id: 'stone', titleKey: 'stone_title', lines: ['stone_1', 'stone_2', 'stone_3'], link: 'https://github.com/Kerarty/cv-top-games' },
-  { id: 'thing', titleKey: 'thing_title', lines: ['thing_1', 'thing_2', 'thing_3'], link: 'https://github.com/Kerarty' },
+  {
+    id: 'forge', titleKey: 'forge_title',
+    link: 'https://github.com/Kerarty/echoloop-playble',
+    facts: [
+      {
+        id: 'echoloop', icon: '🌀', link: 'https://github.com/Kerarty/echoloop-playble',
+        ru: { t: 'echoloop-playble', d: 'Головоломка о времени: петля, эхо прошлых проходов — механика эха повторяет действия игрока', s: '8 уровней · Unity 6 + URP' },
+        en: { t: 'echoloop-playble', d: 'A time puzzle: loop, echoes of past runs — the echo mechanic repeats the player’s actions', s: '8 levels · Unity 6 + URP' },
+      },
+      {
+        id: 'urp', icon: '⚙️',
+        ru: { t: 'Стек Unity', d: 'Быстро осваиваю инструменты движка: сцены, префабы, физика, URP-постобработка', s: 'Unity 6' },
+        en: { t: 'Unity stack', d: 'Fast at picking up engine tools: scenes, prefabs, physics, URP post-processing', s: 'Unity 6' },
+      },
+    ],
+  },
+  {
+    id: 'shipyard', titleKey: 'shipyard_title',
+    link: 'https://github.com/Kerarty/playable-ad-mob-rush',
+    facts: [
+      {
+        id: 'mobrush', icon: '🏃', link: 'https://github.com/Kerarty/playable-ad-mob-rush',
+        ru: { t: 'playable-ad-mob-rush', d: 'Crowd-runner в одном HTML: процедурная графика и звук, совместимость с MRAID', s: '472 КБ' },
+        en: { t: 'playable-ad-mob-rush', d: 'Crowd runner in a single HTML file: procedural art & sound, MRAID-compatible', s: '472 KB' },
+      },
+      {
+        id: 'kitty', icon: '🐱', link: 'https://github.com/Kerarty/splash-kitty-playable-ad',
+        ru: { t: 'splash-kitty', d: 'Playable-ad с физикой: PixiJS 8 + matter.js, работает офлайн', s: '684 КБ · 0 запросов' },
+        en: { t: 'splash-kitty', d: 'Physics playable ad: PixiJS 8 + matter.js, works offline', s: '684 KB · 0 requests' },
+      },
+      {
+        id: 'sdk', icon: '🧩', link: 'https://github.com/Kerarty/playble-ads',
+        ru: { t: 'playble-ads SDK', d: 'Движко-независимый SDK для HTML5-плейблов с адаптерами под основные рекламные сети', s: 'MIT' },
+        en: { t: 'playble-ads SDK', d: 'Engine-agnostic SDK for HTML5 playables with adapters for major ad networks', s: 'MIT' },
+      },
+    ],
+  },
+  {
+    id: 'stone', titleKey: 'stone_title',
+    link: 'https://github.com/Kerarty/cv-top-games',
+    facts: [
+      {
+        id: 'balab', icon: '⚖️', link: 'https://github.com/Kerarty/cv-top-games',
+        ru: { t: 'Баланс-лаборатория', d: 'Интерактивный стенд merge-автобатлера: тюнинг характеристик и проверка метрик вживую', s: 'merge-автобатлер' },
+        en: { t: 'Balance lab', d: 'Interactive merge-autobattler stand: live stat tuning and metric checks', s: 'merge autobattler' },
+      },
+      {
+        id: 'gametech', icon: '📅', link: 'https://github.com/Kerarty/cv-gametech',
+        ru: { t: 'Тюнер ивентов', d: 'Liveops-конструктор: таблицы контента с формулами, экономика ивента', s: 'liveops' },
+        en: { t: 'Event tuner', d: 'Liveops constructor: content tables with formulas, event economy', s: 'liveops' },
+      },
+      {
+        id: 'lesta', icon: '🎯', link: 'https://github.com/Kerarty/cv-lesta',
+        ru: { t: 'Баланс на Three.js', d: 'Игровое резюме с фокусом на балансе сражений', s: 'Three.js' },
+        en: { t: 'Balance on Three.js', d: 'Game resume focused on combat balance', s: 'Three.js' },
+      },
+    ],
+  },
+  {
+    id: 'thing', titleKey: 'thing_title',
+    link: 'https://github.com/Kerarty',
+    facts: [
+      {
+        id: 'cvs', icon: '🎮', link: 'https://github.com/Kerarty',
+        ru: { t: 'Резюме-игры', d: 'Под каждую студию — свой жанр и сеттинг: тактика, арена, баланс-лабы', s: '12+' },
+        en: { t: 'Résumé games', d: 'A genre and setting for every studio: tactics, arena, balance labs', s: '12+' },
+      },
+      {
+        id: 'lang', icon: '🌍',
+        ru: { t: 'Русский / English', d: 'Веду переговоры и пишу документацию на двух языках — это резюме переключается сверху', s: 'RU / EN' },
+        en: { t: 'Russian / English', d: 'Negotiate and document in both languages — this resume switches top-right', s: 'RU / EN' },
+      },
+    ],
+  },
 ];
+
+// --- Лист кандидата: характеристики для экрана «Сразу к резюме» ---
+G.SHEET = {
+  stats: {
+    ru: [
+      ['Playable-ads', 95], ['Прототипирование', 90], ['Гейм-дизайн и баланс', 85],
+      ['Веб: PixiJS · Three.js', 85], ['Unity', 70],
+    ],
+    en: [
+      ['Playable ads', 95], ['Prototyping', 90], ['Game design & balance', 85],
+      ['Web: PixiJS · Three.js', 85], ['Unity', 70],
+    ],
+  },
+  chips: {
+    ru: ['📱 мобайл', '🎯 баланс', '🧩 плейблы', '⚡ быстрые прототипы'],
+    en: ['📱 mobile', '🎯 balance', '🧩 playables', '⚡ fast prototypes'],
+  },
+  lore: {
+    ru: 'Делаю игры, которые продают: playable-ads, баланс, прототипы. Каждая постройка этой деревни — рабочий проект на GitHub.',
+    en: 'I make games that sell: playable ads, balance, prototypes. Every building in this village is a real project on GitHub.',
+  },
+};
 
 // --- Прогресс: сколько волн пройдено (0..3) ---
 G.progress = 0;

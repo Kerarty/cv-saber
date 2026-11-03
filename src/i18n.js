@@ -31,6 +31,12 @@ G.T = {
     village_final: 'ФИНАЛЬНЫЙ БОЙ',
     village_locked: 'Откроется после волны {n}',
     village_unlocked: 'Открыто: {n}',
+    village_sheet: '📜 ЛИСТ КАНДИДАТА',
+    sheet_title: 'Лист кандидата',
+    sheet_stats: 'Характеристики',
+    sheet_contacts: 'Контакты',
+    sheet_mail: 'Написать в Saber Minsk',
+    sheet_github: 'GitHub: Kerarty',
 
     // Постройки
     forge_title: 'Кузница · Unity и прототипы',
@@ -151,6 +157,12 @@ G.T = {
     village_final: 'FINAL BATTLE',
     village_locked: 'Unlocks after wave {n}',
     village_unlocked: 'Unlocked: {n}',
+    village_sheet: '📜 CANDIDATE SHEET',
+    sheet_title: 'Candidate sheet',
+    sheet_stats: 'Skills',
+    sheet_contacts: 'Contacts',
+    sheet_mail: 'Write to Saber Minsk',
+    sheet_github: 'GitHub: Kerarty',
 
     forge_title: 'Forge · Unity & prototypes',
     forge_1: 'echoloop-playble — a time puzzle: loop, echoes of past runs, 8 levels',
