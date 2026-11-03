@@ -21,7 +21,7 @@ G.T = {
     title_play: 'В РЕЙД',
     title_resume: 'СРАЗУ К РЕЗЮМЕ',
     title_load: 'загрузилось за {n} сек — так я делаю playable-ads',
-    title_tag: 'Kerarty · гейм-дизайнер · Минск',
+    title_tag: 'Ярослав Кукар · гейм-дизайнер',
 
     // Деревня
     village_name: 'Деревня кандидата',
@@ -35,7 +35,10 @@ G.T = {
     sheet_title: 'Лист кандидата',
     sheet_stats: 'Характеристики',
     sheet_contacts: 'Контакты',
-    sheet_mail: 'Написать в Saber Minsk',
+    sheet_mail: '✉ Написать мне на почту',
+    sheet_pdf: '⬇ Скачать PDF',
+    sheet_all: '⏭ Пропустить — всё резюме сразу',
+    fr_title: 'Резюме целиком',
     sheet_github: 'GitHub: Kerarty',
 
     // Постройки
@@ -148,7 +151,7 @@ G.T = {
     title_play: 'START THE RAID',
     title_resume: 'STRAIGHT TO RÉSUMÉ',
     title_load: 'loaded in {n}s — this is how I build playable ads',
-    title_tag: 'Kerarty · game designer · Minsk',
+    title_tag: 'Yaroslav Kukar · game designer',
 
     village_name: "Candidate's village",
     village_hint: 'Buildings are résumé sections. Each wave unlocks the next one.',
@@ -161,7 +164,10 @@ G.T = {
     sheet_title: 'Candidate sheet',
     sheet_stats: 'Skills',
     sheet_contacts: 'Contacts',
-    sheet_mail: 'Write to Saber Minsk',
+    sheet_mail: '✉ Email me',
+    sheet_pdf: '⬇ Скачать PDF',
+    sheet_all: '⏭ Пропустить — всё резюме сразу',
+    fr_title: 'Резюме целиком',
     sheet_github: 'GitHub: Kerarty',
 
     forge_title: 'Forge · Unity & prototypes',

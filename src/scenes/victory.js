@@ -96,10 +96,22 @@ G.scenes.victory = function () {
   }
   c.addChild(panel);
 
-  // Кнопки: контакты
+  // Кнопки: PDF, письмо, GitHub
+  const pdfBtn = G.ui.button({
+    label: '⬇ ' + G.t('sheet_pdf'),
+    x: G.W / 2 - 330, y: 620, w: 280, h: 56,
+    onClick: () => {
+      const a = document.createElement('a');
+      a.href = G.CONFIG.pdf;
+      a.download = 'CV_Yaroslav_Kukar.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    },
+  });
   const mailBtn = G.ui.button({
     label: '✉ ' + G.t('win_mail'),
-    x: G.W / 2 - 220, y: 620, w: 300, h: 56, primary: true,
+    x: G.W / 2, y: 620, w: 300, h: 56, primary: true,
     onClick: () => {
       const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
       const body = encodeURIComponent(
@@ -112,7 +124,7 @@ G.scenes.victory = function () {
   });
   const ghBtn = G.ui.button({
     label: G.t('win_github'),
-    x: G.W / 2 + 220, y: 620, w: 300, h: 56,
+    x: G.W / 2 + 330, y: 620, w: 280, h: 56,
     onClick: () => window.open(G.CONFIG.github, '_blank'),
   });
   const again = G.ui.button({

@@ -2,10 +2,11 @@
 window.G = window.G || {};
 
 G.CONFIG = {
-  name: 'Kerarty',
+  name: 'Ярослав Кукар',
   role: { ru: 'гейм-дизайнер', en: 'game designer' },
-  email: 'mail@saber3d.by',
+  email: 'kukar.yar@gmail.com',   // почта кандидата — кнопка «Написать мне»
   github: 'https://github.com/Kerarty',
+  pdf: 'cv.pdf',                  // резюме из docs/CV_Yaroslav.pdf (cv-highcore)
 };
 
 G.C = {

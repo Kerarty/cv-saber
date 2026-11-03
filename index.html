@@ -2436,7 +2436,7 @@ G.T = {
     title_play: 'В РЕЙД',
     title_resume: 'СРАЗУ К РЕЗЮМЕ',
     title_load: 'загрузилось за {n} сек — так я делаю playable-ads',
-    title_tag: 'Kerarty · гейм-дизайнер · Минск',
+    title_tag: 'Ярослав Кукар · гейм-дизайнер',
 
     // Деревня
     village_name: 'Деревня кандидата',
@@ -2450,7 +2450,10 @@ G.T = {
     sheet_title: 'Лист кандидата',
     sheet_stats: 'Характеристики',
     sheet_contacts: 'Контакты',
-    sheet_mail: 'Написать в Saber Minsk',
+    sheet_mail: '✉ Написать мне на почту',
+    sheet_pdf: '⬇ Скачать PDF',
+    sheet_all: '⏭ Пропустить — всё резюме сразу',
+    fr_title: 'Резюме целиком',
     sheet_github: 'GitHub: Kerarty',
 
     // Постройки
@@ -2563,7 +2566,7 @@ G.T = {
     title_play: 'START THE RAID',
     title_resume: 'STRAIGHT TO RÉSUMÉ',
     title_load: 'loaded in {n}s — this is how I build playable ads',
-    title_tag: 'Kerarty · game designer · Minsk',
+    title_tag: 'Yaroslav Kukar · game designer',
 
     village_name: "Candidate's village",
     village_hint: 'Buildings are résumé sections. Each wave unlocks the next one.',
@@ -2576,7 +2579,10 @@ G.T = {
     sheet_title: 'Candidate sheet',
     sheet_stats: 'Skills',
     sheet_contacts: 'Contacts',
-    sheet_mail: 'Write to Saber Minsk',
+    sheet_mail: '✉ Email me',
+    sheet_pdf: '⬇ Скачать PDF',
+    sheet_all: '⏭ Пропустить — всё резюме сразу',
+    fr_title: 'Резюме целиком',
     sheet_github: 'GitHub: Kerarty',
 
     forge_title: 'Forge · Unity & prototypes',
@@ -2688,10 +2694,11 @@ G.setLang = function (lang) {
 window.G = window.G || {};
 
 G.CONFIG = {
-  name: 'Kerarty',
+  name: 'Ярослав Кукар',
   role: { ru: 'гейм-дизайнер', en: 'game designer' },
-  email: 'mail@saber3d.by',
+  email: 'kukar.yar@gmail.com',   // почта кандидата — кнопка «Написать мне»
   github: 'https://github.com/Kerarty',
+  pdf: 'cv.pdf',                  // резюме из docs/CV_Yaroslav.pdf (cv-highcore)
 };
 
 G.C = {
@@ -3545,7 +3552,7 @@ G.ui = {
     const c = new PIXI.Container();
     c.zIndex = 60;
     c.eventMode = 'static';
-    const w = 780, h = 560;
+    const w = 780, h = 620;
     c.x = G.W / 2; c.y = G.H / 2;
     const shadow = new PIXI.Graphics();
     shadow.roundRect(-w / 2 + 8, -h / 2 + 10, w, h, 18).fill({ color: 0x000000, alpha: 0.55 });
@@ -3555,32 +3562,62 @@ G.ui = {
     g.roundRect(-w / 2 + 10, -h / 2 + 10, w - 20, h - 20, 12).stroke({ width: 1, color: G.C.goldDark, alpha: 0.4 });
     c.addChild(shadow, g);
 
-    // аватар: крупный викинг-берсерк с щитом
+    // аватар: викинг с кольчугой, косами и щитом
     const avatar = new PIXI.Container();
-    avatar.x = -w / 2 + 130; avatar.y = -20;
+    avatar.x = -w / 2 + 140; avatar.y = -30;
+    const halo = new PIXI.Graphics();
+    halo.circle(0, 10, 92).fill({ color: G.C.gold, alpha: 0.06 });
+    halo.circle(0, 10, 72).fill({ color: G.C.gold, alpha: 0.05 });
     const av = new PIXI.Graphics();
-    av.scale.set(2.6);
-    const col = G.C.heroBlue;
-    av.circle(0, 26, 17).fill({ color: 0x000000, alpha: 0.35 });
-    av.poly([-10, -2, 10, -2, 14, 24, -14, 24]).fill({ color: col, alpha: 0.55 });
-    av.rect(-8, 0, 16, 22).fill(col).stroke({ width: 2, color: 0x0a0f18 });
-    av.rect(-8, 9, 16, 3).fill(0x3a2a1a);
-    av.circle(0, -8, 11).fill(0xe8c39e).stroke({ width: 2, color: 0x0a0f18 });
-    av.arc(0, -2, 12, Math.PI * 0.15, Math.PI * 0.85).fill(0x8a5a2a);
-    av.rect(-11, -22, 22, 8).fill(0x9aa7b5).stroke({ width: 2, color: 0x0a0f18 });
-    av.moveTo(-11, -18).lineTo(-19, -28).lineTo(-13, -19).closePath().fill(0xd8d8d8).stroke({ width: 1.5, color: 0x0a0f18 });
-    av.moveTo(11, -18).lineTo(19, -28).lineTo(13, -19).closePath().fill(0xd8d8d8).stroke({ width: 1.5, color: 0x0a0f18 });
-    av.circle(0, -18, 2).fill(0xd8d8d8);
-    // щит с руной успеха
-    av.circle(-16, 12, 9).fill(0x8a5a2a).stroke({ width: 2, color: 0x0a0f18 });
-    av.moveTo(-19, 12).lineTo(-13, 12).lineTo(-16, 7).closePath().fill(G.C.gold);
-    avatar.addChild(av);
+    av.scale.set(3.1);
+    const OUT = 0x0a0f18;
+    av.circle(0, 32, 18).fill({ color: 0x000000, alpha: 0.3 });
+    // плащ
+    av.poly([-11, -2, 11, -2, 15, 26, -15, 26]).fill({ color: G.C.heroBlue, alpha: 0.6 });
+    // кольчуга с рядами колец
+    av.rect(-9, 0, 18, 24).fill(0x7a8896).stroke({ width: 2, color: OUT });
+    av.moveTo(-9, 6).lineTo(9, 6).moveTo(-9, 12).lineTo(9, 12).moveTo(-9, 18).lineTo(9, 18)
+      .stroke({ width: 1, color: 0x5a6876 });
+    // ремень с пряжкой
+    av.rect(-9, 12, 18, 3.5).fill(0x3a2a1a);
+    av.rect(-2.5, 11.2, 5, 5).fill(0xd8b45a).stroke({ width: 1, color: OUT });
+    // щит: обод, поле, золотой босс
+    av.circle(-18, 12, 11.5).fill(0x8a5a2a).stroke({ width: 2, color: OUT });
+    av.circle(-18, 12, 8).fill(0x9a6a32);
+    av.circle(-18, 12, 5.5).stroke({ width: 1, color: 0x6a4520 });
+    av.poly([-20.5, 12, -15.5, 12, -18, 8.5]).fill(G.C.gold);
+    // голова
+    av.circle(0, -8, 11.5).fill(0xe8c39e).stroke({ width: 2, color: OUT });
+    // борода с двумя косами
+    av.moveTo(-12, -3).arc(0, -3, 12, Math.PI * 0.1, Math.PI * 0.9).closePath().fill(0x8a5a2a);
+    av.circle(-6.5, 9.5, 2.8).fill(0x8a5a2a).stroke({ width: 1, color: OUT });
+    av.circle(6.5, 9.5, 2.8).fill(0x8a5a2a).stroke({ width: 1, color: OUT });
+    av.circle(-6.5, 9.5, 1.2).fill(0x6a4520);
+    av.circle(6.5, 9.5, 1.2).fill(0x6a4520);
+    // улыбка и глаза
+    av.moveTo(-3.5, -3.5).arc(0, -3.5, 3.5, Math.PI * 0.15, Math.PI * 0.85).stroke({ width: 1.5, color: 0x8a5a2a });
+    av.circle(-4, -9, 1.7).fill(0x2a2018);
+    av.circle(4, -9, 1.7).fill(0x2a2018);
+    // шлем: купол, обод, заклёпки
+    av.moveTo(-12.5, -11).arc(0, -11, 12.5, Math.PI, 0).closePath().fill(0x9aa7b5).stroke({ width: 2, color: OUT });
+    av.rect(-12.5, -13.5, 25, 4.5).fill(0x8794a3).stroke({ width: 1.5, color: OUT });
+    av.circle(0, -19, 1.7).fill(0xd8d8d8);
+    av.circle(-6.5, -16.5, 1.2).fill(0xd8d8d8);
+    av.circle(6.5, -16.5, 1.2).fill(0xd8d8d8);
+    // рога: изогнутые, с полосой у основания
+    av.moveTo(-12, -17).quadraticCurveTo(-25, -23, -23, -36).lineTo(-17.5, -34)
+      .quadraticCurveTo(-19.5, -25, -11.5, -19.5).closePath().fill(0xd8d8d8).stroke({ width: 1.5, color: OUT });
+    av.moveTo(12, -17).quadraticCurveTo(25, -23, 23, -36).lineTo(17.5, -34)
+      .quadraticCurveTo(19.5, -25, 11.5, -19.5).closePath().fill(0xd8d8d8).stroke({ width: 1.5, color: OUT });
+    av.moveTo(-12, -18.5).lineTo(-9, -20).stroke({ width: 2, color: 0x6a4520 });
+    av.moveTo(12, -18.5).lineTo(9, -20).stroke({ width: 2, color: 0x6a4520 });
+    avatar.addChild(halo, av);
     c.addChild(avatar);
 
     // имя и роль
     const name = new PIXI.Text({
       text: G.CONFIG.name,
-      style: { fontFamily: G.FONT_TITLE, fontSize: 40, fill: G.C.text, letterSpacing: 2 },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 36, fill: G.C.text, letterSpacing: 2 },
     });
     name.x = -w / 2 + 236; name.y = -h / 2 + 42;
     const role = new PIXI.Text({
@@ -3651,25 +3688,45 @@ G.ui = {
       cx += t.width + 28;
     }
 
-    // контакты
-    const contactsHead = new PIXI.Text({
-      text: G.t('sheet_contacts'),
-      style: { fontFamily: G.FONT_TITLE, fontSize: 16, fill: G.C.gold, letterSpacing: 1.5 },
+    // пропуск: всё резюме одним экраном
+    const skipBtn = G.ui.button({
+      label: G.t('sheet_all'), x: sx + 280, y: chipY + 44, w: 480, h: 44, small: true,
+      onClick: () => {
+        G.sfx.play('blip');
+        const fr = G.ui.fullResume({
+          onClose: () => { c.removeChild(fr); fr.destroy({ children: true }); },
+        });
+        c.addChild(fr);
+      },
     });
-    contactsHead.x = sx; contactsHead.y = chipY + 42;
+    c.addChild(skipBtn);
+
+    // контакты: почта кандидата, PDF, GitHub — одной строкой по центру
     const mailBtn = G.ui.button({
-      label: '✉ ' + G.t('sheet_mail'), x: sx + 150, y: chipY + 90, w: 280, h: 48, primary: true, small: true,
+      label: G.t('sheet_mail'), x: -212, y: chipY + 112, w: 250, h: 48, primary: true, small: true,
       onClick: () => {
         const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
-        const body = encodeURIComponent('Здравствуйте!\n\nПортфолио: https://github.com/Kerarty\n');
+        const pdfUrl = location.href.replace(/[^/]*$/, '') + G.CONFIG.pdf;
+        const body = encodeURIComponent('Здравствуйте! Резюме (PDF): ' + pdfUrl + ' Портфолио: ' + G.CONFIG.github);
         location.href = 'mailto:' + G.CONFIG.email + '?subject=' + subject + '&body=' + body;
       },
     });
+    const pdfBtn = G.ui.button({
+      label: G.t('sheet_pdf'), x: 22, y: chipY + 112, w: 180, h: 48, small: true,
+      onClick: () => {
+        const a = document.createElement('a');
+        a.href = G.CONFIG.pdf;
+        a.download = 'CV_Yaroslav_Kukar.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      },
+    });
     const ghBtn = G.ui.button({
-      label: G.t('sheet_github'), x: sx + 460, y: chipY + 90, w: 260, h: 48, small: true,
+      label: G.t('sheet_github'), x: 232, y: chipY + 112, w: 200, h: 48, small: true,
       onClick: () => window.open(G.CONFIG.github, '_blank'),
     });
-    c.addChild(contactsHead, mailBtn, ghBtn);
+    c.addChild(mailBtn, pdfBtn, ghBtn);
 
     if (onClose) c.addChild(G.ui.button({ label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true, onClick: onClose }));
     c.alpha = 0;
@@ -3696,6 +3753,150 @@ G.ui = {
       t.destroy();
     }, G.easeOut);
   },
+};
+
+
+// Компактная строка факта для «Резюме целиком»
+G.ui.factRow = function (fact, w = 400) {
+  const L = fact[G.lang] || fact.ru;
+  const cc = new PIXI.Container();
+  cc.eventMode = 'static';
+  if (fact.link) cc.cursor = 'pointer';
+  const g = new PIXI.Graphics();
+  const draw = (hover) => {
+    g.clear();
+    g.roundRect(0, 0, w, 58, 8).fill(hover ? 0x20304a : G.C.panel);
+    g.roundRect(0, 0, w, 58, 8).stroke({ width: 1.5, color: hover ? G.C.gold : G.C.hexBorder });
+    g.circle(24, 29, 14).fill(0x141c29);
+    g.circle(24, 29, 14).stroke({ width: 1, color: G.C.goldDark, alpha: 0.6 });
+  };
+  draw(false);
+  const icon = new PIXI.Text({ text: fact.icon, style: { fontSize: 14 } });
+  icon.anchor.set(0.5);
+  icon.x = 24; icon.y = 29;
+  const title = new PIXI.Text({
+    text: L.t,
+    style: { fontFamily: G.FONT_TITLE, fontSize: 13.5, fill: G.C.gold },
+  });
+  title.x = 46; title.y = 8;
+  const desc = new PIXI.Text({
+    text: L.d,
+    style: { fontFamily: G.FONT_BODY, fontSize: 11, fill: G.C.textDim, wordWrap: true, wordWrapWidth: w - 175, lineHeight: 13 },
+  });
+  desc.x = 46; desc.y = 27;
+  const chipText = new PIXI.Text({
+    text: L.s,
+    style: { fontFamily: G.FONT_TITLE, fontSize: 11, fill: 0xffe4a8 },
+  });
+  const chip = new PIXI.Graphics();
+  chip.roundRect(w - chipText.width - 20, 18, chipText.width + 14, 21, 10)
+    .fill({ color: 0x241c12 })
+    .stroke({ width: 1, color: G.C.goldDark });
+  chipText.x = w - chipText.width - 13; chipText.y = 23;
+  cc.addChild(g, icon, title, desc, chip, chipText);
+  if (fact.link) {
+    const arr = new PIXI.Text({ text: '↗', style: { fontSize: 11, fill: G.C.heroBlue } });
+    arr.x = w - 16; arr.y = 2;
+    cc.addChild(arr);
+    cc.on('pointertap', () => window.open(fact.link, '_blank'));
+  }
+  cc.on('pointerover', () => draw(true));
+  cc.on('pointerout', () => draw(false));
+  return cc;
+};
+
+// «Резюме целиком»: все разделы на одном экране
+G.ui.fullResume = function ({ onClose }) {
+  const c = new PIXI.Container();
+  c.zIndex = 70;
+  c.eventMode = 'static';
+  const w = 900, h = 640;
+  c.x = G.W / 2; c.y = G.H / 2 - 10;
+
+  const shadow = new PIXI.Graphics();
+  shadow.roundRect(-w / 2 + 8, -h / 2 + 10, w, h, 18).fill({ color: 0x000000, alpha: 0.55 });
+  const g = new PIXI.Graphics();
+  g.roundRect(-w / 2, -h / 2, w, h, 18).fill({ color: 0x131b29, alpha: 0.99 });
+  g.roundRect(-w / 2, -h / 2, w, h, 18).stroke({ width: 2.5, color: G.C.gold });
+  g.roundRect(-w / 2 + 10, -h / 2 + 10, w - 20, h - 20, 12).stroke({ width: 1, color: G.C.goldDark, alpha: 0.4 });
+  c.addChild(shadow, g);
+
+  const head = new PIXI.Text({
+    text: G.t('fr_title'),
+    style: { fontFamily: G.FONT_TITLE, fontSize: 26, fill: G.C.gold, letterSpacing: 1.5 },
+  });
+  head.x = -w / 2 + 36; head.y = -h / 2 + 22;
+  const flour = new PIXI.Graphics();
+  flour.moveTo(-w / 2 + 36, -h / 2 + 60).lineTo(w / 2 - 36, -h / 2 + 60)
+    .stroke({ width: 2, color: G.C.goldDark, alpha: 0.5 });
+  flour.moveTo(-w / 2 + 36, -h / 2 + 60).lineTo(-w / 2 + 130, -h / 2 + 60)
+    .stroke({ width: 3, color: G.C.gold });
+  c.addChild(head, flour);
+
+  const cols = [[G.BUILDINGS[0], G.BUILDINGS[1]], [G.BUILDINGS[2], G.BUILDINGS[3]]];
+  const colX = [-w / 2 + 36, 24];
+  let rowIdx = 0;
+  cols.forEach((sections, ci) => {
+    let y = -h / 2 + 82;
+    for (const def of sections) {
+      const short = G.t(def.titleKey).split('·').pop().trim();
+      const st = new PIXI.Text({
+        text: short,
+        style: { fontFamily: G.FONT_TITLE, fontSize: 16, fill: G.C.gold, letterSpacing: 1 },
+      });
+      st.x = colX[ci]; st.y = y;
+      const line = new PIXI.Graphics();
+      line.moveTo(colX[ci], y + 24).lineTo(colX[ci] + 400, y + 24)
+        .stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.45 });
+      c.addChild(st, line);
+      y += 32;
+      for (const f of def.facts) {
+        const row = G.ui.factRow(f, 400);
+        row.x = colX[ci]; row.y = y;
+        row.alpha = 0;
+        c.addChild(row);
+        const delay = 200 + rowIdx * 55;
+        setTimeout(() => { if (!row.destroyed) G.tween(row, { alpha: 1 }, 240, null, G.easeOut); }, delay);
+        rowIdx++;
+        y += 66;
+      }
+      y += 12;
+    }
+  });
+
+  // контакты внизу
+  const mailBtn = G.ui.button({
+    label: G.t('sheet_mail'), x: -212, y: h / 2 - 76, w: 250, h: 48, primary: true, small: true,
+    onClick: () => {
+      const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
+      location.href = 'mailto:' + G.CONFIG.email + '?subject=' + subject;
+    },
+  });
+  const pdfBtn = G.ui.button({
+    label: G.t('sheet_pdf'), x: 22, y: h / 2 - 76, w: 180, h: 48, small: true,
+    onClick: () => {
+      const a = document.createElement('a');
+      a.href = G.CONFIG.pdf;
+      a.download = 'CV_Yaroslav_Kukar.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    },
+  });
+  const ghBtn = G.ui.button({
+    label: G.t('sheet_github'), x: 232, y: h / 2 - 76, w: 200, h: 48, small: true,
+    onClick: () => window.open(G.CONFIG.github, '_blank'),
+  });
+  c.addChild(mailBtn, pdfBtn, ghBtn);
+
+  if (onClose) c.addChild(G.ui.button({ label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true, onClick: onClose }));
+  c.alpha = 0;
+  c.scale.set(0.95);
+  G.tween(c, { alpha: 1 }, 220, null, G.easeOut);
+  G.tween(c.scale, { x: 1, y: 1 }, 220, null, G.easeOut);
+  G.fxParticles.burst(c.x, c.y - h / 2 + 30, G.C.gold, 14, { size: 2.5, speed: 100, ttl: 800, grav: 80 });
+  G.sfx.play('chime');
+  return c;
 };
 
 /* ==== src/scenes/title.js ==== */
@@ -5228,10 +5429,22 @@ G.scenes.victory = function () {
   }
   c.addChild(panel);
 
-  // Кнопки: контакты
+  // Кнопки: PDF, письмо, GitHub
+  const pdfBtn = G.ui.button({
+    label: '⬇ ' + G.t('sheet_pdf'),
+    x: G.W / 2 - 330, y: 620, w: 280, h: 56,
+    onClick: () => {
+      const a = document.createElement('a');
+      a.href = G.CONFIG.pdf;
+      a.download = 'CV_Yaroslav_Kukar.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    },
+  });
   const mailBtn = G.ui.button({
     label: '✉ ' + G.t('win_mail'),
-    x: G.W / 2 - 220, y: 620, w: 300, h: 56, primary: true,
+    x: G.W / 2, y: 620, w: 300, h: 56, primary: true,
     onClick: () => {
       const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
       const body = encodeURIComponent(
@@ -5244,7 +5457,7 @@ G.scenes.victory = function () {
   });
   const ghBtn = G.ui.button({
     label: G.t('win_github'),
-    x: G.W / 2 + 220, y: 620, w: 300, h: 56,
+    x: G.W / 2 + 330, y: 620, w: 280, h: 56,
     onClick: () => window.open(G.CONFIG.github, '_blank'),
   });
   const again = G.ui.button({
