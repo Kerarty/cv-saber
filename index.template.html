@@ -13,7 +13,9 @@
 <script>
 // Ловушка ошибок: помогает диагностировать проблемы в сборке
 window.__errs = [];
-window.addEventListener('error', e => window.__errs.push(e.message + ' @' + (e.filename || '') + ':' + e.lineno));
+window.addEventListener('error', e => window.__errs.push(
+  (e.error && e.error.stack ? e.error.stack.split('\n').slice(0, 4).join(' || ') : e.message) + ' @' + (e.filename || '') + ':' + e.lineno
+));
 window.addEventListener('unhandledrejection', e => window.__errs.push('PROMISE: ' + (e.reason && e.reason.stack || e.reason)));
 </script>
 <script>
