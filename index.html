@@ -2495,6 +2495,9 @@ G.T = {
     ph_player: '⚔ Твой ход',
     ph_enemy: '💀 Враги',
     ph_round: '✦ Раунд {n}',
+    enemy_move: '💀 Ход: {n}',
+    boss_rage_banner: '😡 Босс в ярости!',
+    q_done: '✓',
     sum_deadline: 'дедлайны злее (+урон)',
     sum_krynch: 'кринч подлечился',
     sum_boss: 'босс в ярости (урон {n})',
@@ -2641,6 +2644,9 @@ G.T = {
     ph_player: '⚔ Your turn',
     ph_enemy: '💀 Enemies',
     ph_round: '✦ Round {n}',
+    enemy_move: '💀 Move: {n}',
+    boss_rage_banner: '😡 The boss is enraged!',
+    q_done: '✓',
     sum_deadline: 'deadlines angrier (+damage)',
     sum_krynch: 'crunch healed up',
     sum_boss: 'boss enraged (damage {n})',
@@ -4553,7 +4559,7 @@ G.scenes.battle = function (params) {
 
   // Пилюля текущей стадии хода игрока
   const stagePill = new PIXI.Container();
-  stagePill.x = G.W / 2; stagePill.y = 40;
+  stagePill.x = G.W / 2; stagePill.y = 588;
   c.addChild(stagePill);
 
   function setStep(step) {
@@ -4573,28 +4579,92 @@ G.scenes.battle = function (params) {
     stagePill.addChild(g, t);
   }
 
-  // Лента инициативы: герои слева, враги справа
+  // Очередь хода в стиле XCOM: кто готов, кто отработал, кто сейчас
   const init = new PIXI.Container();
-  init.y = 46;
+  init.y = 58;
   c.addChild(init);
+
+  const QUEUE_ICONS = {
+    berserk: '⚔️', skald: '🎻', smith: '🔨', zone: '🎯',
+    bug: '🐛', krynch: '☕', deadline: '⏳',
+  };
+  B.enemyCursor = -1;
+
+  function queueSlots() {
+    const slots = [];
+    if (B.state === 'enemy' || B.state === 'intro') {
+      const foes = B.units.filter(u => u.kind === 'enemy');
+      if (foes.length) {
+        foes.forEach((e, i) => slots.push({
+          u: e,
+          status: i < B.enemyCursor ? 'done' : (i === B.enemyCursor ? 'active' : 'pending'),
+        }));
+      } else {
+        // босс: зоны не ходят, но фаза ярости видна в очереди
+        B.units.filter(u => u.kind === 'zone').forEach(z => slots.push({ u: z, status: 'pending' }));
+      }
+    } else {
+      for (const h of heroes) {
+        slots.push({
+          u: h,
+          status: !h.alive || h.acted ? 'done' : (h === B.activeHero ? 'active' : 'pending'),
+        });
+      }
+    }
+    return slots;
+  }
 
   function drawInitiative() {
     init.removeChildren();
-    let x = 24;
-    for (const u of B.units) {
-      if (u.kind === 'zone') continue;
+    const slots = queueSlots();
+    const total = slots.length * 46;
+    let x = G.W / 2 - total / 2 + 23;
+    for (const s of slots) {
+      const slot = new PIXI.Container();
+      slot.x = x; slot.y = 0;
       const g = new PIXI.Graphics();
-      g.circle(0, 0, 6).fill(u.kind === 'hero' ? (u.alive ? u.def.color : 0x3a3a3a) : G.C.enemy);
-      g.x = x;
-      init.addChild(g);
-      x += 16;
+      const isHero = s.u.kind === 'hero';
+      const col = isHero ? (s.u.alive ? s.u.def.color : 0x3a3a3a) : (s.u.kind === 'zone' ? 0x2a3240 : G.C.enemy);
+      if (s.status === 'active') {
+        g.circle(0, 0, 19).fill({ color: G.C.gold, alpha: 0.18 });
+        g.circle(0, 0, 15).fill(0x141c29);
+        g.circle(0, 0, 15).stroke({ width: 2.5, color: G.C.gold });
+        slot.scale.set(1.12);
+      } else {
+        g.circle(0, 0, 14).fill(0x141c29);
+        g.circle(0, 0, 14).stroke({ width: 2, color: s.status === 'done' ? 0x2a3240 : col, alpha: s.status === 'done' ? 0.6 : 1 });
+      }
+      const ic = new PIXI.Text({
+        text: QUEUE_ICONS[s.u.id?.split('_')[0]] || QUEUE_ICONS[s.u.defKey] || '❓',
+        style: { fontSize: 13 },
+      });
+      ic.anchor.set(0.5);
+      ic.alpha = s.status === 'done' ? 0.4 : 1;
+      if (s.status === 'done') {
+        const done = new PIXI.Text({
+          text: G.t('q_done'),
+          style: { fontFamily: G.FONT_TITLE, fontSize: 13, fill: 0x6a7a6a },
+        });
+        done.anchor.set(0.5);
+        slot.addChild(g, ic, done);
+      } else {
+        slot.addChild(g, ic);
+      }
+      if (s.status === 'active') {
+        const name = new PIXI.Text({
+          text: unitName(s.u),
+          style: {
+            fontFamily: G.FONT_BODY, fontSize: 12, fill: G.C.gold, fontWeight: 'bold',
+            stroke: { color: 0x0a0f18, width: 3 },
+          },
+        });
+        name.anchor.set(0.5, 0);
+        name.y = 18;
+        slot.addChild(name);
+      }
+      init.addChild(slot);
+      x += 46;
     }
-    // маркер активной фазы
-    const m = new PIXI.Graphics();
-    m.poly([0, -10, 7, -18, -7, -18]).fill(G.C.gold);
-    m.x = B.state === 'enemy' ? x - 8 : 24 + 0;
-    m.y = 0;
-    init.addChild(m);
     drawZoneHud();
   }
 
@@ -5275,10 +5345,18 @@ G.scenes.battle = function (params) {
     hideRing();
     clearHighlights();
     B.state = 'select';
-    setStep('hero');
     drawInitiative();
-    const left = heroes.filter(h => h.alive && !h.acted);
-    if (left.length === 0) enemyPhase();
+    // автопереключение на следующего героя — как в XCOM
+    const next = heroes.find(h => h.alive && !h.acted);
+    if (next) {
+      B.activeHero = next;
+      showRing(next);
+      showHand(next);
+      setStep('card');
+    } else {
+      setStep(null);
+      enemyPhase();
+    }
   }
 
   // --- Фаза врагов ---
@@ -5290,13 +5368,38 @@ G.scenes.battle = function (params) {
     drawInitiative();
     await sleep(350);
 
-    for (const e of B.units.filter(u => u.kind === 'enemy')) {
+    const foes = B.units.filter(u => u.kind === 'enemy');
+    for (let fi = 0; fi < foes.length; fi++) {
+      const e = foes[fi];
       if (c.destroyed || B.over) return;
-      if (!e.alive) continue;
+      if (!e.alive) { B.enemyCursor = fi; drawInitiative(); continue; }
+      B.enemyCursor = fi;
+      drawInitiative();
+      // баннер: данный враг сейчас двигается
+      const banner = new PIXI.Text({
+        text: G.t('enemy_move', { n: unitName(e) }),
+        style: {
+          fontFamily: G.FONT_TITLE, fontSize: 20, fill: G.C.enemy,
+          stroke: { color: 0x0a0f18, width: 4 },
+        },
+      });
+      banner.anchor.set(0.5);
+      banner.x = G.W / 2; banner.y = 104;
+      banner.zIndex = 70;
+      banner.alpha = 0;
+      c.addChild(banner);
+      G.tween(banner, { alpha: 1 }, 180, () => {
+        G.tween(banner, { alpha: 0 }, 420, () => {
+          if (banner.parent) c.removeChild(banner);
+          banner.destroy();
+        }, G.easeOut);
+      }, G.easeOut);
+      showRing(e);
       if (e.stunned) {
         e.stunned = false;
         const { x, y } = G.hexToPx(e.col, e.row);
         popText(x, y, '💫', 0xffe4a8);
+        hideRing();
         continue;
       }
       const def = e.def;
@@ -5347,6 +5450,7 @@ G.scenes.battle = function (params) {
           }
         }
       }
+      hideRing();
     }
 
     // босс: рёв — бьёт случайного героя
