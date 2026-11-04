@@ -561,7 +561,7 @@ G.ui = {
 
     // пропуск: всё резюме одним экраном
     const skipBtn = G.ui.button({
-      label: G.t('sheet_all'), x: 0, y: chipY + 44, w: 420, h: 44, small: true,
+      label: G.t('sheet_all'), x: 0, y: chipY + 62, w: 420, h: 44, small: true, // зазор от чипов: верх кнопки на chipY+40
       onClick: () => {
         G.sfx.play('blip');
         // лист больше не нужен — резюме целиком заменяет его
@@ -579,7 +579,7 @@ G.ui = {
     // ряд контактов: собираем, меряем, центрируем
     const contactBtns = [];
     const mkContact = (label, onClick, primary) => contactBtns.push(G.ui.button({
-      label, x: 0, y: chipY + 112, w: 10, h: 48, primary, small: true, onClick,
+      label, x: 0, y: chipY + 126, w: 10, h: 48, primary, small: true, onClick,
     }));
     mkContact(G.t('sheet_mail'), () => {
       const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
