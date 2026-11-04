@@ -117,13 +117,13 @@ G.BUILDINGS = [
     facts: [
       {
         id: 'echoloop', icon: '🌀', link: 'https://github.com/Kerarty/echoloop-playble',
-        ru: { t: 'echoloop-playble', d: 'Головоломка вокруг одной механики: действия игрока возвращаются эхом. 8 уровней учат петле через игру, без туториалов', s: '8 уровней · Unity 6 + URP' },
-        en: { t: 'echoloop-playble', d: 'A puzzle around one mechanic: player actions return as echoes. 8 levels teach the loop through play, no tutorials', s: '8 levels · Unity 6 + URP' },
+        ru: { t: 'echoloop-playble', d: 'Головоломка об эхе действий: всё возвращается. 8 уровней учат петле без туториалов', s: '8 уровней · Unity 6 + URP' },
+        en: { t: 'echoloop-playble', d: 'One mechanic: actions return as echoes. 8 levels teach the loop without tutorials', s: '8 levels · Unity 6 + URP' },
       },
       {
         id: 'unity', icon: '⚙️',
-        ru: { t: 'Стек Unity', d: 'Проектирую фичи от схемы до плейтеста: сцены, префабы, физика, URP — вижу связь механики и реализации', s: 'Unity 6' },
-        en: { t: 'Unity stack', d: 'Design from sketch to playtest: scenes, prefabs, physics, URP — I see how mechanics map to implementation', s: 'Unity 6' },
+        ru: { t: 'Стек Unity', d: 'Проектирую фичи от схемы до плейтеста: сцены, префабы, физика, URP', s: 'Unity 6' },
+        en: { t: 'Unity stack', d: 'Design from sketch to playtest: scenes, prefabs, physics, URP', s: 'Unity 6' },
       },
     ],
   },
@@ -133,18 +133,18 @@ G.BUILDINGS = [
     facts: [
       {
         id: 'mobrush', icon: '🏃', link: 'https://github.com/Kerarty/playable-ad-mob-rush',
-        ru: { t: 'playable-ad-mob-rush', d: 'Core читается за 15 секунд без текста, онбординг — первым касанием, ретеншен-петля на 30 секунд. Графика и звук процедурные', s: '472 КБ · MRAID' },
-        en: { t: 'playable-ad-mob-rush', d: 'Core reads in 15 seconds, no text; onboarding is the first touch; a 30-second retention loop. Procedural art & sound', s: '472 KB · MRAID' },
+        ru: { t: 'playable-ad-mob-rush', d: 'Core за 15 секунд без текста, онбординг — первым касанием. Графика и звук процедурные', s: '472 КБ · MRAID' },
+        en: { t: 'playable-ad-mob-rush', d: 'Core reads in 15 seconds, onboarding is the first touch. Procedural art & sound', s: '472 KB · MRAID' },
       },
       {
         id: 'kitty', icon: '🐱', link: 'https://github.com/Kerarty/splash-kitty-playable-ad',
-        ru: { t: 'splash-kitty', d: 'Физическая головоломка на matter.js: один вход, мягкий фейл и петля «ещё раз» — конверсионная механика плейбла', s: '684 КБ · 0 запросов' },
-        en: { t: 'splash-kitty', d: 'A matter.js physics toy: one input, soft fail, an "again" loop — the classic playable conversion mechanic', s: '684 KB · 0 requests' },
+        ru: { t: 'splash-kitty', d: 'Физическая головоломка на matter.js: мягкий фейл и петля «ещё раз» — конверсионная механика', s: '684 КБ · 0 запросов' },
+        en: { t: 'splash-kitty', d: 'A matter.js physics toy: soft fail and an "again" loop — the classic conversion mechanic', s: '684 KB · 0 requests' },
       },
       {
         id: 'sdk', icon: '🧩', link: 'https://github.com/Kerarty/playble-ads',
         ru: { t: 'playble-ads SDK', d: 'Движко-независимый SDK с адаптерами рекламных сетей — понимаю плейблы и как бизнес-модель', s: 'MIT' },
-        en: { t: 'playble-ads SDK', d: 'Engine-agnostic SDK with ad-network adapters — playables as a business model, not just design', s: 'MIT' },
+        en: { t: 'playble-ads SDK', d: 'Engine-agnostic SDK with ad-network adapters — playables as a business model', s: 'MIT' },
       },
     ],
   },
@@ -154,8 +154,8 @@ G.BUILDINGS = [
     facts: [
       {
         id: 'balab', icon: '⚖️', link: 'https://github.com/Kerarty/cv-top-games',
-        ru: { t: 'Баланс-лаба', d: 'Стенд merge-автобатлера: моделирую бои, тюню характеристики и сразу вижу влияние правок на исход', s: 'merge-автобатлер' },
-        en: { t: 'Balance lab', d: 'A merge-autobattler stand: simulate fights, tune stats, instantly see the outcome — balance as data work', s: 'merge autobattler' },
+        ru: { t: 'Баланс-лаба', d: 'Стенд merge-автобатлера: моделирую бои, тюню характеристики и сразу вижу исход правок', s: 'merge-автобатлер' },
+        en: { t: 'Balance lab', d: 'A merge-autobattler stand: simulate fights, tune stats, see the outcome instantly', s: 'merge autobattler' },
       },
       {
         id: 'gametech', icon: '📅', link: 'https://github.com/Kerarty/cv-gametech',
@@ -164,13 +164,13 @@ G.BUILDINGS = [
       },
       {
         id: 'eridora', icon: '🏰',
-        ru: { t: 'Варгейм «Эридора»', d: 'Настольная тактика на 4 фракции: боевые механики, захват территорий, баланс юнитов. 15+ плейтестов и итерации по фидбеку', s: '15+ плейтестов' },
-        en: { t: '"Eridor" wargame', d: 'A tabletop tactics for 4 factions: combat, territory capture, unit balance. 15+ playtests, iterated on feedback', s: '15+ playtests' },
+        ru: { t: 'Варгейм «Эридора»', d: 'Настольная тактика на 4 фракции: бои, захват территорий, баланс юнитов. 15+ плейтестов', s: '15+ плейтестов' },
+        en: { t: '"Eridor" wargame', d: 'Tabletop tactics for 4 factions: combat, territory control, unit balance. 15+ playtests', s: '15+ playtests' },
       },
       {
         id: 'gdd', icon: '📐',
-        ru: { t: 'GDD стратегии', d: 'Концепт-документ стратегии с градостроителем: механики, прогрессия, баланс ресурсов — под передачу команде', s: 'полный GDD' },
-        en: { t: 'Strategy GDD', d: 'A strategy concept doc: mechanics, progression, resource balance — structured for team hand-off', s: 'full GDD' },
+        ru: { t: 'GDD стратегии', d: 'Концепт-документ стратегии: механики, прогрессия, баланс ресурсов — под передачу команде', s: 'полный GDD' },
+        en: { t: 'Strategy GDD', d: 'Strategy concept doc: mechanics, progression, resource balance — ready for team hand-off', s: 'full GDD' },
       },
       {
         id: 'lesta', icon: '🎯', link: 'https://github.com/Kerarty/cv-lesta',
@@ -185,8 +185,8 @@ G.BUILDINGS = [
     facts: [
       {
         id: 'cvs', icon: '🎮', link: 'https://github.com/Kerarty',
-        ru: { t: 'Резюме-игры', d: 'Под каждую студию — свой жанр. Эта — тактика в сеттинге I, Viking: механики Gloomhaven, free-aim из Phoenix Point', s: '12+' },
-        en: { t: 'Résumé games', d: 'A genre for every studio. This one: tactics in the I, Viking setting — Gloomhaven mechanics, Phoenix Point free-aim', s: '12+' },
+        ru: { t: 'Резюме-игры', d: 'Под каждую студию — свой жанр. Эта: тактика в сеттинге I, Viking с механиками Gloomhaven', s: '12+' },
+        en: { t: 'Résumé games', d: 'A genre for every studio. This one: I, Viking tactics with Gloomhaven mechanics', s: '12+' },
       },
       {
         id: 'lang', icon: '🌍',

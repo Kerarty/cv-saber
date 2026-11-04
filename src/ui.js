@@ -391,15 +391,36 @@ G.ui = {
     // аватар: медальон со спрайтом воина Tiny Swords (фолбэк — процедурный викинг)
     const avatar = new PIXI.Container();
     avatar.x = -w / 2 + 128; avatar.y = -70;
-    const halo = new PIXI.Graphics();
     const R = 96;
+    const halo = new PIXI.Graphics();
     halo.circle(0, 14, R + 30).fill({ color: G.C.goldDark, alpha: 0.07 });
-    halo.circle(0, 14, R + 10).stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.45 });
-    halo.circle(0, 14, R).fill(0x2c2115);
-    halo.circle(0, 14, R).stroke({ width: 3, color: G.C.goldDark });
-    halo.circle(0, 20, R - 16).fill({ color: 0xffe0a0, alpha: 0.09 });
+    // мини-сцена внутри медальона: небо, звёзды, луна, трава
+    const scene = new PIXI.Container();
+    const sky = new PIXI.Graphics();
+    sky.circle(0, 14, R).fill(G.viz.gradient(0, -R, 0, R + 14, [
+      [0, 0x081120], [0.55, 0x122340], [1, 0x1b2d4e],
+    ]));
+    for (let i = 0; i < 9; i++) {
+      const a = Math.random() * Math.PI * 2, rr = Math.random() * (R - 18);
+      const sx = Math.cos(a) * rr, sy = 14 + Math.sin(a) * rr * 0.8 - 26;
+      if (sy < 40) sky.circle(sx, sy, 0.7 + Math.random() * 0.9).fill({ color: 0xdfe9f2, alpha: 0.5 + Math.random() * 0.4 });
+    }
+    sky.circle(R * 0.42, -R * 0.42, 12).fill({ color: 0xcfe0f0, alpha: 0.12 });
+    sky.circle(R * 0.42, -R * 0.42, 7.5).fill(0xdfe9f2);
+    // травяной сегмент: круг ниже уровня y=70, строго внутри медальона
+    const gY = 14 + R - 42;
+    const halfW = Math.sqrt((R - 2) * (R - 2) - (gY - 14) * (gY - 14));
+    const a0 = Math.atan2(gY - 14, halfW);
+    sky.arc(0, 14, R - 2, a0, Math.PI - a0).lineTo(-halfW, gY).closePath().fill(0x2f5a46);
+    sky.arc(0, 14, R - 2, a0, Math.PI - a0).lineTo(-halfW, gY).closePath()
+      .stroke({ width: 2, color: 0x3f7057, alpha: 0.9 });
+    // кустики на холмике
+    sky.circle(-R * 0.45, gY + 12, 5).fill(0x27493a);
+    sky.circle(-R * 0.32, gY + 20, 3.5).fill(0x27493a);
+    sky.circle(R * 0.55, gY + 16, 4.5).fill(0x27493a);
+    scene.addChild(sky);
+    // процедурный викинг — фолбэк, если спрайты не загрузились
     const av = new PIXI.Graphics();
-    av.scale.set(1);
     const OUT = 0x0a0f18;
     av.circle(0, 32, 18).fill({ color: 0x000000, alpha: 0.16 });
     // плащ
@@ -441,21 +462,27 @@ G.ui = {
       .quadraticCurveTo(19.5, -25, 11.5, -19.5).closePath().fill(0xd8d8d8).stroke({ width: 1.5, color: OUT });
     av.moveTo(-12, -18.5).lineTo(-9, -20).stroke({ width: 2, color: 0x6a4520 });
     av.moveTo(12, -18.5).lineTo(9, -20).stroke({ width: 2, color: 0x6a4520 });
-    avatar.addChild(halo);
     if (G.TEX && G.TEX.hero_warrior_idle) {
-      // спрайтовый воин в медальоне
+      // воин стоит на травяном холмике
       const fr = G.TEX.hero_warrior_idle.frames[0];
       const sp = new PIXI.Sprite(fr);
-      sp.anchor.set(0.5, 0.66);
-      const sc = (R * 2.3) / 192;
+      sp.anchor.set(0.5, 0.86);
+      const sc = (R * 1.62) / 192;
       sp.scale.set(sc, sc);
-      sp.x = 0; sp.y = 30;
-      avatar.addChild(sp);
+      sp.x = -4; sp.y = gY + 20;
+      scene.addChild(sp);
     } else {
-      // процедурный фолбэк
-      av.scale.set(3.1);
-      avatar.addChild(av);
+      // процедурный фолбэк — портрет викинга в круге
+      av.scale.set(2.6);
+      av.x = 0; av.y = 30;
+      scene.addChild(av);
     }
+    avatar.addChild(scene);
+    // золотые кольца поверх сцены
+    const ringG = new PIXI.Graphics();
+    ringG.circle(0, 14, R).stroke({ width: 3.5, color: G.C.goldDark });
+    ringG.circle(0, 14, R + 10).stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.45 });
+    avatar.addChild(ringG);
     c.addChild(avatar);
 
     // имя и роль
@@ -629,8 +656,9 @@ G.ui.factRow = function (fact, w = 400) {
   const g = new PIXI.Graphics();
   const draw = (hover) => {
     g.clear();
-    g.roundRect(0, 0, w, 70, 8).fill(hover ? 0xfff2d0 : 0xf4e6c0);
-    g.roundRect(0, 0, w, 70, 8).stroke({ width: 1.5, color: hover ? G.C.goldDark : 0xd8c49a });
+    const rh = cc.h || 70;
+    g.roundRect(0, 0, w, rh, 8).fill(hover ? 0xfff2d0 : 0xf4e6c0);
+    g.roundRect(0, 0, w, rh, 8).stroke({ width: 1.5, color: hover ? G.C.goldDark : 0xd8c49a });
     g.circle(24, 29, 14).fill(0x2c2115);
     g.circle(24, 29, 14).stroke({ width: 1, color: G.C.goldDark, alpha: 0.8 });
   };
@@ -643,29 +671,33 @@ G.ui.factRow = function (fact, w = 400) {
     style: { fontFamily: G.FONT_SERIF, fontSize: 13, fill: G.C.ink, wordWrap: true, wordWrapWidth: w - 190, lineHeight: 14 },
   });
   title.x = 46; title.y = 8;
-  const desc = new PIXI.Text({
-    text: L.d,
-    style: { fontFamily: G.FONT_BODY, fontSize: 11, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 60, lineHeight: 14 },
-  });
-  desc.x = 46; desc.y = 28 + (title.height > 15 ? 13 : 0);
+  // чип статистики — на строке заголовка справа (заголовок уже не доходит до него)
   const chipText = new PIXI.Text({
     text: L.s,
     style: { fontFamily: G.FONT_TITLE, fontSize: 11, fill: 0xffe4a8 },
   });
   const chip = new PIXI.Graphics();
-  chip.roundRect(w - chipText.width - 20, 18, chipText.width + 14, 21, 10)
+  chip.roundRect(w - chipText.width - 20, 6, chipText.width + 14, 21, 10)
     .fill({ color: 0x241c12 })
     .stroke({ width: 1, color: G.C.goldDark });
-  chipText.x = w - chipText.width - 13; chipText.y = 29;
+  chipText.x = w - chipText.width - 13; chipText.y = 17;
+  // описание ниже чипа, на полную ширину строки
+  const desc = new PIXI.Text({
+    text: L.d,
+    style: { fontFamily: G.FONT_BODY, fontSize: 11, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 60, lineHeight: 13 },
+  });
+  desc.x = 46; desc.y = 42;
   cc.addChild(g, icon, title, desc, chip, chipText);
   if (fact.link) {
-    const arr = new PIXI.Text({ text: '↗', style: { fontSize: 11, fill: G.C.heroBlue } });
-    arr.x = w - 16; arr.y = 2;
+    const arr = new PIXI.Text({ text: '↗', style: { fontSize: 11, fill: G.C.tealDark } });
+    arr.x = w - 16; arr.y = 50;
     cc.addChild(arr);
     cc.on('pointertap', () => window.open(fact.link, '_blank'));
   }
   cc.on('pointerover', () => draw(true));
   cc.on('pointerout', () => draw(false));
+  cc.h = Math.max(70, desc.y + desc.height + 8);   // высота строки подгоняется под описание
+  draw(false);                                     // фон под фактическую высоту
   return cc;
 };
 
@@ -723,7 +755,7 @@ G.ui.fullResume = function ({ onClose }) {
         const delay = 200 + rowIdx * 45;
         setTimeout(() => { if (!row.destroyed) G.tween(row, { alpha: 1 }, 240, null, G.easeOut); }, delay);
         rowIdx++;
-        y += 72;
+        y += (row.h || 70) + 6;
       }
       y += 10;
     }

@@ -1619,9 +1619,9 @@ G.ui.drawCard = function (card, index, heroColor) {
   });
   icon.anchor.set(0.5);
   const iconBg = new PIXI.Graphics();
-  iconBg.circle(w - 21, 20, 15).fill(0x2c2115);
-  iconBg.circle(w - 21, 20, 15).stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.9 });
-  icon.x = w - 21; icon.y = 20;
+  iconBg.circle(w - 19, 17, 12).fill(0x2c2115);
+  iconBg.circle(w - 19, 17, 12).stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.9 });
+  icon.x = w - 19; icon.y = 17;
   const name = new PIXI.Text({
     text: G.t('c_' + card.id),
     style: { fontFamily: G.FONT_TITLE, fontSize: 13, fill: G.C.ink, letterSpacing: 0.5 },
