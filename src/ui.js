@@ -388,14 +388,18 @@ G.ui = {
     const grain = G.viz.grain(w, h, 0.045);
     grain.x = -w / 2; grain.y = -h / 2;
     c.addChild(sheet, g, grain);
-    // аватар: викинг с кольчугой, косами и щитом
+    // аватар: медальон со спрайтом воина Tiny Swords (фолбэк — процедурный викинг)
     const avatar = new PIXI.Container();
-    avatar.x = -w / 2 + 140; avatar.y = -30;
+    avatar.x = -w / 2 + 128; avatar.y = -70;
     const halo = new PIXI.Graphics();
-    halo.circle(0, 10, 92).fill({ color: G.C.gold, alpha: 0.06 });
-    halo.circle(0, 10, 72).fill({ color: G.C.gold, alpha: 0.05 });
+    const R = 96;
+    halo.circle(0, 14, R + 30).fill({ color: G.C.goldDark, alpha: 0.07 });
+    halo.circle(0, 14, R + 10).stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.45 });
+    halo.circle(0, 14, R).fill(0x2c2115);
+    halo.circle(0, 14, R).stroke({ width: 3, color: G.C.goldDark });
+    halo.circle(0, 20, R - 16).fill({ color: 0xffe0a0, alpha: 0.09 });
     const av = new PIXI.Graphics();
-    av.scale.set(3.1);
+    av.scale.set(1);
     const OUT = 0x0a0f18;
     av.circle(0, 32, 18).fill({ color: 0x000000, alpha: 0.16 });
     // плащ
@@ -437,7 +441,21 @@ G.ui = {
       .quadraticCurveTo(19.5, -25, 11.5, -19.5).closePath().fill(0xd8d8d8).stroke({ width: 1.5, color: OUT });
     av.moveTo(-12, -18.5).lineTo(-9, -20).stroke({ width: 2, color: 0x6a4520 });
     av.moveTo(12, -18.5).lineTo(9, -20).stroke({ width: 2, color: 0x6a4520 });
-    avatar.addChild(halo, av);
+    avatar.addChild(halo);
+    if (G.TEX && G.TEX.hero_warrior_idle) {
+      // спрайтовый воин в медальоне
+      const fr = G.TEX.hero_warrior_idle.frames[0];
+      const sp = new PIXI.Sprite(fr);
+      sp.anchor.set(0.5, 0.66);
+      const sc = (R * 2.3) / 192;
+      sp.scale.set(sc, sc);
+      sp.x = 0; sp.y = 30;
+      avatar.addChild(sp);
+    } else {
+      // процедурный фолбэк
+      av.scale.set(3.1);
+      avatar.addChild(av);
+    }
     c.addChild(avatar);
 
     // имя и роль
@@ -552,9 +570,13 @@ G.ui = {
     }, false);
     mkContact(G.t('sheet_github'), () => window.open(G.CONFIG.github, '_blank'), false);
     const gapC = 16;
-    const totalC = contactBtns.reduce((acc, b) => acc + b.width, 0) + gapC * (contactBtns.length - 1);
+    let totalC = contactBtns.reduce((acc, b) => acc + b.width, 0) + gapC * (contactBtns.length - 1);
+    // ряд не шире пергамента: иначе кнопки пропорционально сжимаются
+    const fitK = Math.min(1, (w - 56) / totalC);
+    if (fitK < 1) for (const b of contactBtns) b.scale.set(fitK);
+    totalC *= fitK;
     let cx2 = -totalC / 2;
-    for (const b of contactBtns) { b.x = cx2 + b.width / 2; cx2 += b.width + gapC; }
+    for (const b of contactBtns) { b.x = cx2 + b.width * fitK / 2; cx2 += b.width * fitK + gapC; }
     c.addChild(...contactBtns);
 
     if (onClose) c.addChild(G.ui.button({ label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true, onClick: onClose }));

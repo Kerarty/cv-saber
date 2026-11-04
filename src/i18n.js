@@ -35,7 +35,7 @@ G.T = {
     sheet_title: 'Лист кандидата',
     sheet_stats: 'Характеристики',
     sheet_contacts: 'Контакты',
-    sheet_mail: '✉ Написать мне на почту',
+    sheet_mail: '✉ Написать мне',
     sheet_pdf: '⬇ Скачать PDF',
     sheet_all: '⏭ Пропустить — всё резюме сразу',
     fr_title: 'Резюме целиком',
