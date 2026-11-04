@@ -6060,8 +6060,8 @@ G.scenes.battle = function (params) {
   bg.addChild(depth);
   c.addChild(bg);
 
-  // остров: шельф-тень в воде, затем травяной массив
-  const FIELD = { x: 148, y: 44, w: 1010, h: 558 };
+  // остров шире поля: вокруг гексов остаётся травяная кромка под деревья
+  const FIELD = { x: 100, y: 26, w: 1100, h: 590 };
   const shelf = new PIXI.Graphics();
   shelf.roundRect(FIELD.x - 10, FIELD.y - 8, FIELD.w + 20, FIELD.h + 16, 30)
     .fill({ color: 0x051019, alpha: 0.4 });
@@ -6174,17 +6174,20 @@ G.scenes.battle = function (params) {
     cont.addChild(sp);
   };
   if (G.TEX) {
-    putSprite(edgePlants, 'tree1', 0, 196, 210, 150, 0.95);
-    putSprite(edgePlants, 'tree2', 1, 1092, 190, 140, 0.95);
-    putSprite(edgePlants, 'tree4', 2, 1130, 400, 120, 0.9);
-    putSprite(edgePlants, 'tree3', 3, 176, 430, 115, 0.9);
-    putSprite(edgePlants, 'tree1', 4, 620, 120, 110, 0.75);
-    putSprite(edgePlants, 'bush1', 0, 300, 156, 44, 0.9);
-    putSprite(edgePlants, 'bush2', 2, 480, 142, 40, 0.9);
-    putSprite(edgePlants, 'bush3', 4, 830, 146, 42, 0.9);
-    putSprite(edgePlants, 'bush4', 6, 1000, 158, 44, 0.9);
-    putSprite(edgePlants, 'rock4', 0, 130, 300, 40, 0.9);
-    putSprite(edgePlants, 'rock4', 0, 1160, 540, 36, 0.9);
+    // левая кромка (гексы начинаются с x=202)
+    putSprite(edgePlants, 'tree1', 0, 152, 195, 130, 1);
+    putSprite(edgePlants, 'bush2', 3, 172, 318, 34, 1);
+    putSprite(edgePlants, 'tree3', 3, 163, 425, 112, 1);
+    putSprite(edgePlants, 'rock4', 0, 168, 545, 36, 1);
+    // правая кромка (гексы кончаются x=1014)
+    putSprite(edgePlants, 'tree2', 1, 1062, 195, 135, 1);
+    putSprite(edgePlants, 'bush4', 6, 1152, 300, 34, 1);
+    putSprite(edgePlants, 'tree4', 2, 1122, 415, 118, 1);
+    putSprite(edgePlants, 'tree1', 4, 1102, 565, 110, 1);
+    // верхняя кромка над первым рядом гексов (их верх ~y=80)
+    putSprite(edgePlants, 'bush1', 0, 350, 70, 32, 1);
+    putSprite(edgePlants, 'bush3', 4, 720, 66, 30, 1);
+    putSprite(edgePlants, 'bush2', 6, 980, 68, 30, 1);
   }
 
   // Светлячки над полем
@@ -6883,9 +6886,29 @@ G.scenes.battle = function (params) {
     }
   }
 
-  // Перерисовать юнита (hp/щит/состояние)
+  // Перерисовать юнита (hp/щит/состояние); усталый, поднятый лечением, собирается заново
   function refresh(u) {
-    if (!u.view || u.view.destroyed) return;
+    if (u.view && !u.view.destroyed && u.view.__dying && u.alive) {
+      // подняли до конца анимации смерти — старый вид сжигаем, твины отваливаются сами
+      if (u.view.parent) u.view.parent.removeChild(u.view);
+      u.view.destroy({ children: true });
+      u.view = null;
+    }
+    if (!u.view || u.view.destroyed) {
+      if (!u.alive) return;
+      u.view = new PIXI.Container();
+      u.view.eventMode = 'static';
+      u.view.on('pointertap', () => onUnitTap(u));
+      u.body = null;
+      drawUnitView(u);
+      const px = G.hexToPx(u.col, u.row);
+      u.view.x = px.x; u.view.y = px.y;
+      u.view.zIndex = 10;
+      c.addChild(u.view);
+      u.view.alpha = 0;
+      G.tween(u.view, { alpha: 1 }, 260, null, G.easeOut);
+      return;
+    }
     const { x, y } = G.hexToPx(u.col, u.row);
     u.view.x = x; u.view.y = y;
     drawUnitView(u);
@@ -6993,8 +7016,19 @@ G.scenes.battle = function (params) {
     u.alive = false;
     u.hp = 0;
     G.sfx.play(u.kind === 'hero' ? 'thud' : 'hit');
+    // трупов не оставляем: юнит гаснет и уходит со сцены целиком
+    if (u.view && !u.view.destroyed) {
+      u.view.__dying = true;
+      G.tween(u.view, { alpha: 0 }, 360, () => {
+        if (!u.alive && u.view && !u.view.destroyed) {
+          if (u.view.parent) u.view.parent.removeChild(u.view);
+          u.view.destroy({ children: true });
+          u.view = null;
+        }
+      });
+    }
     if (u.kind === 'enemy' || u.kind === 'zone') {
-      // спрайтовый взрыв + угасание
+      // спрайтовый взрыв
       const ex = G.art.anim('fx_explosion', {
         h: 96, fps: 15, loop: false,
         onDone: () => { if (ex.view.parent) ex.view.parent.removeChild(ex.view); ex.view.destroy(); },
@@ -7006,7 +7040,6 @@ G.scenes.battle = function (params) {
         c.addChild(ex.view);
       }
       G.fxParticles.burst(u.view.x, u.view.y, 0xffb070, 10, { size: 3, speed: 130, ttl: 560 });
-      G.tween(u.view, { alpha: 0.15 }, 400);
       if (u.kind === 'zone') onZoneDestroyed(u);
     }
     if (u.kind === 'hero') {
