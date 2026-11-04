@@ -12,3 +12,7 @@ Thumbs.db
 .idea/
 .vscode/
 fub.zip
+
+# временные папки ресёрча ассетов
+_dump/
+_downloads/
