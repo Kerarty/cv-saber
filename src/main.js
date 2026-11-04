@@ -71,7 +71,9 @@
   // Снег — глобальный слой поверх сцен; частицы — ещё выше
   G.fxSnow.init(app.stage);
   G.fxParticles.init(app.stage);
-  app.stage.addChild((G.muteBtn = G.ui.muteButton()));
+  // кнопка звука в мировых координатах — на широких экранах угол игры, а не окна
+  G.muteBtn = G.ui.muteButton();
+  G.world.addChild(G.muteBtn);
 
   // Letterbox-масштабирование под любой экран
   function resize() {
@@ -83,7 +85,6 @@
     G.world.x = (vw - G.W * s) / 2;
     G.world.y = (vh - G.H * s) / 2;
     G.fxShake.base = { x: G.world.x, y: G.world.y };
-    G.muteBtn.y = Math.max(34, 34 / s);
   }
   window.addEventListener('resize', resize);
   resize();

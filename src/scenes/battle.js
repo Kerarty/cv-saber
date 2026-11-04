@@ -219,13 +219,13 @@ G.scenes.battle = function (params) {
     style: { fontFamily: G.FONT_BODY, fontSize: 17, fill: G.C.text },
   });
   roundLabel.anchor.set(1, 0);
-  roundLabel.x = G.W - 24; roundLabel.y = 40;
+  roundLabel.x = G.W - 76; roundLabel.y = 40;   // угол занят кнопкой звука
   const phaseLabel = new PIXI.Text({
     text: G.t('phase_player'),
     style: { fontFamily: G.FONT_BODY, fontSize: 17, fill: G.C.heroBlue, fontWeight: 'bold' },
   });
   phaseLabel.anchor.set(1, 0);
-  phaseLabel.x = G.W - 24; phaseLabel.y = 16;
+  phaseLabel.x = G.W - 76; phaseLabel.y = 16;
   c.addChild(waveLabel, roundLabel, phaseLabel);
 
   // Трекер фаз раунда: [Твой ход | Враги | Раунд]
@@ -1043,6 +1043,8 @@ G.scenes.battle = function (params) {
   }
 
   function showDefeat() {
+    hideRing();
+    clearHighlights();
     const p = new PIXI.Container();
     p.zIndex = 80;
     const pw = 520, ph = 220;
@@ -1475,6 +1477,8 @@ G.scenes.battle = function (params) {
     G.sfx.play('chime');
     G.stats.rounds += B.round;
     G.progress = waveIdx + 1;
+    hideRing();
+    clearHighlights();
     const ov = new PIXI.Container();
     ov.zIndex = 85;
     ov.eventMode = 'static';
@@ -1483,8 +1487,10 @@ G.scenes.battle = function (params) {
     ov.addChild(dim);
     const pw = 480, ph = 260;
     const sheet = G.ui.parchment(pw, ph);
+    sheet.x = G.W / 2; sheet.y = G.H / 2;   // панель в центре, текст уже ждёт её там
     const pg = new PIXI.Graphics();
     G.ui.fancyFrame(pg, pw, ph);
+    pg.x = G.W / 2; pg.y = G.H / 2;
     ov.addChild(sheet, pg);
     const head = new PIXI.Text({
       text: G.t('wave_clear_title'),
@@ -1541,7 +1547,7 @@ G.scenes.battle = function (params) {
   };
 
   // отладочный доступ для автотестов
-  G.battleCtx = { B, heroes, playCard, onHexTap, onUnitTap, advanceMove, advanceAct, enemyPhase, dealHands, startWave };
+  G.battleCtx = { B, heroes, playCard, onHexTap, onUnitTap, advanceMove, advanceAct, enemyPhase, dealHands, startWave, waveClear, showDefeat };
 
   return c;
 };

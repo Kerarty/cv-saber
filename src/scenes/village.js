@@ -78,8 +78,8 @@ G.scenes.village = function (params) {
     text: G.CONFIG.name + ' · ' + G.CONFIG.role[G.lang],
     style: { fontFamily: G.FONT_BODY, fontSize: 15, fill: G.C.textDim, letterSpacing: 1 },
   });
-  tag.anchor.set(0, 1);
-  tag.x = 24; tag.y = G.H - 14;
+  tag.anchor.set(1, 1);
+  tag.x = G.W - 24; tag.y = G.H - 14;
   c.addChild(head, hint, tag);
 
   // --- Постройки ---

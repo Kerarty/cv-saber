@@ -66,6 +66,11 @@ G.art = {
     mk(3, 0, t, l, ih);
     mk(5, w - r, t, r, ih);
     mk(4, l, t, iw, ih);
+    // перекрытие стыков на 1px: на швах между квадами иначе просвечивает тень
+    c.children.forEach(sp => {
+      if (sp.x > 0 && sp.x + sp.width < w - 0.5) sp.width += 1;
+      if (sp.y > 0 && sp.y + sp.height < h - 0.5) sp.height += 1;
+    });
     if (opts.tint !== undefined) c.children.forEach(ch => { ch.tint = opts.tint; });
     if (opts.alpha !== undefined) c.alpha = opts.alpha;
     return c;
@@ -113,17 +118,24 @@ G.art = {
     return c;
   },
 
-  // Деревянная плашка: тайлинг текстуры + рамка
+  // Деревянная плашка: сетка спрайтов с перекрытием (без швов TilingSprite) + рамка
   wood(w, h, opts = {}) {
     const c = new PIXI.Container();
     if (opts.shadow !== false) c.addChild(this.shadow(w, h, { alpha: 0.38, r: 7, dx: 4, dy: 5 }));
     const m = G.UI9 && G.UI9.wood;
     const t = m && G.TEX[m.asset] ? this.frame(m.asset, m.cells[4]) : null;
     if (t) {
-      const ts = new PIXI.TilingSprite({ texture: t, width: w, height: h });
-      ts.tint = opts.tint === undefined ? 0x8a6a4a : opts.tint;
-      ts.x = -w / 2; ts.y = -h / 2;
-      c.addChild(ts);
+      const cw = m.cells[4].w, ch = m.cells[4].h;
+      for (let y = 0; y < h; y += ch) {
+        for (let x = 0; x < w; x += cw) {
+          const sp = new PIXI.Sprite(t);
+          sp.x = -w / 2 + x; sp.y = -h / 2 + y;
+          sp.width = Math.min(cw + 1, w - x);   // +1: перекрытие стыка
+          sp.height = Math.min(ch + 1, h - y);
+          if (opts.tint !== undefined) sp.tint = opts.tint;
+          c.addChild(sp);
+        }
+      }
     } else {
       const g = new PIXI.Graphics();
       g.rect(-w / 2, -h / 2, w, h).fill(opts.tint === undefined ? G.C.wood : opts.tint);
@@ -205,43 +217,29 @@ G.art = {
     return c;
   },
 
-  // Остров из 3×3 тайлов травы: углы + тайлинг краёв и центра
+  // Остров из 3×3 тайлов травы: сетка спрайтов с перекрытием 1px —
+  // TilingSprite по суб-прямоугольнику атласа даёт тёмные швы на стыках
   island(w, h, opts = {}) {
     const c = new PIXI.Container();
     const base = G.TEX && G.TEX.terrain_island;
     if (!base) return c;
     const cell = (x, y) => this.frame('terrain_island', { x, y, w: 64, h: 64 });
-    const mk = (tex, x, y, sw, sh) => {
-      if (!tex) return null;
-      const sp = new PIXI.Sprite(tex);
-      sp.x = x; sp.y = y;
-      if (sw !== undefined) sp.width = sw;
-      if (sh !== undefined) sp.height = sh;
-      if (opts.tint !== undefined) sp.tint = opts.tint;
-      c.addChild(sp);
-      return sp;
-    };
     const W = Math.max(192, Math.round(w / 64) * 64);
     const H = Math.max(192, Math.round(h / 64) * 64);
-    // углы
-    mk(cell(0, 0), 0, 0);
-    mk(cell(128, 0), W - 64, 0);
-    mk(cell(0, 128), 0, H - 64);
-    mk(cell(128, 128), W - 64, H - 64);
-    // края и центр — тайлингом, чтобы текстура не растягивалась
-    const tile = (tex, x, y, tw, th) => {
-      if (!tex) return null;
-      const ts = new PIXI.TilingSprite({ texture: tex, width: tw, height: th });
-      ts.x = x; ts.y = y;
-      if (opts.tint !== undefined) ts.tint = opts.tint;
-      c.addChild(ts);
-      return ts;
-    };
-    tile(cell(64, 0), 64, 0, W - 128, 64);
-    tile(cell(64, 128), 64, H - 64, W - 128, 64);
-    tile(cell(0, 64), 0, 64, 64, H - 128);
-    tile(cell(128, 64), W - 64, 64, 64, H - 128);
-    tile(cell(64, 64), 64, 64, W - 128, H - 128);
+    const cols = W / 64, rows = H / 64;
+    for (let cy = 0; cy < rows; cy++) {
+      for (let cx = 0; cx < cols; cx++) {
+        const sx = cx === 0 ? 0 : cx === cols - 1 ? 128 : 64;
+        const sy = cy === 0 ? 0 : cy === rows - 1 ? 128 : 64;
+        const sp = new PIXI.Sprite(cell(sx, sy));
+        sp.x = cx * 64; sp.y = cy * 64;
+        // перекрытие справа/снизу, кроме самой последней ячейки: швы закрыты
+        if (cx < cols - 1) sp.width = 65;
+        if (cy < rows - 1) sp.height = 65;
+        if (opts.tint !== undefined) sp.tint = opts.tint;
+        c.addChild(sp);
+      }
+    }
     c.__w = W; c.__h = H;
     return c;
   },

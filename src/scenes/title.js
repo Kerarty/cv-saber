@@ -157,13 +157,13 @@ G.scenes.title = function () {
   });
   c.addChild(btnPlay, btnResume);
 
-  // Подпись кандидата
+  // Подпись кандидата — правый нижний угол, чтобы не встречалась с кнопками
   const tag = new PIXI.Text({
     text: G.t('title_tag'),
     style: { fontFamily: G.FONT_BODY, fontSize: 15, fill: G.C.textDim, letterSpacing: 1 },
   });
-  tag.anchor.set(0, 1);
-  tag.x = 24; tag.y = G.H - 16;
+  tag.anchor.set(1, 1);
+  tag.x = G.W - 24; tag.y = G.H - 16;
   c.addChild(tag);
 
   const langT = G.ui.langToggle();
