@@ -297,8 +297,7 @@ G.scenes.village = function (params) {
     setTimeout(() => { if (!c.destroyed) G.ui.toast(G.t('village_unlocked', { n: G.t(def.titleKey).split('·')[0].trim() }), 2200); }, 400);
   }
 
-  // Анимация: качание драккара, дрейф воды, мерцание огней, дым из кузницы
-  let lastSmoke = 0;
+  // Анимация: качание драккара, дрейф воды, мерцание огней
   c.tick = (dtMs) => {
     aur.update();
     const t = performance.now() / 1000;
@@ -309,11 +308,6 @@ G.scenes.village = function (params) {
     }
     for (let i = 0; i < torchFlames.length; i++) {
       torchFlames[i].alpha = 0.88 + 0.12 * Math.sin(t * (7 + i) + i * 2);
-    }
-    // дымок из трубы кузницы
-    if (t - lastSmoke > 0.6) {
-      lastSmoke = t;
-      G.fxParticles.burst(262, 312, 0x8a94a0, 1, { size: 3.5, speed: 8, up: true, grav: -14, ttl: 1900 });
     }
     // овца: щиплет траву и бродит
     if (sheep) {
