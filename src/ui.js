@@ -397,7 +397,7 @@ G.ui = {
     const av = new PIXI.Graphics();
     av.scale.set(3.1);
     const OUT = 0x0a0f18;
-    av.circle(0, 32, 18).fill({ color: 0x000000, alpha: 0.3 });
+    av.circle(0, 32, 18).fill({ color: 0x000000, alpha: 0.16 });
     // плащ
     av.poly([-11, -2, 11, -2, 15, 26, -15, 26]).fill({ color: G.C.heroBlue, alpha: 0.6 });
     // кольчуга с рядами колец

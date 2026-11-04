@@ -9,8 +9,10 @@ const exists = f => fs.existsSync(path.join(__dirname, f));
 const ORDER = [
   'src/i18n.js',
   'src/assets/atlas.js',
+  'src/assets/world.js',
   'src/data.js',
   'src/fx.js',
+  'src/art.js',
   'src/ui.js',
   'src/scenes/title.js',
   'src/scenes/village.js',

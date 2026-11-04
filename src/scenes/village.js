@@ -25,9 +25,16 @@ G.scenes.village = function (params) {
   c.addChild(shelf, island);
   const depth = new PIXI.Graphics();
   depth.rect(0, 0, G.W, G.H).fill(G.viz.gradient(0, 0, 0, G.H, [
-    [0, 'rgba(6,10,18,0.42)'], [0.4, 'rgba(6,10,18,0.05)'], [1, 'rgba(6,10,18,0.3)'],
+    [0, 'rgba(6,10,18,0.34)'], [0.4, 'rgba(6,10,18,0.04)'], [1, 'rgba(6,10,18,0.26)'],
   ]));
   c.addChild(depth);
+  // тёплый свет очагов над центром деревни (additive)
+  const warm = new PIXI.Graphics();
+  for (let i = 0; i < 5; i++) {
+    warm.circle(640, 470, 430 - i * 74).fill({ color: 0xffdba8, alpha: 0.012 });
+  }
+  warm.blendMode = 'add';
+  c.addChild(warm);
 
   const aur = G.viz.aurora(c, { y: 22, alpha: 0.1, index: c.children.length - 1 });
 
