@@ -67,7 +67,7 @@ G.CARDS = [
   { id: 'event_tuner', hero: 'berserk', dmg: 3, range: 1, stun: true },
   { id: 'gwent_logic', hero: 'berserk', bonusNext: 2 },
   { id: 'echo_loop', hero: 'skald', echo: true },
-  { id: 'onefile', hero: 'skald', dmg: 2, range: 3 },
+  { id: 'onefile', hero: 'skald', dmg: 3, range: 3 },
   { id: 'mvp', hero: 'skald', dmg: 2, range: 1 },
   { id: 'rune_sdk', hero: 'smith', shieldAll: 2 },
   { id: 'kb472', hero: 'smith', shieldSelf: 3, dmg: 1, range: 1 },
@@ -77,8 +77,8 @@ G.CARDS = [
 // --- Враги ---
 G.ENEMY_DEFS = {
   bug: { key: 'e_bug', hp: 4, move: 2, dmg: 1, color: G.C.enemy },
-  krynch: { key: 'e_krynch', hp: 10, move: 2, dmg: 2, healSelf: 1, color: 0x9b3a6e },
-  deadline: { key: 'e_deadline', hp: 6, move: 3, dmg: 1, grow: 1, color: 0x6e5a2a },
+  krynch: { key: 'e_krynch', hp: 10, move: 2, dmg: 3, healSelf: 1, color: 0x9b3a6e },
+  deadline: { key: 'e_deadline', hp: 6, move: 3, dmg: 2, grow: 1, color: 0x6e5a2a },
 };
 
 // --- Волны: состав и позиции на поле ---
@@ -100,10 +100,10 @@ G.WAVES = [
   {
     id: 'boss', nameKey: 'wave3_name', hintKey: 'hint3', boss: true,
     zones: [
-      { id: 'mobile', key: 'z_mobile', hp: 8, col: 8, row: 1 },
+      { id: 'mobile', key: 'z_mobile', hp: 9, col: 8, row: 1 },
       { id: 'balance', key: 'z_balance', hp: 10, col: 9, row: 3 },
-      { id: 'unity', key: 'z_unity', hp: 8, col: 8, row: 4 },
-      { id: 'team', key: 'z_team', hp: 6, col: 10, row: 2 },
+      { id: 'unity', key: 'z_unity', hp: 9, col: 8, row: 4 },
+      { id: 'team', key: 'z_team', hp: 8, col: 10, row: 2 },
     ],
   },
 ];
