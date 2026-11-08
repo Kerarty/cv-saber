@@ -984,7 +984,7 @@ G.scenes.battle = function (params) {
         const { x, y } = G.hexToPx(target.col, target.row);
         popText(x, y, '−' + rest + ' ' + sourceLabel, color || 0xff9d8a);
       }
-      if (target.kind === 'hero') G.stats.damage += rest;
+      if (target.kind !== 'hero') G.stats.damage += rest;
     }
     refresh(target);
     if (target.kind === 'zone') drawZoneHud();
@@ -1124,13 +1124,8 @@ G.scenes.battle = function (params) {
     for (const h of heroes) {
       if (!h.alive) { B.hands[h.id] = []; continue; }
       const deck = G.CARDS.filter(card => card.hero === h.id);
-      // перемешать и взять 2
-      const sh = deck.slice();
-      for (let i = sh.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [sh[i], sh[j]] = [sh[j], sh[i]];
-      }
-      B.hands[h.id] = sh.slice(0, 2);
+      // вся рука: каждая способность героя всегда под рукой — мёртвых раздач нет
+      B.hands[h.id] = deck.slice();
     }
   }
 
@@ -1142,7 +1137,6 @@ G.scenes.battle = function (params) {
       actual = Object.assign({}, B.lastCard.card, { echoOf: B.lastCard.card.id });
     }
     G.sfx.play('card');
-    G.stats.cards++;
     B.pendingCard = actual;
     hideHand();
 
@@ -1174,8 +1168,15 @@ G.scenes.battle = function (params) {
       return false;
     });
     if (targets.length === 0) {
-      // мгновенная карта без целей
-      finishActCard(hero, actual);
+      if (actual.shieldAll || actual.shieldSelf || actual.bonusNext) {
+        // мгновенная карта без целей — эффект уже применился, действие списываем
+        finishActCard(hero, actual);
+        return;
+      }
+      // урон/лечение без целей: карта возвращается в руку, ход сохраняется
+      G.ui.toast(G.t('no_targets'));
+      B.pendingCard = null;
+      showHand(hero);
       return;
     }
     highlightCells(targets.map(u => ({ col: u.col, row: u.row })), actual.dmg > 0 ? 'attack' : 'move');
@@ -1229,6 +1230,7 @@ G.scenes.battle = function (params) {
 
   function finishActCard(hero, card) {
     if (card) B.lastCard = { card: card.echoOf ? G.CARDS.find(x => x.id === card.echoOf) : card };
+    G.stats.cards++;
     B.pendingCard = null;
     hideHand();
     clearHighlights();
@@ -1395,13 +1397,15 @@ G.scenes.battle = function (params) {
       hideRing();
     }
 
-    // босс: рёв — бьёт случайного героя
+    // босс: рёв — бьёт героя, стоящего ближе всех к живым зонам
     if (wave.boss && !B.over) {
       const targets = heroes.filter(h => h.alive);
       if (targets.length > 0) {
         B.bossDmg = 1 + Math.floor(B.round / 2);
         if (!B.events.includes('sum_boss')) B.events.push('sum_boss');
-        const t = targets[Math.floor(Math.random() * targets.length)];
+        const zones = B.units.filter(u => u.kind === 'zone' && u.alive);
+        const prox = h => zones.length ? Math.min.apply(null, zones.map(z => G.hexDist(h.col, h.row, z.col, z.row))) : 99;
+        const t = targets.slice().sort((a, b) => prox(a) - prox(b))[0];
         G.sfx.play('boss');
         await sleep(240);
         attackHero(null, t, B.bossDmg, G.t('boss_name'));
