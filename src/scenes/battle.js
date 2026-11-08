@@ -233,7 +233,7 @@ G.scenes.battle = function (params) {
 
   // Трекер фаз раунда: [Твой ход | Враги | Раунд]
   const phaseBar = new PIXI.Container();
-  phaseBar.x = G.W / 2; phaseBar.y = 30;
+  phaseBar.x = G.W / 2; phaseBar.y = 26;
   c.addChild(phaseBar);
 
   function drawPhaseBar() {
@@ -289,7 +289,7 @@ G.scenes.battle = function (params) {
 
   // Очередь хода в стиле XCOM: кто готов, кто отработал, кто сейчас
   const init = new PIXI.Container();
-  init.y = 58;
+  init.y = 64;
   c.addChild(init);
 
   const QUEUE_ICONS = {
@@ -516,15 +516,15 @@ G.scenes.battle = function (params) {
     activateAct();
   }
 
-  // нижняя панель движения: подсказка + пропуск
+  // нижняя панель движения: имя активного героя + пропуск справа
   function showMoveBar(hero) {
     handBar.removeChildren();
-    const hint = new PIXI.Text({
-      text: G.t('skip_move'),
-      style: { fontFamily: G.FONT_BODY, fontSize: 15, fill: G.C.textDim },
+    const name = new PIXI.Text({
+      text: G.t(hero.def.nameKey),
+      style: { fontFamily: G.FONT_TITLE, fontSize: 18, fill: hero.def.color },
     });
-    hint.x = 24; hint.y = -2;
-    handBar.addChild(hint);
+    name.x = 24; name.y = -4;
+    handBar.addChild(name);
     const skip = G.ui.button({
       label: G.t('skip_move'), x: G.W - 120, y: 42, w: 160, h: 44, small: true,
       onClick: () => { G.sfx.play('blip'); if (B.state === 'move') advanceMove(); },
@@ -1628,25 +1628,25 @@ G.ui.drawCard = function (card, index, heroColor) {
   icon.x = w - 19; icon.y = 17;
   const name = new PIXI.Text({
     text: G.t('c_' + card.id),
-    style: { fontFamily: G.FONT_TITLE, fontSize: 13, fill: G.C.ink, letterSpacing: 0.5 },
+    style: { fontFamily: G.FONT_SERIF, fontSize: 12.5, fill: G.C.ink, letterSpacing: 0.3 },
   });
   name.x = 10; name.y = 7;
   const desc = new PIXI.Text({
     text: G.t('c_' + card.id + '_d'),
     style: {
-      fontFamily: G.FONT_BODY, fontSize: 11.5, fill: G.C.ink, fontWeight: 'bold',
-      wordWrap: true, wordWrapWidth: w - 26, lineHeight: 13.5,
+      fontFamily: G.FONT_BODY, fontSize: 11, fill: G.C.ink, fontWeight: 'bold',
+      wordWrap: true, wordWrapWidth: w - 24, lineHeight: 13,
     },
   });
-  desc.x = 10; desc.y = 32;
+  desc.x = 10; desc.y = 30;
   const fact = new PIXI.Text({
     text: G.t('c_' + card.id + '_f'),
     style: {
-      fontFamily: G.FONT_BODY, fontSize: 10.5, fill: G.C.inkDim,
-      wordWrap: true, wordWrapWidth: w - 26, lineHeight: 12,
+      fontFamily: G.FONT_BODY, fontSize: 10, fill: G.C.inkDim,
+      wordWrap: true, wordWrapWidth: w - 24, lineHeight: 11.5,
     },
   });
-  fact.x = 10; fact.y = 62;
+  fact.x = 10; fact.y = 60;
   cc.addChild(body, g, iconBg, icon, name, desc, fact);
   cc.on('pointerover', () => { draw(true); cc.y = -4; });
   cc.on('pointerout', () => { draw(false); cc.y = 0; });
