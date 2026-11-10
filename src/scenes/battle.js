@@ -388,7 +388,7 @@ G.scenes.battle = function (params) {
 
   // Чеклист зон босса: требования и их HP
   const zoneHud = new PIXI.Container();
-  zoneHud.x = G.W - 190; zoneHud.y = 78;
+  zoneHud.x = G.W - 212; zoneHud.y = 78;
   zoneHud.visible = false;
   c.addChild(zoneHud);
 
@@ -397,7 +397,7 @@ G.scenes.battle = function (params) {
     zoneHud.visible = true;
     zoneHud.removeChildren();
     const zones = B.units.filter(u => u.kind === 'zone');
-    const w = 168, rowH = 30, h = zones.length * rowH + 34;
+    const w = 190, rowH = 30, h = zones.length * rowH + 34;
     const g = new PIXI.Graphics();
     g.roundRect(0, 0, w, h, 10).fill({ color: G.C.panelDark, alpha: 0.92 });
     g.roundRect(0, 0, w, h, 10).stroke({ width: 1.5, color: G.C.hexBorder });
@@ -408,7 +408,7 @@ G.scenes.battle = function (params) {
     head.x = 12; head.y = 8;
     zoneHud.addChild(g, head);
     zones.forEach((z, i) => {
-      const faces = { mobile: 0x4a9db8, balance: 0xb8a24a, unity: 0x7ab55c, team: 0x9b6ab8 };
+      const faces = { balance: 0xb8a24a, economy: 0x7ab55c, analytics: 0x4a9db8, monetization: 0x9b6ab8 };
       const col = faces[z.defId];
       const y = 30 + i * rowH;
       const name = new PIXI.Text({
@@ -771,8 +771,8 @@ G.scenes.battle = function (params) {
   }
 
   function drawZoneFace(g, u) {
-    const faces = { mobile: 0x4a9db8, balance: 0xb8a24a, unity: 0x7ab55c, team: 0x9b6ab8 };
-    const brows = { mobile: -1, balance: 1, unity: 0, team: -2 }; // характер маски
+    const faces = { balance: 0xb8a24a, economy: 0x7ab55c, analytics: 0x4a9db8, monetization: 0x9b6ab8 };
+    const brows = { balance: 1, economy: 0, analytics: -1, monetization: -2 }; // характер маски
     const col = faces[u.defId] || G.C.enemy;
     g.circle(0, 24, 18).fill({ color: 0x000000, alpha: 0.3 });
     g.roundRect(-20, -16, 40, 42, 8).fill(0x2a3240).stroke({ width: 2, color: OUTLINE });
@@ -1591,9 +1591,9 @@ G.scenes.battle = function (params) {
 
 // Иконки карт (эмодзи — нулевая цена, читаются мгновенно)
 G.CARD_ICONS = {
-  balance_lab: '⚖️', event_tuner: '📅', gwent_logic: '🃏',
+  balance_lab: '⚖️', event_tuner: '📅', math_model: '🧮',
   echo_loop: '🌀', onefile: '📄', mvp: '⚡',
-  rune_sdk: '🛡️', kb472: '💾', code_review: '🔧',
+  rune_sdk: '🛡️', kb472: '💾', retention_loop: '🔁',
 };
 
 // Карта способности v3: гвинт-пергамент, геройская кромка, иконка в круге

@@ -492,7 +492,7 @@ G.ui = {
     });
     name.x = -w / 2 + 236; name.y = -h / 2 + 42;
     const role = new PIXI.Text({
-      text: G.CONFIG.role[G.lang] + ' · playable-ads',
+      text: G.CONFIG.role[G.lang],
       style: { fontFamily: G.FONT_BODY, fontSize: 17, fill: G.C.goldDark, letterSpacing: 1 },
     });
     role.x = name.x; role.y = -h / 2 + 92;

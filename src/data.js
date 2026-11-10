@@ -3,7 +3,7 @@ window.G = window.G || {};
 
 G.CONFIG = {
   name: 'Ярослав Кукар',
-  role: { ru: 'гейм-дизайнер', en: 'game designer' },
+  role: { ru: 'гейм-дизайнер · экономика и монетизация', en: 'game designer · economy & monetization' },
   email: 'kukar.yar@gmail.com',   // почта кандидата — кнопка «Написать мне»
   github: 'https://github.com/Kerarty',
   pdf: 'cv.pdf',                  // резюме из docs/CV_Yaroslav.pdf (cv-highcore)
@@ -65,13 +65,13 @@ G.HEROES = [
 G.CARDS = [
   { id: 'balance_lab', hero: 'berserk', dmg: 5, range: 1 },
   { id: 'event_tuner', hero: 'berserk', dmg: 3, range: 1, stun: true },
-  { id: 'gwent_logic', hero: 'berserk', bonusNext: 2 },
+  { id: 'math_model', hero: 'berserk', bonusNext: 2 },
   { id: 'echo_loop', hero: 'skald', echo: true },
   { id: 'onefile', hero: 'skald', dmg: 3, range: 3 },
   { id: 'mvp', hero: 'skald', dmg: 2, range: 1 },
   { id: 'rune_sdk', hero: 'smith', shieldAll: 2 },
   { id: 'kb472', hero: 'smith', shieldSelf: 3, dmg: 1, range: 1 },
-  { id: 'code_review', hero: 'smith', heal: 3, range: 2 },
+  { id: 'retention_loop', hero: 'smith', heal: 3, range: 2 },
 ];
 
 // --- Враги ---
@@ -100,10 +100,10 @@ G.WAVES = [
   {
     id: 'boss', nameKey: 'wave3_name', hintKey: 'hint3', boss: true,
     zones: [
-      { id: 'mobile', key: 'z_mobile', hp: 9, col: 8, row: 1 },
       { id: 'balance', key: 'z_balance', hp: 10, col: 9, row: 3 },
-      { id: 'unity', key: 'z_unity', hp: 9, col: 8, row: 4 },
-      { id: 'team', key: 'z_team', hp: 8, col: 10, row: 2 },
+      { id: 'economy', key: 'z_economy', hp: 9, col: 8, row: 1 },
+      { id: 'analytics', key: 'z_analytics', hp: 9, col: 8, row: 4 },
+      { id: 'monetization', key: 'z_monetization', hp: 8, col: 10, row: 2 },
     ],
   },
 ];
@@ -185,8 +185,8 @@ G.BUILDINGS = [
     facts: [
       {
         id: 'cvs', icon: '🎮', link: 'https://github.com/Kerarty',
-        ru: { t: 'Резюме-игры', d: 'Под каждую студию — свой жанр. Эта: тактика в сеттинге I, Viking с механиками Gloomhaven', s: '12+' },
-        en: { t: 'Résumé games', d: 'A genre for every studio. This one: I, Viking tactics with Gloomhaven mechanics', s: '12+' },
+        ru: { t: 'Резюме-игры', d: 'Под каждую студию — свой жанр. Эта: тактика про экономику F2P — энергия, золото, ивент', s: '12+' },
+        en: { t: 'Résumé games', d: 'A genre for every studio. This one: F2P economy tactics — energy, gold, a live event', s: '12+' },
       },
       {
         id: 'lang', icon: '🌍',
@@ -201,21 +201,21 @@ G.BUILDINGS = [
 G.SHEET = {
   stats: {
     ru: [
-      ['Playable-ads', 95], ['Прототипирование', 90], ['Гейм-дизайн и баланс', 85],
-      ['Веб: PixiJS · Three.js', 85], ['Unity', 70],
+      ['Баланс и экономика', 92], ['Прототипирование', 90], ['LiveOps и ивенты', 88],
+      ['Монетизация и плейблы', 85], ['Unity / JS', 75],
     ],
     en: [
-      ['Playable ads', 95], ['Prototyping', 90], ['Game design & balance', 85],
-      ['Web: PixiJS · Three.js', 85], ['Unity', 70],
+      ['Balance & economy', 92], ['Prototyping', 90], ['LiveOps & events', 88],
+      ['Monetization & playables', 85], ['Unity / JS', 75],
     ],
   },
   chips: {
-    ru: ['📱 мобайл', '🎯 баланс', '🧩 плейблы', '⚡ быстрые прототипы'],
-    en: ['📱 mobile', '🎯 balance', '🧩 playables', '⚡ fast prototypes'],
+    ru: ['📱 мобайл', '💰 экономика', '📊 метрики', '🧮 Excel'],
+    en: ['📱 mobile', '💰 economy', '📊 metrics', '🧮 Excel'],
   },
   lore: {
-    ru: 'Делаю игры, которые продают: playable-ads, баланс, прототипы. Каждая постройка этой деревни — рабочий проект на GitHub.',
-    en: 'I make games that sell: playable ads, balance, prototypes. Every building in this village is a real project on GitHub.',
+    ru: 'Проектирую баланс и экономику так, чтобы игра зарабатывала: эта резюме-игра — живой кейс с энергией, золотом и ивентом.',
+    en: 'I design balance and economy that make games earn: this resume-game is a live case with energy, gold and an event.',
   },
 };
 
@@ -229,14 +229,14 @@ G.HEX = { size: 48, cols: 11, rows: 6, padX: 200, padY: 84 };
 // Короткие подписи фактов для всплывающего урона
 G.SHORT = {
   ru: {
-    balance_lab: 'баланс-лаба', event_tuner: 'ивент-тюнер', gwent_logic: 'гвинт-логика',
+    balance_lab: 'баланс-лаба', event_tuner: 'ивент-тюнер', math_model: 'матмодель',
     echo_loop: 'эхо', onefile: 'однофайловик', mvp: 'MVP',
-    rune_sdk: 'рунный SDK', kb472: '472 КБ', code_review: 'код-ревью', offer: 'оффер',
+    rune_sdk: 'рунный SDK', kb472: '472 КБ', retention_loop: 'ретеншен', offer: 'оффер',
   },
   en: {
-    balance_lab: 'balance lab', event_tuner: 'event tuner', gwent_logic: 'gwent logic',
+    balance_lab: 'balance lab', event_tuner: 'event tuner', math_model: 'math model',
     echo_loop: 'echo', onefile: 'single file', mvp: 'MVP',
-    rune_sdk: 'rune SDK', kb472: '472 KB', code_review: 'code review', offer: 'offer',
+    rune_sdk: 'rune SDK', kb472: '472 KB', retention_loop: 'retention', offer: 'offer',
   },
 };
 
