@@ -13,15 +13,15 @@ G.scenes.title = function () {
   ]));
   c.addChild(sky);
 
-  // Луна с гало — фокусная точка
+  // Луна с гало — правее заголовка, чтобы «Т» не упирался в свечение
   const moonGlow = new PIXI.Graphics();
-  moonGlow.circle(1010, 140, 86).fill({ color: 0xcfe0f0, alpha: 0.06 });
-  moonGlow.circle(1010, 140, 62).fill({ color: 0xcfe0f0, alpha: 0.08 });
+  moonGlow.circle(1100, 140, 86).fill({ color: 0xcfe0f0, alpha: 0.06 });
+  moonGlow.circle(1100, 140, 62).fill({ color: 0xcfe0f0, alpha: 0.08 });
   const moon = new PIXI.Graphics();
-  moon.circle(1010, 140, 38).fill(0xdfe9f2);
-  moon.circle(998, 128, 7).fill({ color: 0xc2cfdd, alpha: 0.7 });
-  moon.circle(1022, 152, 5).fill({ color: 0xc2cfdd, alpha: 0.6 });
-  moon.circle(1016, 122, 3.5).fill({ color: 0xc2cfdd, alpha: 0.6 });
+  moon.circle(1100, 140, 38).fill(0xdfe9f2);
+  moon.circle(1088, 128, 7).fill({ color: 0xc2cfdd, alpha: 0.7 });
+  moon.circle(1112, 152, 5).fill({ color: 0xc2cfdd, alpha: 0.6 });
+  moon.circle(1106, 122, 3.5).fill({ color: 0xc2cfdd, alpha: 0.6 });
   c.addChild(moonGlow, moon);
 
   // Северное сияние за звёздами
@@ -200,7 +200,7 @@ G.scenes.title = function () {
     for (let i = 0; i < 9; i++) {
       const y = 490 + i * 22;
       const w = 46 - i * 3.4 + 8 * Math.sin(t * 1.7 + i);
-      shimmer.rect(1010 - w / 2, y, w, 3).fill({ color: 0xdfe9f2, alpha: 0.1 - i * 0.009 });
+      shimmer.rect(1100 - w / 2, y, w, 3).fill({ color: 0xdfe9f2, alpha: 0.1 - i * 0.009 });
     }
     if (ship) ship.rotation = Math.sin(t * 1.6) * 0.02;
     if (torch) torch.alpha = 0.85 + 0.15 * Math.sin(t * 9);

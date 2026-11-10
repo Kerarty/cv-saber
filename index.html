@@ -2552,6 +2552,8 @@ G.T = {
     wc_damage: 'Урона нанесено: {n}',
     wc_cards: 'Карт сыграно: {n}',
     wc_gold: 'Золото: +{n} (база {a} + скорость {b})',
+    wc_gold_short: 'Золото: +{n}',
+    wc_gold_sub: 'база {a} · скорость {b}',
     wc_cont: 'В деревню →',
     ev_x2: 'ивент ×2',
     energy_bought: 'Энергия уже докуплена в этом раунде',
@@ -2576,7 +2578,7 @@ G.T = {
     sum_boss: 'босс в ярости (урон {n})',
     wave1_name: 'Волна 1 · Стая багов',
     wave2_name: 'Волна 2 · Кринч и дедлайны',
-    wave3_name: 'Финал · Вакансия: экономика F2P',
+    wave3_name: 'Финал · Экономика и монетизация',
     hint1: 'Фаза 1 — двигай отряд по гексам, фаза 2 — играй карты: у каждой цена в ⚡, пул общий на раунд',
     hint2: 'Щиты кузнеца держат удар — но тают в конце раунда',
     hint3: 'Каждая зона босса — столп вакансии: баланс, экономика, аналитика, монетизация',
@@ -2633,7 +2635,8 @@ G.T = {
     z_economy: 'ЭКОНОМИКА',
     z_analytics: 'АНАЛИТИКА',
     z_monetization: 'МОНЕТИЗАЦИЯ',
-    boss_name: 'Вакансия: гейм-дизайнер F2P',
+    boss_name: 'Вакансия гейм-дизайнера',
+    boss_short: 'босс',
     fact_balance: 'Баланс: лаба автобатлера, варгейм «Эридора» на 4 фракции, 15+ плейтестов',
     fact_economy: 'Экономика: эта игра — живой кейс: энергия, золото, лавка, сходящиеся книги',
     fact_analytics: 'Аналитика: Excel-модель баланса и экономики — формулы, TTK, ожидаемый урон',
@@ -2747,6 +2750,8 @@ G.T = {
     wc_damage: 'Damage dealt: {n}',
     wc_cards: 'Cards played: {n}',
     wc_gold: 'Gold: +{n} (base {a} + speed {b})',
+    wc_gold_short: 'Gold: +{n}',
+    wc_gold_sub: 'base {a} · speed {b}',
     wc_cont: 'To the village →',
     ev_x2: 'event ×2',
     energy_bought: 'Energy already bought this round',
@@ -2771,7 +2776,7 @@ G.T = {
     sum_boss: 'boss enraged (damage {n})',
     wave1_name: 'Wave 1 · Bug swarm',
     wave2_name: 'Wave 2 · Crunch & deadlines',
-    wave3_name: 'Final · The F2P economy vacancy',
+    wave3_name: 'Final · Economy & monetization',
     hint1: 'Phase 1 — move the squad, Phase 2 — play cards: each costs ⚡ from the shared per-round pool',
     hint2: "The smith's shields absorb hits — but fade at round's end",
     hint3: 'Each boss zone is a job pillar: balance, economy, analytics, monetization',
@@ -2825,7 +2830,8 @@ G.T = {
     z_economy: 'ECONOMY',
     z_analytics: 'ANALYTICS',
     z_monetization: 'MONETIZATION',
-    boss_name: 'The F2P game designer vacancy',
+    boss_name: 'Game designer vacancy',
+    boss_short: 'boss',
     fact_balance: 'Balance: autobattler lab, a 4-faction wargame, 15+ playtests',
     fact_economy: 'Economy: this game is the living case — energy, gold, a shop, balanced books',
     fact_analytics: 'Analytics: an Excel model of combat & economy — formulas, TTK, expected damage',
@@ -5653,15 +5659,15 @@ G.scenes.title = function () {
   ]));
   c.addChild(sky);
 
-  // Луна с гало — фокусная точка
+  // Луна с гало — правее заголовка, чтобы «Т» не упирался в свечение
   const moonGlow = new PIXI.Graphics();
-  moonGlow.circle(1010, 140, 86).fill({ color: 0xcfe0f0, alpha: 0.06 });
-  moonGlow.circle(1010, 140, 62).fill({ color: 0xcfe0f0, alpha: 0.08 });
+  moonGlow.circle(1100, 140, 86).fill({ color: 0xcfe0f0, alpha: 0.06 });
+  moonGlow.circle(1100, 140, 62).fill({ color: 0xcfe0f0, alpha: 0.08 });
   const moon = new PIXI.Graphics();
-  moon.circle(1010, 140, 38).fill(0xdfe9f2);
-  moon.circle(998, 128, 7).fill({ color: 0xc2cfdd, alpha: 0.7 });
-  moon.circle(1022, 152, 5).fill({ color: 0xc2cfdd, alpha: 0.6 });
-  moon.circle(1016, 122, 3.5).fill({ color: 0xc2cfdd, alpha: 0.6 });
+  moon.circle(1100, 140, 38).fill(0xdfe9f2);
+  moon.circle(1088, 128, 7).fill({ color: 0xc2cfdd, alpha: 0.7 });
+  moon.circle(1112, 152, 5).fill({ color: 0xc2cfdd, alpha: 0.6 });
+  moon.circle(1106, 122, 3.5).fill({ color: 0xc2cfdd, alpha: 0.6 });
   c.addChild(moonGlow, moon);
 
   // Северное сияние за звёздами
@@ -5840,7 +5846,7 @@ G.scenes.title = function () {
     for (let i = 0; i < 9; i++) {
       const y = 490 + i * 22;
       const w = 46 - i * 3.4 + 8 * Math.sin(t * 1.7 + i);
-      shimmer.rect(1010 - w / 2, y, w, 3).fill({ color: 0xdfe9f2, alpha: 0.1 - i * 0.009 });
+      shimmer.rect(1100 - w / 2, y, w, 3).fill({ color: 0xdfe9f2, alpha: 0.1 - i * 0.009 });
     }
     if (ship) ship.rotation = Math.sin(t * 1.6) * 0.02;
     if (torch) torch.alpha = 0.85 + 0.15 * Math.sin(t * 9);
@@ -6803,6 +6809,10 @@ G.scenes.battle = function (params) {
 
   function drawPhaseBar() {
     phaseBar.removeChildren();
+    const barW = [116, 96, 104, 118].reduce((a, b) => a + b + 10, 0) - 10;
+    // адаптивный сдвиг: длинный заголовок волны отодвигает бар вправо
+    const leftLimit = 24 + waveLabel.width + 40;
+    const shift = Math.max(0, leftLimit - (G.W / 2 - barW / 2));
     const phases = [
       { key: 'ph_move', on: B.subphase === 'move' && B.state !== 'enemy' && B.state !== 'intro' },
       { key: 'ph_act', on: B.subphase === 'act' && B.state !== 'enemy' && B.state !== 'intro' },
@@ -6828,7 +6838,7 @@ G.scenes.battle = function (params) {
       phaseBar.addChild(seg);
       px += w + 10;
     });
-    phaseBar.x = G.W / 2 - px / 2 + 60; // центрируем блок
+    phaseBar.x = G.W / 2 - px / 2 + shift; // центр, но не задеваем заголовок волны слева
   }
 
   // Пилюля текущей стадии хода игрока
@@ -6968,19 +6978,20 @@ G.scenes.battle = function (params) {
     g.roundRect(0, 0, w, h, 10).stroke({ width: 1.5, color: G.C.hexBorder });
     const head = new PIXI.Text({
       text: G.t('boss_name'),
-      style: { fontFamily: G.FONT_TITLE, fontSize: 10.5, fill: G.C.gold },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 12, fill: G.C.gold },
     });
-    head.x = 10; head.y = 10;
+    head.x = 12; head.y = 9;
     zoneHud.addChild(g, head);
     zones.forEach((z, i) => {
       const faces = { balance: 0xb8a24a, economy: 0x7ab55c, analytics: 0x4a9db8, monetization: 0x9b6ab8 };
       const col = faces[z.defId];
       const y = 30 + i * rowH;
+      // имя зоны красится в цвет своей маски — чеклист читается с полем одним взглядом
       const name = new PIXI.Text({
         text: (z.alive ? '• ' : '✓ ') + G.t(z.def.key),
         style: {
           fontFamily: G.FONT_BODY, fontSize: 13, fontWeight: 'bold',
-          fill: z.alive ? G.C.text : 0x6a7a6a,
+          fill: z.alive ? col : 0x6a7a6a,
           stroke: { color: 0x0a0f18, width: 2 },
         },
       });
@@ -7988,7 +7999,7 @@ G.scenes.battle = function (params) {
         const t = targets.slice().sort((a, b) => prox(a) - prox(b))[0];
         G.sfx.play('boss');
         await sleep(240);
-        attackHero(null, t, B.bossDmg, G.t('boss_name'));
+        attackHero(null, t, B.bossDmg, G.t('boss_short'));
         await sleep(350);
       }
     }
@@ -8032,7 +8043,7 @@ G.scenes.battle = function (params) {
     });
     // панель подрастает под заголовок: Ruslan Display шире системного
     const pw = Math.max(620, head.width + 84);
-    const ph = wave.boss ? 300 : 262;
+    const ph = wave.boss ? 330 : 262;
     const sheet = G.ui.parchment(pw, ph);
     sheet.x = G.W / 2; sheet.y = G.H / 2 - 20;
     const pg = new PIXI.Graphics();
@@ -8049,7 +8060,7 @@ G.scenes.battle = function (params) {
     hint.x = G.W / 2; hint.y = G.H / 2 - ph / 2 + 46;
     ov.addChild(head, hint);
 
-    // ростер противника
+    // ростер противника: у босса — сетка 2×2, чтобы не наезжал на кнопку
     const roster = new PIXI.Container();
     roster.x = G.W / 2; roster.y = G.H / 2 - ph / 2 + 96;
     const foes = B.units.filter(u => u.kind === 'enemy' || u.kind === 'zone');
@@ -8061,16 +8072,20 @@ G.scenes.battle = function (params) {
       byName.set(k, cur);
     }
     let ry = 0;
+    let slot = 0;
+    const twoCols = wave.boss;
     for (const [name, info] of byName) {
+      const cx = twoCols ? (slot % 2 === 0 ? -200 : 40) : -80;
+      ry = twoCols ? Math.floor(slot / 2) * 34 : slot * 34;
       const t = new PIXI.Text({
         text: (info.count > 1 ? info.count + ' × ' : '') + name + '  —  ' + G.t('roster_hp', { n: info.hp }),
         style: { fontFamily: G.FONT_BODY, fontSize: 16, fill: G.C.ink },
       });
-      t.x = -80; t.y = ry;
+      t.x = cx; t.y = ry;
       const dot = new PIXI.Graphics();
-      dot.circle(-96, ry + 9, 5).fill(G.C.blood);
+      dot.circle(cx - 16, ry + 9, 5).fill(G.C.blood);
       roster.addChild(dot, t);
-      ry += 34;
+      slot++;
     }
     ov.addChild(roster);
 
@@ -8123,7 +8138,7 @@ G.scenes.battle = function (params) {
     const dim = new PIXI.Graphics();
     dim.rect(0, 0, G.W, G.H).fill({ color: 0x060a12, alpha: 0.6 });
     ov.addChild(dim);
-    const pw = 480, ph = 300;
+    const pw = 480, ph = 320;
     const sheet = G.ui.parchment(pw, ph);
     sheet.x = G.W / 2; sheet.y = G.H / 2;   // панель в центре, текст уже ждёт её там
     const pg = new PIXI.Graphics();
@@ -8141,8 +8156,7 @@ G.scenes.battle = function (params) {
       G.t('wc_rounds', { n: B.round }),
       G.t('wc_damage', { n: G.stats.damage - waveDamage0 }),
       G.t('wc_cards', { n: G.stats.cards - waveCards0 }),
-      G.t('wc_gold', { n: pay.gold, a: pay.base, b: pay.speed })
-        + (pay.luckHit ? ' 🍀' : '') + (pay.mult > 1 ? ' · ' + G.t('ev_x2') : ''),
+      '🪙 ' + G.t('wc_gold_short', { n: pay.gold }),
     ];
     rows.forEach((r, i) => {
       const t = new PIXI.Text({
@@ -8152,6 +8166,14 @@ G.scenes.battle = function (params) {
       t.x = G.W / 2 - 130; t.y = G.H / 2 - ph / 2 + 84 + i * 34;
       ov.addChild(t);
     });
+    // разбивка награды — мельче, под строкой золота
+    const goldSub = new PIXI.Text({
+      text: G.t('wc_gold_sub', { a: pay.base, b: pay.speed })
+        + (pay.luckHit ? ' · 🍀×2' : '') + (pay.mult > 1 ? ' · ' + G.t('ev_x2') : ''),
+      style: { fontFamily: G.FONT_BODY, fontSize: 12, fill: G.C.inkSoft },
+    });
+    goldSub.x = G.W / 2 - 130; goldSub.y = G.H / 2 - ph / 2 + 84 + 3 * 34 + 21;
+    ov.addChild(goldSub);
     const cont = G.ui.button({
       label: G.t('wc_cont'), x: G.W / 2, y: G.H / 2 + ph / 2 - 52, w: 260, h: 50, primary: true,
       onClick: () => G.setScene('village', { unlocked: G.progress }),
@@ -8370,7 +8392,7 @@ G.scenes.victory = function () {
     a.click();
     a.remove();
   }, false);
-  mkBtn('✉ ' + G.t('win_mail'), () => {
+  mkBtn(G.t('win_mail'), () => {
     const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
     const pdfUrl = location.href.replace(/[^/]*$/, '') + G.CONFIG.pdf;
     const body = encodeURIComponent('Здравствуйте! Резюме (PDF): ' + pdfUrl + ' Портфолио: ' + G.CONFIG.github);
@@ -8385,7 +8407,7 @@ G.scenes.victory = function () {
   c.addChild(...rowBtns);
 
   const again = G.ui.button({
-    label: '↻', x: G.W - 40, y: 92, w: 44, h: 44, small: true,
+    label: '↻', x: G.W - 40, y: 92, w: 44, h: 44, small: true, primary: true,
     onClick: () => {
       G.progress = 0;
       G.stats = { rounds: 0, damage: 0, cards: 0, facts: 0 };

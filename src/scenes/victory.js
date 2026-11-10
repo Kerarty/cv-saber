@@ -111,7 +111,7 @@ G.scenes.victory = function () {
     a.click();
     a.remove();
   }, false);
-  mkBtn('✉ ' + G.t('win_mail'), () => {
+  mkBtn(G.t('win_mail'), () => {
     const subject = encodeURIComponent('Резюме: гейм-дизайнер — ' + G.CONFIG.name);
     const pdfUrl = location.href.replace(/[^/]*$/, '') + G.CONFIG.pdf;
     const body = encodeURIComponent('Здравствуйте! Резюме (PDF): ' + pdfUrl + ' Портфолио: ' + G.CONFIG.github);
@@ -126,7 +126,7 @@ G.scenes.victory = function () {
   c.addChild(...rowBtns);
 
   const again = G.ui.button({
-    label: '↻', x: G.W - 40, y: 92, w: 44, h: 44, small: true,
+    label: '↻', x: G.W - 40, y: 92, w: 44, h: 44, small: true, primary: true,
     onClick: () => {
       G.progress = 0;
       G.stats = { rounds: 0, damage: 0, cards: 0, facts: 0 };

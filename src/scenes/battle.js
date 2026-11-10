@@ -304,6 +304,10 @@ G.scenes.battle = function (params) {
 
   function drawPhaseBar() {
     phaseBar.removeChildren();
+    const barW = [116, 96, 104, 118].reduce((a, b) => a + b + 10, 0) - 10;
+    // адаптивный сдвиг: длинный заголовок волны отодвигает бар вправо
+    const leftLimit = 24 + waveLabel.width + 40;
+    const shift = Math.max(0, leftLimit - (G.W / 2 - barW / 2));
     const phases = [
       { key: 'ph_move', on: B.subphase === 'move' && B.state !== 'enemy' && B.state !== 'intro' },
       { key: 'ph_act', on: B.subphase === 'act' && B.state !== 'enemy' && B.state !== 'intro' },
@@ -329,7 +333,7 @@ G.scenes.battle = function (params) {
       phaseBar.addChild(seg);
       px += w + 10;
     });
-    phaseBar.x = G.W / 2 - px / 2 + 60; // центрируем блок
+    phaseBar.x = G.W / 2 - px / 2 + shift; // центр, но не задеваем заголовок волны слева
   }
 
   // Пилюля текущей стадии хода игрока
@@ -469,19 +473,20 @@ G.scenes.battle = function (params) {
     g.roundRect(0, 0, w, h, 10).stroke({ width: 1.5, color: G.C.hexBorder });
     const head = new PIXI.Text({
       text: G.t('boss_name'),
-      style: { fontFamily: G.FONT_TITLE, fontSize: 10.5, fill: G.C.gold },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 12, fill: G.C.gold },
     });
-    head.x = 10; head.y = 10;
+    head.x = 12; head.y = 9;
     zoneHud.addChild(g, head);
     zones.forEach((z, i) => {
       const faces = { balance: 0xb8a24a, economy: 0x7ab55c, analytics: 0x4a9db8, monetization: 0x9b6ab8 };
       const col = faces[z.defId];
       const y = 30 + i * rowH;
+      // имя зоны красится в цвет своей маски — чеклист читается с полем одним взглядом
       const name = new PIXI.Text({
         text: (z.alive ? '• ' : '✓ ') + G.t(z.def.key),
         style: {
           fontFamily: G.FONT_BODY, fontSize: 13, fontWeight: 'bold',
-          fill: z.alive ? G.C.text : 0x6a7a6a,
+          fill: z.alive ? col : 0x6a7a6a,
           stroke: { color: 0x0a0f18, width: 2 },
         },
       });
@@ -1489,7 +1494,7 @@ G.scenes.battle = function (params) {
         const t = targets.slice().sort((a, b) => prox(a) - prox(b))[0];
         G.sfx.play('boss');
         await sleep(240);
-        attackHero(null, t, B.bossDmg, G.t('boss_name'));
+        attackHero(null, t, B.bossDmg, G.t('boss_short'));
         await sleep(350);
       }
     }
@@ -1533,7 +1538,7 @@ G.scenes.battle = function (params) {
     });
     // панель подрастает под заголовок: Ruslan Display шире системного
     const pw = Math.max(620, head.width + 84);
-    const ph = wave.boss ? 300 : 262;
+    const ph = wave.boss ? 330 : 262;
     const sheet = G.ui.parchment(pw, ph);
     sheet.x = G.W / 2; sheet.y = G.H / 2 - 20;
     const pg = new PIXI.Graphics();
@@ -1550,7 +1555,7 @@ G.scenes.battle = function (params) {
     hint.x = G.W / 2; hint.y = G.H / 2 - ph / 2 + 46;
     ov.addChild(head, hint);
 
-    // ростер противника
+    // ростер противника: у босса — сетка 2×2, чтобы не наезжал на кнопку
     const roster = new PIXI.Container();
     roster.x = G.W / 2; roster.y = G.H / 2 - ph / 2 + 96;
     const foes = B.units.filter(u => u.kind === 'enemy' || u.kind === 'zone');
@@ -1562,16 +1567,20 @@ G.scenes.battle = function (params) {
       byName.set(k, cur);
     }
     let ry = 0;
+    let slot = 0;
+    const twoCols = wave.boss;
     for (const [name, info] of byName) {
+      const cx = twoCols ? (slot % 2 === 0 ? -200 : 40) : -80;
+      ry = twoCols ? Math.floor(slot / 2) * 34 : slot * 34;
       const t = new PIXI.Text({
         text: (info.count > 1 ? info.count + ' × ' : '') + name + '  —  ' + G.t('roster_hp', { n: info.hp }),
         style: { fontFamily: G.FONT_BODY, fontSize: 16, fill: G.C.ink },
       });
-      t.x = -80; t.y = ry;
+      t.x = cx; t.y = ry;
       const dot = new PIXI.Graphics();
-      dot.circle(-96, ry + 9, 5).fill(G.C.blood);
+      dot.circle(cx - 16, ry + 9, 5).fill(G.C.blood);
       roster.addChild(dot, t);
-      ry += 34;
+      slot++;
     }
     ov.addChild(roster);
 
@@ -1624,7 +1633,7 @@ G.scenes.battle = function (params) {
     const dim = new PIXI.Graphics();
     dim.rect(0, 0, G.W, G.H).fill({ color: 0x060a12, alpha: 0.6 });
     ov.addChild(dim);
-    const pw = 480, ph = 300;
+    const pw = 480, ph = 320;
     const sheet = G.ui.parchment(pw, ph);
     sheet.x = G.W / 2; sheet.y = G.H / 2;   // панель в центре, текст уже ждёт её там
     const pg = new PIXI.Graphics();
@@ -1642,8 +1651,7 @@ G.scenes.battle = function (params) {
       G.t('wc_rounds', { n: B.round }),
       G.t('wc_damage', { n: G.stats.damage - waveDamage0 }),
       G.t('wc_cards', { n: G.stats.cards - waveCards0 }),
-      G.t('wc_gold', { n: pay.gold, a: pay.base, b: pay.speed })
-        + (pay.luckHit ? ' 🍀' : '') + (pay.mult > 1 ? ' · ' + G.t('ev_x2') : ''),
+      '🪙 ' + G.t('wc_gold_short', { n: pay.gold }),
     ];
     rows.forEach((r, i) => {
       const t = new PIXI.Text({
@@ -1653,6 +1661,14 @@ G.scenes.battle = function (params) {
       t.x = G.W / 2 - 130; t.y = G.H / 2 - ph / 2 + 84 + i * 34;
       ov.addChild(t);
     });
+    // разбивка награды — мельче, под строкой золота
+    const goldSub = new PIXI.Text({
+      text: G.t('wc_gold_sub', { a: pay.base, b: pay.speed })
+        + (pay.luckHit ? ' · 🍀×2' : '') + (pay.mult > 1 ? ' · ' + G.t('ev_x2') : ''),
+      style: { fontFamily: G.FONT_BODY, fontSize: 12, fill: G.C.inkSoft },
+    });
+    goldSub.x = G.W / 2 - 130; goldSub.y = G.H / 2 - ph / 2 + 84 + 3 * 34 + 21;
+    ov.addChild(goldSub);
     const cont = G.ui.button({
       label: G.t('wc_cont'), x: G.W / 2, y: G.H / 2 + ph / 2 - 52, w: 260, h: 50, primary: true,
       onClick: () => G.setScene('village', { unlocked: G.progress }),
