@@ -2649,6 +2649,7 @@ G.T = {
     win_net: 'Кошелёк на конец рейда',
     win_mail: '✉ Написать мне',
     win_github: 'GitHub: Kerarty',
+    win_excel: 'Excel-модель',
     win_again: 'Ещё рейд',
   },
 
@@ -2837,6 +2838,7 @@ G.T = {
     win_net: 'Wallet at the end',
     win_mail: '✉ Write to me',
     win_github: 'GitHub: Kerarty',
+    win_excel: 'Excel model',
     win_again: 'Raid again',
   },
 };
@@ -3716,6 +3718,7 @@ G.CONFIG = {
   email: 'kukar.yar@gmail.com',   // почта кандидата — кнопка «Написать мне»
   github: 'https://github.com/Kerarty',
   pdf: 'cv.pdf',                  // резюме из docs/CV_Yaroslav.pdf (cv-highcore)
+  excel: 'economy_model.xlsx',    // модель баланса и экономики — живые формулы
 };
 
 G.C = {
@@ -5339,27 +5342,41 @@ G.ui = {
 };
 
 
-// Лента liveops-ивента: таймер до конца окна, тап — Ивент-центр
+// Лента liveops-ивента: таймер до конца окна, блик-шиммер, тап — Ивент-центр
 G.ui.eventBanner = function (onTap) {
   const c = new PIXI.Container();
   c.eventMode = 'static';
   c.cursor = 'pointer';
   const g = new PIXI.Graphics();
+  const shimmer = new PIXI.Graphics();
+  const mask = new PIXI.Graphics();
   const t = new PIXI.Text({
     text: '',
     style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: 0xffe4a8, letterSpacing: 1 },
   });
+  let w = 0;
   const draw = () => {
     t.text = G.t('ev_banner', { n: G.EVENT.endsIn() });
+    w = t.width + 44;
     g.clear();
-    g.roundRect(0, 0, t.width + 44, 36, 18)
+    g.roundRect(0, 0, w, 36, 18)
       .fill({ color: 0x241c12, alpha: 0.94 })
       .stroke({ width: 1.5, color: G.C.gold, alpha: 0.95 });
+    mask.clear();
+    mask.roundRect(0, 0, w, 36, 18).fill();
   };
   draw();
+  shimmer.mask = mask;
   t.x = 22; t.y = 8;
-  c.addChild(g, t);
-  c.refresh = draw;
+  c.addChild(g, shimmer, mask, t);
+  // блик пробегает по ленте раз в ~2.8 c — «живой» liveops-баннер
+  c.refresh = () => {
+    draw();
+    const ph = (performance.now() / 1000) % 2.8 / 2.8;
+    const x = -20 + ph * (w + 40);
+    shimmer.clear();
+    shimmer.poly([x, 0, x + 14, 0, x - 6, 36, x - 20, 36]).fill({ color: 0xffffff, alpha: 0.16 });
+  };
   if (onTap) c.on('pointertap', () => { G.sfx.play('blip'); onTap(); });
   return c;
 };
@@ -6144,6 +6161,7 @@ G.scenes.village = function (params) {
             if (it.id === 'coat') G.economy.coat++;
             if (it.id === 'luck') G.economy.luck = true;
             G.sfx.play('chime');
+            G.ui.popText(G.W / 2 + 130, G.H / 2 - 30, '−' + price + ' 🪙', G.C.gold);
             G.fxParticles.burst(G.W / 2, G.H / 2 - 10, G.C.gold, 14, { size: 2.5, speed: 110, ttl: 700, grav: 80 });
             p.destroy({ children: true });
             openShop(); // перерисовать панель с новым состоянием кошелька
@@ -6736,6 +6754,7 @@ G.scenes.battle = function (params) {
       B.energyBought = true;
       B.energy = Math.min(B.energyMax, B.energy + G.ECONOMY.energyBuy);
       G.sfx.play('chime');
+      G.ui.popText(180, 110, '−' + G.ECONOMY.energyPrice + ' 🪙', G.C.gold);
       drawEnergy();
     });
     energyHud.addChild(pill);
@@ -6914,9 +6933,9 @@ G.scenes.battle = function (params) {
     g.roundRect(0, 0, w, h, 10).stroke({ width: 1.5, color: G.C.hexBorder });
     const head = new PIXI.Text({
       text: G.t('boss_name'),
-      style: { fontFamily: G.FONT_TITLE, fontSize: 11, fill: G.C.gold },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 10.5, fill: G.C.gold },
     });
-    head.x = 12; head.y = 10;
+    head.x = 10; head.y = 10;
     zoneHud.addChild(g, head);
     zones.forEach((z, i) => {
       const faces = { balance: 0xb8a24a, economy: 0x7ab55c, analytics: 0x4a9db8, monetization: 0x9b6ab8 };
@@ -8323,6 +8342,7 @@ G.scenes.victory = function () {
     location.href = 'mailto:' + G.CONFIG.email + '?subject=' + subject + '&body=' + body;
   }, true);
   mkBtn(G.t('win_github'), () => window.open(G.CONFIG.github, '_blank'), false);
+  mkBtn('📊 ' + G.t('win_excel'), () => window.open(G.CONFIG.excel, '_blank'), false);
   const gapV = 20;
   const totalV = rowBtns.reduce((acc, b) => acc + b.width, 0) + gapV * (rowBtns.length - 1);
   let vx = G.W / 2 - totalV / 2;

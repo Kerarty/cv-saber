@@ -118,6 +118,7 @@ G.scenes.victory = function () {
     location.href = 'mailto:' + G.CONFIG.email + '?subject=' + subject + '&body=' + body;
   }, true);
   mkBtn(G.t('win_github'), () => window.open(G.CONFIG.github, '_blank'), false);
+  mkBtn('📊 ' + G.t('win_excel'), () => window.open(G.CONFIG.excel, '_blank'), false);
   const gapV = 20;
   const totalV = rowBtns.reduce((acc, b) => acc + b.width, 0) + gapV * (rowBtns.length - 1);
   let vx = G.W / 2 - totalV / 2;

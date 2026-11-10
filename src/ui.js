@@ -634,27 +634,41 @@ G.ui = {
 };
 
 
-// Лента liveops-ивента: таймер до конца окна, тап — Ивент-центр
+// Лента liveops-ивента: таймер до конца окна, блик-шиммер, тап — Ивент-центр
 G.ui.eventBanner = function (onTap) {
   const c = new PIXI.Container();
   c.eventMode = 'static';
   c.cursor = 'pointer';
   const g = new PIXI.Graphics();
+  const shimmer = new PIXI.Graphics();
+  const mask = new PIXI.Graphics();
   const t = new PIXI.Text({
     text: '',
     style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: 0xffe4a8, letterSpacing: 1 },
   });
+  let w = 0;
   const draw = () => {
     t.text = G.t('ev_banner', { n: G.EVENT.endsIn() });
+    w = t.width + 44;
     g.clear();
-    g.roundRect(0, 0, t.width + 44, 36, 18)
+    g.roundRect(0, 0, w, 36, 18)
       .fill({ color: 0x241c12, alpha: 0.94 })
       .stroke({ width: 1.5, color: G.C.gold, alpha: 0.95 });
+    mask.clear();
+    mask.roundRect(0, 0, w, 36, 18).fill();
   };
   draw();
+  shimmer.mask = mask;
   t.x = 22; t.y = 8;
-  c.addChild(g, t);
-  c.refresh = draw;
+  c.addChild(g, shimmer, mask, t);
+  // блик пробегает по ленте раз в ~2.8 c — «живой» liveops-баннер
+  c.refresh = () => {
+    draw();
+    const ph = (performance.now() / 1000) % 2.8 / 2.8;
+    const x = -20 + ph * (w + 40);
+    shimmer.clear();
+    shimmer.poly([x, 0, x + 14, 0, x - 6, 36, x - 20, 36]).fill({ color: 0xffffff, alpha: 0.16 });
+  };
   if (onTap) c.on('pointertap', () => { G.sfx.play('blip'); onTap(); });
   return c;
 };

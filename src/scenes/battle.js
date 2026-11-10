@@ -290,6 +290,7 @@ G.scenes.battle = function (params) {
       B.energyBought = true;
       B.energy = Math.min(B.energyMax, B.energy + G.ECONOMY.energyBuy);
       G.sfx.play('chime');
+      G.ui.popText(180, 110, '−' + G.ECONOMY.energyPrice + ' 🪙', G.C.gold);
       drawEnergy();
     });
     energyHud.addChild(pill);
@@ -468,9 +469,9 @@ G.scenes.battle = function (params) {
     g.roundRect(0, 0, w, h, 10).stroke({ width: 1.5, color: G.C.hexBorder });
     const head = new PIXI.Text({
       text: G.t('boss_name'),
-      style: { fontFamily: G.FONT_TITLE, fontSize: 11, fill: G.C.gold },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 10.5, fill: G.C.gold },
     });
-    head.x = 12; head.y = 10;
+    head.x = 10; head.y = 10;
     zoneHud.addChild(g, head);
     zones.forEach((z, i) => {
       const faces = { balance: 0xb8a24a, economy: 0x7ab55c, analytics: 0x4a9db8, monetization: 0x9b6ab8 };

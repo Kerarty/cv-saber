@@ -200,6 +200,7 @@ G.T = {
     win_net: 'Кошелёк на конец рейда',
     win_mail: '✉ Написать мне',
     win_github: 'GitHub: Kerarty',
+    win_excel: 'Excel-модель',
     win_again: 'Ещё рейд',
   },
 
@@ -388,6 +389,7 @@ G.T = {
     win_net: 'Wallet at the end',
     win_mail: '✉ Write to me',
     win_github: 'GitHub: Kerarty',
+    win_excel: 'Excel model',
     win_again: 'Raid again',
   },
 };

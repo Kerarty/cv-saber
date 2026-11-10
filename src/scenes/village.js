@@ -271,6 +271,7 @@ G.scenes.village = function (params) {
             if (it.id === 'coat') G.economy.coat++;
             if (it.id === 'luck') G.economy.luck = true;
             G.sfx.play('chime');
+            G.ui.popText(G.W / 2 + 130, G.H / 2 - 30, '−' + price + ' 🪙', G.C.gold);
             G.fxParticles.burst(G.W / 2, G.H / 2 - 10, G.C.gold, 14, { size: 2.5, speed: 110, ttl: 700, grav: 80 });
             p.destroy({ children: true });
             openShop(); // перерисовать панель с новым состоянием кошелька
