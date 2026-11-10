@@ -596,6 +596,7 @@ G.ui = {
       a.remove();
     }, false);
     mkContact(G.t('sheet_github'), () => window.open(G.CONFIG.github, '_blank'), false);
+    mkContact(G.t('sheet_excel'), () => window.open(G.CONFIG.excel, '_blank'), false);
     const gapC = 16;
     let totalC = contactBtns.reduce((acc, b) => acc + b.width, 0) + gapC * (contactBtns.length - 1);
     // ряд не шире пергамента: иначе кнопки пропорционально сжимаются
@@ -731,17 +732,26 @@ G.ui.eventHub = function ({ onClose }) {
   line('ev_goal', -h / 2 + 132);
   line('ev_mech', -h / 2 + 172);
   line('ev_metrics', -h / 2 + 212);
+  // разделитель между моим ивентом и разбором чужого
+  const div = new PIXI.Graphics();
+  div.moveTo(-w / 2 + 26, -h / 2 + 242).lineTo(w / 2 - 26, -h / 2 + 242)
+    .stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.3 });
+  c.addChild(div);
   head('ev_review', -h / 2 + 258);
   line('ev_r1', -h / 2 + 286);
   line('ev_r2', -h / 2 + 326);
   line('ev_r3', -h / 2 + 366);
   line('ev_r4', -h / 2 + 406);
 
+  // футер — живая ссылка на Excel-модель
   const foot = new PIXI.Text({
     text: G.t('ev_footer'),
-    style: { fontFamily: G.FONT_BODY, fontSize: 12, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 56 },
+    style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fill: G.C.heroBlue, wordWrap: true, wordWrapWidth: w - 56 },
   });
   foot.x = -w / 2 + 26; foot.y = h / 2 - 46;
+  foot.eventMode = 'static';
+  foot.cursor = 'pointer';
+  foot.on('pointertap', () => window.open(G.CONFIG.excel, '_blank'));
   c.addChild(foot);
 
   if (onClose) c.addChild(G.ui.button({ label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true, onClick: onClose }));
@@ -894,6 +904,7 @@ G.ui.fullResume = function ({ onClose }) {
             a.remove();
           } },
         { label: G.t('sheet_github'), primary: false, onClick: () => window.open(G.CONFIG.github, '_blank') },
+        { label: G.t('sheet_excel'), primary: false, onClick: () => window.open(G.CONFIG.excel, '_blank') },
       ];
       for (const cinfo of contacts) {
         y += 6;

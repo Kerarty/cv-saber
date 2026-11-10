@@ -277,19 +277,39 @@ G.scenes.village = function (params) {
             openShop(); // перерисовать панель с новым состоянием кошелька
           },
         });
+        // не по карману — кнопка приглушена, но кликабельна (подсказка о нехватке)
+        if (G.economy.gold < price) buy.alpha = 0.5;
         row.addChild(buy);
       }
       row.alpha = 0;
       p.addChild(row);
       setTimeout(() => { if (!row.destroyed) G.tween(row, { alpha: 1 }, 240, null, G.easeOut); }, 120 + i * 110);
+      // тонкий золотой разделитель между рядами товаров
+      if (i < items.length - 1) {
+        const sep = new PIXI.Graphics();
+        sep.moveTo(-w / 2 + 26, row.y + 70).lineTo(w / 2 - 26, row.y + 70)
+          .stroke({ width: 1, color: G.C.goldDark, alpha: 0.22 });
+        p.addChild(sep);
+      }
     });
 
     const shint = new PIXI.Text({
       text: G.t('shop_hint'),
       style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 52 },
     });
-    shint.x = -w / 2 + 26; shint.y = h / 2 - 62;
+    shint.x = -w / 2 + 26; shint.y = h / 2 - 78;
     p.addChild(shint);
+
+    // живая ссылка на Excel-модель — экономика открыта целиком
+    const xl = new PIXI.Text({
+      text: G.t('shop_excel'),
+      style: { fontFamily: G.FONT_BODY, fontSize: 14, fill: G.C.heroBlue },
+    });
+    xl.x = -w / 2 + 26; xl.y = h / 2 - 42;
+    xl.eventMode = 'static';
+    xl.cursor = 'pointer';
+    xl.on('pointertap', () => window.open(G.CONFIG.excel, '_blank'));
+    p.addChild(xl);
 
     p.addChild(G.ui.button({
       label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true,

@@ -40,6 +40,7 @@ G.T = {
     sheet_all: '⏭ Пропустить — всё резюме сразу',
     fr_title: 'Резюме целиком',
     sheet_github: 'GitHub: Kerarty',
+    sheet_excel: '📊 Excel-модель',
 
     // Постройки
     forge_title: 'Кузница · Unity и прототипы',
@@ -63,7 +64,8 @@ G.T = {
     shop_luck: 'Мешок удачи',
     shop_luck_d: '50%: ×2 золото за следующую волну. Честный шанс — матожидание считает Excel-модель',
     shop_owned: '✓ Куплено',
-    shop_hint: 'Доход: база волны + бонус за скорость. Сходится ли экономика — см. Excel-модель в репозитории',
+    shop_hint: 'Доход: база волны + бонус за скорость. Всё купить нельзя — выбирай, что окупится',
+    shop_excel: '↗ Открыть Excel-модель экономики',
 
     // Ивент «Золотой рейд»
     ev_banner: '⭐ ЗОЛОТОЙ РЕЙД ×2 · {n}',
@@ -78,7 +80,7 @@ G.T = {
     ev_r2: 'Проблема: отрицательная ценность покупки — математику колеса считают на реддитах, платящие уходят',
     ev_r3: 'Правка: цена 60🪙, pity-гарант приза 100🪙 на 10-й прокрут, итоговый EV ≈ 46🪙 — margin ≈24% сохранён',
     ev_r4: 'Прогноз: конверсия в покупку ×1.8, выручка на DAU +12%, отток платящих −8%',
-    ev_footer: 'Полный расчёт с формулами — в Excel-модели экономики (ссылка в README)',
+    ev_footer: '↗ Полный расчёт с формулами — в Excel-модели',
     ev_days: 'дн.',
     ev_hours: 'ч',
     ev_min: 'мин',
@@ -235,6 +237,7 @@ G.T = {
     sheet_all: '⏭ Skip — show the whole résumé',
     fr_title: 'Full résumé',
     sheet_github: 'GitHub: Kerarty',
+    sheet_excel: '📊 Excel model',
 
     forge_title: 'Forge · Unity & prototypes',
     forge_1: 'echoloop-playble — a time puzzle: loop, echoes of past runs, 8 levels',
@@ -257,7 +260,8 @@ G.T = {
     shop_luck: 'Luck Bag',
     shop_luck_d: '50%: gold ×2 for the next wave. An honest chance — the Excel model computes the EV',
     shop_owned: '✓ Owned',
-    shop_hint: 'Income: wave base + speed bonus. Whether it adds up — see the Excel model in the repo',
+    shop_hint: 'Income: wave base + speed bonus. You can’t buy everything — choose what pays off',
+    shop_excel: '↗ Open the economy Excel model',
 
     // Golden Raid event
     ev_banner: '⭐ GOLDEN RAID ×2 · {n}',
@@ -272,7 +276,7 @@ G.T = {
     ev_r2: 'Problem: negative purchase value — wheel math gets posted on Reddit, payers churn',
     ev_r3: 'Fix: price 60🪙, a 100🪙 prize pity guarantee on the 10th spin, final EV ≈ 46🪙 — a ~24% margin kept',
     ev_r4: 'Forecast: purchase conversion ×1.8, revenue per DAU +12%, payer churn −8%',
-    ev_footer: 'Full calculations with formulas — in the economy Excel model (link in the README)',
+    ev_footer: '↗ Full calculations with formulas — in the Excel model',
     ev_days: 'd',
     ev_hours: 'h',
     ev_min: 'min',

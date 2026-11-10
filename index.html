@@ -2489,6 +2489,7 @@ G.T = {
     sheet_all: '⏭ Пропустить — всё резюме сразу',
     fr_title: 'Резюме целиком',
     sheet_github: 'GitHub: Kerarty',
+    sheet_excel: '📊 Excel-модель',
 
     // Постройки
     forge_title: 'Кузница · Unity и прототипы',
@@ -2512,7 +2513,8 @@ G.T = {
     shop_luck: 'Мешок удачи',
     shop_luck_d: '50%: ×2 золото за следующую волну. Честный шанс — матожидание считает Excel-модель',
     shop_owned: '✓ Куплено',
-    shop_hint: 'Доход: база волны + бонус за скорость. Сходится ли экономика — см. Excel-модель в репозитории',
+    shop_hint: 'Доход: база волны + бонус за скорость. Всё купить нельзя — выбирай, что окупится',
+    shop_excel: '↗ Открыть Excel-модель экономики',
 
     // Ивент «Золотой рейд»
     ev_banner: '⭐ ЗОЛОТОЙ РЕЙД ×2 · {n}',
@@ -2527,7 +2529,7 @@ G.T = {
     ev_r2: 'Проблема: отрицательная ценность покупки — математику колеса считают на реддитах, платящие уходят',
     ev_r3: 'Правка: цена 60🪙, pity-гарант приза 100🪙 на 10-й прокрут, итоговый EV ≈ 46🪙 — margin ≈24% сохранён',
     ev_r4: 'Прогноз: конверсия в покупку ×1.8, выручка на DAU +12%, отток платящих −8%',
-    ev_footer: 'Полный расчёт с формулами — в Excel-модели экономики (ссылка в README)',
+    ev_footer: '↗ Полный расчёт с формулами — в Excel-модели',
     ev_days: 'дн.',
     ev_hours: 'ч',
     ev_min: 'мин',
@@ -2684,6 +2686,7 @@ G.T = {
     sheet_all: '⏭ Skip — show the whole résumé',
     fr_title: 'Full résumé',
     sheet_github: 'GitHub: Kerarty',
+    sheet_excel: '📊 Excel model',
 
     forge_title: 'Forge · Unity & prototypes',
     forge_1: 'echoloop-playble — a time puzzle: loop, echoes of past runs, 8 levels',
@@ -2706,7 +2709,8 @@ G.T = {
     shop_luck: 'Luck Bag',
     shop_luck_d: '50%: gold ×2 for the next wave. An honest chance — the Excel model computes the EV',
     shop_owned: '✓ Owned',
-    shop_hint: 'Income: wave base + speed bonus. Whether it adds up — see the Excel model in the repo',
+    shop_hint: 'Income: wave base + speed bonus. You can’t buy everything — choose what pays off',
+    shop_excel: '↗ Open the economy Excel model',
 
     // Golden Raid event
     ev_banner: '⭐ GOLDEN RAID ×2 · {n}',
@@ -2721,7 +2725,7 @@ G.T = {
     ev_r2: 'Problem: negative purchase value — wheel math gets posted on Reddit, payers churn',
     ev_r3: 'Fix: price 60🪙, a 100🪙 prize pity guarantee on the 10th spin, final EV ≈ 46🪙 — a ~24% margin kept',
     ev_r4: 'Forecast: purchase conversion ×1.8, revenue per DAU +12%, payer churn −8%',
-    ev_footer: 'Full calculations with formulas — in the economy Excel model (link in the README)',
+    ev_footer: '↗ Full calculations with formulas — in the Excel model',
     ev_days: 'd',
     ev_hours: 'h',
     ev_min: 'min',
@@ -5304,6 +5308,7 @@ G.ui = {
       a.remove();
     }, false);
     mkContact(G.t('sheet_github'), () => window.open(G.CONFIG.github, '_blank'), false);
+    mkContact(G.t('sheet_excel'), () => window.open(G.CONFIG.excel, '_blank'), false);
     const gapC = 16;
     let totalC = contactBtns.reduce((acc, b) => acc + b.width, 0) + gapC * (contactBtns.length - 1);
     // ряд не шире пергамента: иначе кнопки пропорционально сжимаются
@@ -5439,17 +5444,26 @@ G.ui.eventHub = function ({ onClose }) {
   line('ev_goal', -h / 2 + 132);
   line('ev_mech', -h / 2 + 172);
   line('ev_metrics', -h / 2 + 212);
+  // разделитель между моим ивентом и разбором чужого
+  const div = new PIXI.Graphics();
+  div.moveTo(-w / 2 + 26, -h / 2 + 242).lineTo(w / 2 - 26, -h / 2 + 242)
+    .stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.3 });
+  c.addChild(div);
   head('ev_review', -h / 2 + 258);
   line('ev_r1', -h / 2 + 286);
   line('ev_r2', -h / 2 + 326);
   line('ev_r3', -h / 2 + 366);
   line('ev_r4', -h / 2 + 406);
 
+  // футер — живая ссылка на Excel-модель
   const foot = new PIXI.Text({
     text: G.t('ev_footer'),
-    style: { fontFamily: G.FONT_BODY, fontSize: 12, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 56 },
+    style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fill: G.C.heroBlue, wordWrap: true, wordWrapWidth: w - 56 },
   });
   foot.x = -w / 2 + 26; foot.y = h / 2 - 46;
+  foot.eventMode = 'static';
+  foot.cursor = 'pointer';
+  foot.on('pointertap', () => window.open(G.CONFIG.excel, '_blank'));
   c.addChild(foot);
 
   if (onClose) c.addChild(G.ui.button({ label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true, onClick: onClose }));
@@ -5602,6 +5616,7 @@ G.ui.fullResume = function ({ onClose }) {
             a.remove();
           } },
         { label: G.t('sheet_github'), primary: false, onClick: () => window.open(G.CONFIG.github, '_blank') },
+        { label: G.t('sheet_excel'), primary: false, onClick: () => window.open(G.CONFIG.excel, '_blank') },
       ];
       for (const cinfo of contacts) {
         y += 6;
@@ -6167,19 +6182,39 @@ G.scenes.village = function (params) {
             openShop(); // перерисовать панель с новым состоянием кошелька
           },
         });
+        // не по карману — кнопка приглушена, но кликабельна (подсказка о нехватке)
+        if (G.economy.gold < price) buy.alpha = 0.5;
         row.addChild(buy);
       }
       row.alpha = 0;
       p.addChild(row);
       setTimeout(() => { if (!row.destroyed) G.tween(row, { alpha: 1 }, 240, null, G.easeOut); }, 120 + i * 110);
+      // тонкий золотой разделитель между рядами товаров
+      if (i < items.length - 1) {
+        const sep = new PIXI.Graphics();
+        sep.moveTo(-w / 2 + 26, row.y + 70).lineTo(w / 2 - 26, row.y + 70)
+          .stroke({ width: 1, color: G.C.goldDark, alpha: 0.22 });
+        p.addChild(sep);
+      }
     });
 
     const shint = new PIXI.Text({
       text: G.t('shop_hint'),
       style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 52 },
     });
-    shint.x = -w / 2 + 26; shint.y = h / 2 - 62;
+    shint.x = -w / 2 + 26; shint.y = h / 2 - 78;
     p.addChild(shint);
+
+    // живая ссылка на Excel-модель — экономика открыта целиком
+    const xl = new PIXI.Text({
+      text: G.t('shop_excel'),
+      style: { fontFamily: G.FONT_BODY, fontSize: 14, fill: G.C.heroBlue },
+    });
+    xl.x = -w / 2 + 26; xl.y = h / 2 - 42;
+    xl.eventMode = 'static';
+    xl.cursor = 'pointer';
+    xl.on('pointertap', () => window.open(G.CONFIG.excel, '_blank'));
+    p.addChild(xl);
 
     p.addChild(G.ui.button({
       label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true,
