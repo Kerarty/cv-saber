@@ -453,7 +453,7 @@ G.scenes.battle = function (params) {
 
   // Чеклист зон босса: требования и их HP
   const zoneHud = new PIXI.Container();
-  zoneHud.x = G.W - 212; zoneHud.y = 78;
+  zoneHud.x = G.W - 222; zoneHud.y = 78;
   zoneHud.visible = false;
   c.addChild(zoneHud);
 
@@ -462,15 +462,15 @@ G.scenes.battle = function (params) {
     zoneHud.visible = true;
     zoneHud.removeChildren();
     const zones = B.units.filter(u => u.kind === 'zone');
-    const w = 190, rowH = 30, h = zones.length * rowH + 34;
+    const w = 200, rowH = 30, h = zones.length * rowH + 34;
     const g = new PIXI.Graphics();
     g.roundRect(0, 0, w, h, 10).fill({ color: G.C.panelDark, alpha: 0.92 });
     g.roundRect(0, 0, w, h, 10).stroke({ width: 1.5, color: G.C.hexBorder });
     const head = new PIXI.Text({
       text: G.t('boss_name'),
-      style: { fontFamily: G.FONT_TITLE, fontSize: 13, fill: G.C.gold },
+      style: { fontFamily: G.FONT_TITLE, fontSize: 11, fill: G.C.gold },
     });
-    head.x = 12; head.y = 8;
+    head.x = 12; head.y = 10;
     zoneHud.addChild(g, head);
     zones.forEach((z, i) => {
       const faces = { balance: 0xb8a24a, economy: 0x7ab55c, analytics: 0x4a9db8, monetization: 0x9b6ab8 };
@@ -1251,7 +1251,9 @@ G.scenes.battle = function (params) {
         finishActCard(hero, actual);
         return;
       }
-      // урон/лечение без целей: карта возвращается в руку, ход сохраняется
+      // урон/лечение без целей: карта возвращается в руку, энергия — в пул
+      B.energy += cost;
+      drawEnergy();
       G.ui.toast(G.t('no_targets'));
       B.pendingCard = null;
       showHand(hero);
@@ -1621,7 +1623,7 @@ G.scenes.battle = function (params) {
     const dim = new PIXI.Graphics();
     dim.rect(0, 0, G.W, G.H).fill({ color: 0x060a12, alpha: 0.6 });
     ov.addChild(dim);
-    const pw = 480, ph = 260;
+    const pw = 480, ph = 300;
     const sheet = G.ui.parchment(pw, ph);
     sheet.x = G.W / 2; sheet.y = G.H / 2;   // панель в центре, текст уже ждёт её там
     const pg = new PIXI.Graphics();

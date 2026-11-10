@@ -21,7 +21,7 @@ G.T = {
     title_play: 'В РЕЙД',
     title_resume: 'СРАЗУ К РЕЗЮМЕ',
     title_load: 'загрузилось за {n} сек — так я делаю playable-ads',
-    title_tag: 'Ярослав Кукар · гейм-дизайнер',
+    title_tag: 'Ярослав Кукар · экономика и монетизация',
 
     // Деревня
     village_name: 'Деревня кандидата',
@@ -216,7 +216,7 @@ G.T = {
     title_play: 'START THE RAID',
     title_resume: 'STRAIGHT TO RÉSUMÉ',
     title_load: 'loaded in {n}s — this is how I build playable ads',
-    title_tag: 'Yaroslav Kukar · game designer',
+    title_tag: 'Yaroslav Kukar · economy & monetization',
 
     village_name: "Candidate's village",
     village_hint: 'Buildings are résumé sections. Each wave unlocks the next one.',

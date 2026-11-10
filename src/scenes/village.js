@@ -416,10 +416,10 @@ G.scenes.village = function (params) {
   evBanner.x = 24; evBanner.y = 12;
   c.addChild(evBanner);
 
-  // Возвращение после победы в волне — тост о новой постройке
+  // Возвращение после победы в волне — тост о новой постройке (первая с need == прогресса)
   if (params.unlocked) {
-    const def = G.BUILDINGS[params.unlocked - 1];
-    setTimeout(() => { if (!c.destroyed) G.ui.toast(G.t('village_unlocked', { n: G.t(def.titleKey).split('·')[0].trim() }), 2200); }, 400);
+    const def = G.BUILDINGS[params.unlocked];
+    if (def) setTimeout(() => { if (!c.destroyed) G.ui.toast(G.t('village_unlocked', { n: G.t(def.titleKey).split('·')[0].trim() }), 2200); }, 400);
   }
 
   // Анимация: качание драккара, дрейф воды, мерцание огней
