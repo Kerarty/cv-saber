@@ -75,12 +75,28 @@ G.CARDS = [
 ];
 
 // --- Экономика рейда: живой кейс для вакансии «экономика и монетизация» ---
-// Энергия — внутрибоевая валюта на раунд; золото и лавка добавляются в деревне
+// Энергия — внутрибоевая валюта раунда; золото — мета-валюта рейда
 G.ECONOMY = {
   energyBase: 6,     // пул энергии команды на раунд
   energyBuy: 2,      // докупка энергии в бою
   energyPrice: 30,   // цена докупки, золото
+  speedBonus: 10,    // золото за каждый раунд быстрее par
+  upgrades: {
+    crystal: { price: 60 },  // +1 к пулу энергии на рейд
+    coat:    { price: 70 },  // +2 макс HP героям на рейд
+    luck:    { price: 60 },  // 50%: ×2 золото за следующую волну
+  },
 };
+
+// Состояние экономики рейда (живёт сессию; сбрасывается кнопкой «Ещё рейд»)
+G.economy = { gold: 0, earned: 0, spent: 0, energy: 0, coat: 0, luck: false };
+G.resetEconomy = function () {
+  G.economy = { gold: 0, earned: 0, spent: 0, energy: 0, coat: 0, luck: false };
+};
+
+// Множитель золота liveops-ивента («Золотой рейд» ×2)
+G.EVENT = { enabled: false, mult: 2 };
+G.goldMult = function () { return G.EVENT && G.EVENT.enabled ? G.EVENT.mult : 1; };
 
 // --- Враги ---
 G.ENEMY_DEFS = {
@@ -89,24 +105,24 @@ G.ENEMY_DEFS = {
   deadline: { key: 'e_deadline', hp: 6, move: 3, dmg: 2, grow: 1, color: 0x6e5a2a },
 };
 
-// --- Волны: состав и позиции на поле ---
+// --- Волны: состав и позиции на поле; reward/par — экономика награды ---
 G.WAVES = [
   {
-    id: 'wave1', nameKey: 'wave1_name', hintKey: 'hint1',
+    id: 'wave1', nameKey: 'wave1_name', hintKey: 'hint1', reward: 40, par: 3,
     enemies: [
       { def: 'bug', col: 8, row: 1 }, { def: 'bug', col: 9, row: 3 },
       { def: 'bug', col: 8, row: 4 }, { def: 'bug', col: 10, row: 2 },
     ],
   },
   {
-    id: 'wave2', nameKey: 'wave2_name', hintKey: 'hint2',
+    id: 'wave2', nameKey: 'wave2_name', hintKey: 'hint2', reward: 60, par: 4,
     enemies: [
       { def: 'krynch', col: 9, row: 2 }, { def: 'deadline', col: 8, row: 1 },
       { def: 'deadline', col: 8, row: 4 },
     ],
   },
   {
-    id: 'boss', nameKey: 'wave3_name', hintKey: 'hint3', boss: true,
+    id: 'boss', nameKey: 'wave3_name', hintKey: 'hint3', boss: true, reward: 100, par: 6,
     zones: [
       { id: 'balance', key: 'z_balance', hp: 10, col: 9, row: 3 },
       { id: 'economy', key: 'z_economy', hp: 9, col: 8, row: 1 },

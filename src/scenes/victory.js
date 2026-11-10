@@ -56,10 +56,10 @@ G.scenes.victory = function () {
   ship.x = G.W / 2; ship.y = 560;
   c.addChild(ship);
 
-  // Отчёт рейда — пергамент
+  // Отчёт рейда — пергамент (внизу — экономика: заработано / кошелёк)
   const panel = new PIXI.Container();
-  panel.x = G.W / 2; panel.y = 350;
-  const pw = 460, ph = 190;
+  panel.x = G.W / 2; panel.y = 356;
+  const pw = 460, ph = 268;
   const sheet = G.ui.parchment(pw, ph);
   const pg = new PIXI.Graphics();
   G.ui.fancyFrame(pg, pw, ph);
@@ -77,6 +77,8 @@ G.scenes.victory = function () {
     ['win_damage', G.stats.damage],
     ['win_cards', G.stats.cards],
     ['win_facts', G.stats.facts],
+    ['win_earned', '🪙 ' + G.economy.earned],
+    ['win_net', '🪙 ' + G.economy.gold],
   ];
   let yy = -ph / 2 + 52;
   for (const [k, v] of rows) {
@@ -127,6 +129,7 @@ G.scenes.victory = function () {
     onClick: () => {
       G.progress = 0;
       G.stats = { rounds: 0, damage: 0, cards: 0, facts: 0 };
+      G.resetEconomy();
       G.setScene('title');
     },
   });

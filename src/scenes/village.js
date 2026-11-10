@@ -87,12 +87,14 @@ G.scenes.village = function (params) {
     { id: 'forge', x: 250, y: 430, need: 0 },
     { id: 'shipyard', x: 520, y: 480, need: 1 },
     { id: 'stone', x: 780, y: 450, need: 2 },
+    { id: 'shop', x: 920, y: 530, need: 0 },   // лавка: тратим золото между волнами
     { id: 'thing', x: 1040, y: 470, need: 3 },
   ];
   const torches = [];
   const torchFlames = [];
 
   for (const b of layout) {
+    const isShop = b.id === 'shop';
     const def = G.BUILDINGS.find(x => x.id === b.id);
     const open = G.previewAll || G.progress >= b.need;
     const bld = new PIXI.Container();
@@ -101,8 +103,8 @@ G.scenes.village = function (params) {
     bld.cursor = 'pointer';
 
     // спрайтовое здание (Tiny Swords) или процедурный фолбэк
-    const BT = { forge: 'b_barracks', shipyard: 'b_house3', stone: 'b_tower2', thing: 'b_monastery' };
-    const BH = { forge: 175, shipyard: 150, stone: 190, thing: 205 };
+    const BT = { forge: 'b_barracks', shipyard: 'b_house3', stone: 'b_tower2', shop: 'b_house2', thing: 'b_monastery' };
+    const BH = { forge: 175, shipyard: 150, stone: 190, shop: 118, thing: 205 };
     let sprBuilt = false;
     if (G.TEX && G.TEX[BT[b.id]]) {
       const t = G.TEX[BT[b.id]];
@@ -129,7 +131,7 @@ G.scenes.village = function (params) {
 
     // табличка с названием раздела — деревянная плашка Tiny Swords
     const label = new PIXI.Text({
-      text: G.t(def.titleKey).split('·')[0].trim(),
+      text: (isShop ? G.t('shop_title') : G.t(def.titleKey)).split('·')[0].trim(),
       style: { fontFamily: G.FONT_BODY, fontSize: 14, fill: 0xf0e2b8, fontWeight: 'bold' },
     });
     label.anchor.set(0.5, 0);
@@ -172,6 +174,7 @@ G.scenes.village = function (params) {
       if (!open) { G.sfx.play('thud'); G.ui.toast(G.t('village_locked', { n: b.need })); return; }
       G.sfx.play('blip');
       closeOverlays();
+      if (isShop) { openShop(); return; }
       const p = G.ui.buildingPanel({
         title: G.t(def.titleKey),
         facts: def.facts,
@@ -185,6 +188,118 @@ G.scenes.village = function (params) {
     });
 
     c.addChild(bld);
+  }
+
+  // --- Лавка: единственный магазин рейда — сюда уходит золото за волны ---
+  function openShop() {
+    closeOverlays();
+    const p = new PIXI.Container();
+    p.zIndex = 50;
+    p.eventMode = 'static';
+    const w = 660, h = 430;
+    p.x = G.W / 2; p.y = G.H / 2 - 10;
+    const sheet = G.ui.parchment(w, h);
+    const g = new PIXI.Graphics();
+    G.ui.fancyFrame(g, w, h);
+    const grain = G.viz.grain(w, h, 0.04);
+    grain.x = -w / 2; grain.y = -h / 2;
+    p.addChild(sheet, g, grain);
+    const tt = new PIXI.Text({
+      text: G.t('shop_title'),
+      style: { fontFamily: G.FONT_TITLE, fontSize: 21, fill: G.C.ink, letterSpacing: 1 },
+    });
+    tt.x = -w / 2 + 26; tt.y = -h / 2 + 20;
+    const flour = new PIXI.Graphics();
+    flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(w / 2 - 26, -h / 2 + 56)
+      .stroke({ width: 2, color: G.C.goldDark, alpha: 0.55 });
+    flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(-w / 2 + 96, -h / 2 + 56)
+      .stroke({ width: 3, color: G.C.goldDark });
+    p.addChild(tt, flour);
+
+    // кошелёк кандидата
+    const wallet = new PIXI.Text({
+      text: G.t('shop_gold', { n: G.economy.gold }),
+      style: { fontFamily: G.FONT_TITLE, fontSize: 17, fill: G.C.goldDark },
+    });
+    wallet.x = -w / 2 + 26; wallet.y = -h / 2 + 66;
+    p.addChild(wallet);
+
+    const items = [
+      { id: 'crystal', icon: '💎', owned: (G.economy.energy || 0) > 0 },
+      { id: 'coat', icon: '🧥', owned: (G.economy.coat || 0) > 0 },
+      { id: 'luck', icon: '🍀', owned: !!G.economy.luck },
+    ];
+    items.forEach((it, i) => {
+      const price = G.ECONOMY.upgrades[it.id].price;
+      const row = new PIXI.Container();
+      row.x = -w / 2 + 26;
+      row.y = -h / 2 + 116 + i * 84;
+      const iconBg = new PIXI.Graphics();
+      iconBg.circle(20, 20, 19).fill(0x2c2115);
+      iconBg.circle(20, 20, 19).stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.9 });
+      const icon = new PIXI.Text({ text: it.icon, style: { fontSize: 19 } });
+      icon.anchor.set(0.5);
+      icon.x = 20; icon.y = 20;
+      const nameT = new PIXI.Text({
+        text: G.t('shop_' + it.id),
+        style: { fontFamily: G.FONT_SERIF, fontSize: 15, fill: G.C.ink },
+      });
+      nameT.x = 50; nameT.y = 2;
+      const desc = new PIXI.Text({
+        text: G.t('shop_' + it.id + '_d'),
+        style: { fontFamily: G.FONT_BODY, fontSize: 12, fill: G.C.inkSoft, wordWrap: true, wordWrapWidth: w - 320, lineHeight: 15 },
+      });
+      desc.x = 50; desc.y = 26;
+      row.addChild(iconBg, icon, nameT, desc);
+
+      if (it.owned) {
+        const chip = new PIXI.Text({
+          text: G.t('shop_owned'),
+          style: { fontFamily: G.FONT_TITLE, fontSize: 13, fill: 0x4a6a3a },
+        });
+        chip.anchor.set(1, 0.5);
+        chip.x = w - 78; chip.y = 20;
+        row.addChild(chip);
+      } else {
+        const buy = G.ui.button({
+          label: '🪙 ' + price, x: w - 140, y: 20, w: 124, h: 40, small: true,
+          onClick: () => {
+            if (G.economy.gold < price) { G.sfx.play('thud'); G.ui.toast(G.t('no_gold')); return; }
+            G.economy.gold -= price;
+            G.economy.spent += price;
+            if (it.id === 'crystal') G.economy.energy++;
+            if (it.id === 'coat') G.economy.coat++;
+            if (it.id === 'luck') G.economy.luck = true;
+            G.sfx.play('chime');
+            G.fxParticles.burst(G.W / 2, G.H / 2 - 10, G.C.gold, 14, { size: 2.5, speed: 110, ttl: 700, grav: 80 });
+            p.destroy({ children: true });
+            openShop(); // перерисовать панель с новым состоянием кошелька
+          },
+        });
+        row.addChild(buy);
+      }
+      row.alpha = 0;
+      p.addChild(row);
+      setTimeout(() => { if (!row.destroyed) G.tween(row, { alpha: 1 }, 240, null, G.easeOut); }, 120 + i * 110);
+    });
+
+    const shint = new PIXI.Text({
+      text: G.t('shop_hint'),
+      style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 52 },
+    });
+    shint.x = -w / 2 + 26; shint.y = h / 2 - 62;
+    p.addChild(shint);
+
+    p.addChild(G.ui.button({
+      label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true,
+      onClick: () => { c.removeChild(p); p.destroy({ children: true }); },
+    }));
+    c.addChild(p);
+    p.alpha = 0;
+    p.scale.set(0.95);
+    G.tween(p, { alpha: 1 }, 200, null, G.easeOut);
+    G.tween(p.scale, { x: 1, y: 1 }, 200, null, G.easeOut);
+    G.sfx.play('chime');
   }
 
   // пропсы: деревья, кусты, камни, пни, инструменты, бочки — всё спрайты
@@ -393,6 +508,23 @@ function drawBuilding(g, id, open) {
       g.circle(-34, 38, 6).fill(0x39465c).stroke({ width: 1, color: outline });
       g.circle(-40, 42, 4.5).fill(0x2a3648).stroke({ width: 1, color: outline });
       g.circle(34, 40, 5).fill(0x39465c).stroke({ width: 1, color: outline });
+      break;
+    case 'shop':
+      // торговый прилавок: стол, полосатый тент, товар и вывеска-монета
+      g.rect(-40, 6, 80, 30).fill(woodDark).stroke({ width: 2, color: outline });
+      g.rect(-44, 0, 88, 8).fill(wood).stroke({ width: 2, color: outline });
+      g.rect(-6, -58, 5, 60).fill(woodDark).stroke({ width: 1, color: outline });
+      g.rect(22, -58, 5, 60).fill(woodDark).stroke({ width: 1, color: outline });
+      for (let i = 0; i < 6; i++) {
+        g.rect(-45 + i * 15, -66, 15, 14).fill(i % 2 ? (open ? 0xb07722 : 0x3a2d1c) : (open ? G.C.gold : 0x5a4a38))
+          .stroke({ width: 1, color: outline });
+      }
+      if (open) {
+        g.circle(-20, 0, 8).fill(0xc4ad82).stroke({ width: 1.5, color: outline });
+        g.rect(4, -8, 24, 10).fill(0x8a5a2a).stroke({ width: 1.5, color: outline });
+        g.rect(4, -4, 24, 2.5).fill(G.C.gold);
+        g.circle(-1, -74, 5).fill(G.C.gold).stroke({ width: 1.5, color: outline });
+      }
       break;
     case 'thing':
       g.rect(-64, -18, 128, 52).fill(wood).stroke({ width: 2, color: outline });

@@ -2502,6 +2502,18 @@ G.T = {
     stone_1: 'cv-top-games — баланс-лаборатория merge-автобатлера',
     stone_2: 'cv-gametech — тюнер liveops-ивентов: таблицы контента, формулы, экономика ивента',
     stone_3: 'cv-lesta — игровой баланс на Three.js',
+    // Лавка: экономика рейда
+    shop_title: 'Лавка · Экономика рейда',
+    shop_gold: '🪙 Золото: {n}',
+    shop_crystal: 'Кристалл энергии',
+    shop_crystal_d: '+1 к пулу ⚡ в каждом раунде до конца рейда',
+    shop_coat: 'Меховой плащ',
+    shop_coat_d: '+2 к макс. HP всех героев до конца рейда',
+    shop_luck: 'Мешок удачи',
+    shop_luck_d: '50%: ×2 золото за следующую волну. Честный шанс — матожидание считает Excel-модель',
+    shop_owned: '✓ Куплено',
+    shop_hint: 'Доход: база волны + бонус за скорость. Сходится ли экономика — см. Excel-модель в репозитории',
+
     thing_title: 'Тинг · Софт-скиллы',
     thing_1: '12+ интерактивных резюме-игр — под каждую студию свой жанр',
     thing_2: 'Русский / English',
@@ -2519,7 +2531,11 @@ G.T = {
     wc_rounds: 'Раундов: {n}',
     wc_damage: 'Урона нанесено: {n}',
     wc_cards: 'Карт сыграно: {n}',
+    wc_gold: 'Золото: +{n} (база {a} + скорость {b})',
     wc_cont: 'В деревню →',
+    ev_x2: 'ивент ×2',
+    energy_bought: 'Энергия уже докуплена в этом раунде',
+    no_gold: 'Не хватает золота — загляни в лавку после волны',
     st_move: 'Фаза 1 · Движение: передвинь {n} или пропусти',
     st_act: 'Фаза 2 · Атака: {n} — выбери карту',
     skip_move: 'Пропустить движение',
@@ -2611,6 +2627,8 @@ G.T = {
     win_damage: 'Урона нанесено',
     win_cards: 'Карт сыграно',
     win_facts: 'Фактов открыто',
+    win_earned: 'Золота заработано',
+    win_net: 'Кошелёк на конец рейда',
     win_mail: '✉ Написать мне',
     win_github: 'GitHub: Kerarty',
     win_again: 'Ещё рейд',
@@ -2659,6 +2677,18 @@ G.T = {
     stone_1: 'cv-top-games — balance lab for a merge autobattler',
     stone_2: 'cv-gametech — liveops event tuner: content tables, formulas, event economy',
     stone_3: 'cv-lesta — game balance on Three.js',
+    // Shop: raid economy
+    shop_title: 'Shop · Raid economy',
+    shop_gold: '🪙 Gold: {n}',
+    shop_crystal: 'Energy Crystal',
+    shop_crystal_d: '+1 to the ⚡ pool in every round for the rest of the raid',
+    shop_coat: 'Fur Cloak',
+    shop_coat_d: '+2 max HP to every hero for the rest of the raid',
+    shop_luck: 'Luck Bag',
+    shop_luck_d: '50%: gold ×2 for the next wave. An honest chance — the Excel model computes the EV',
+    shop_owned: '✓ Owned',
+    shop_hint: 'Income: wave base + speed bonus. Whether it adds up — see the Excel model in the repo',
+
     thing_title: 'Thing · Soft skills',
     thing_1: '12+ interactive résumé games — a genre for every studio',
     thing_2: 'Russian / English',
@@ -2675,7 +2705,11 @@ G.T = {
     wc_rounds: 'Rounds: {n}',
     wc_damage: 'Damage dealt: {n}',
     wc_cards: 'Cards played: {n}',
+    wc_gold: 'Gold: +{n} (base {a} + speed {b})',
     wc_cont: 'To the village →',
+    ev_x2: 'event ×2',
+    energy_bought: 'Energy already bought this round',
+    no_gold: 'Not enough gold — visit the shop after the wave',
     st_move: 'Phase 1 · Move: move {n} or skip',
     st_act: 'Phase 2 · Attack: {n}, play a card',
     skip_move: 'Skip movement',
@@ -2763,6 +2797,8 @@ G.T = {
     win_damage: 'Damage dealt',
     win_cards: 'Cards played',
     win_facts: 'Facts revealed',
+    win_earned: 'Gold earned',
+    win_net: 'Wallet at the end',
     win_mail: '✉ Write to me',
     win_github: 'GitHub: Kerarty',
     win_again: 'Raid again',
@@ -3712,12 +3748,28 @@ G.CARDS = [
 ];
 
 // --- Экономика рейда: живой кейс для вакансии «экономика и монетизация» ---
-// Энергия — внутрибоевая валюта на раунд; золото и лавка добавляются в деревне
+// Энергия — внутрибоевая валюта раунда; золото — мета-валюта рейда
 G.ECONOMY = {
   energyBase: 6,     // пул энергии команды на раунд
   energyBuy: 2,      // докупка энергии в бою
   energyPrice: 30,   // цена докупки, золото
+  speedBonus: 10,    // золото за каждый раунд быстрее par
+  upgrades: {
+    crystal: { price: 60 },  // +1 к пулу энергии на рейд
+    coat:    { price: 70 },  // +2 макс HP героям на рейд
+    luck:    { price: 60 },  // 50%: ×2 золото за следующую волну
+  },
 };
+
+// Состояние экономики рейда (живёт сессию; сбрасывается кнопкой «Ещё рейд»)
+G.economy = { gold: 0, earned: 0, spent: 0, energy: 0, coat: 0, luck: false };
+G.resetEconomy = function () {
+  G.economy = { gold: 0, earned: 0, spent: 0, energy: 0, coat: 0, luck: false };
+};
+
+// Множитель золота liveops-ивента («Золотой рейд» ×2)
+G.EVENT = { enabled: false, mult: 2 };
+G.goldMult = function () { return G.EVENT && G.EVENT.enabled ? G.EVENT.mult : 1; };
 
 // --- Враги ---
 G.ENEMY_DEFS = {
@@ -3726,24 +3778,24 @@ G.ENEMY_DEFS = {
   deadline: { key: 'e_deadline', hp: 6, move: 3, dmg: 2, grow: 1, color: 0x6e5a2a },
 };
 
-// --- Волны: состав и позиции на поле ---
+// --- Волны: состав и позиции на поле; reward/par — экономика награды ---
 G.WAVES = [
   {
-    id: 'wave1', nameKey: 'wave1_name', hintKey: 'hint1',
+    id: 'wave1', nameKey: 'wave1_name', hintKey: 'hint1', reward: 40, par: 3,
     enemies: [
       { def: 'bug', col: 8, row: 1 }, { def: 'bug', col: 9, row: 3 },
       { def: 'bug', col: 8, row: 4 }, { def: 'bug', col: 10, row: 2 },
     ],
   },
   {
-    id: 'wave2', nameKey: 'wave2_name', hintKey: 'hint2',
+    id: 'wave2', nameKey: 'wave2_name', hintKey: 'hint2', reward: 60, par: 4,
     enemies: [
       { def: 'krynch', col: 9, row: 2 }, { def: 'deadline', col: 8, row: 1 },
       { def: 'deadline', col: 8, row: 4 },
     ],
   },
   {
-    id: 'boss', nameKey: 'wave3_name', hintKey: 'hint3', boss: true,
+    id: 'boss', nameKey: 'wave3_name', hintKey: 'hint3', boss: true, reward: 100, par: 6,
     zones: [
       { id: 'balance', key: 'z_balance', hp: 10, col: 9, row: 3 },
       { id: 'economy', key: 'z_economy', hp: 9, col: 8, row: 1 },
@@ -5737,12 +5789,14 @@ G.scenes.village = function (params) {
     { id: 'forge', x: 250, y: 430, need: 0 },
     { id: 'shipyard', x: 520, y: 480, need: 1 },
     { id: 'stone', x: 780, y: 450, need: 2 },
+    { id: 'shop', x: 920, y: 530, need: 0 },   // лавка: тратим золото между волнами
     { id: 'thing', x: 1040, y: 470, need: 3 },
   ];
   const torches = [];
   const torchFlames = [];
 
   for (const b of layout) {
+    const isShop = b.id === 'shop';
     const def = G.BUILDINGS.find(x => x.id === b.id);
     const open = G.previewAll || G.progress >= b.need;
     const bld = new PIXI.Container();
@@ -5751,8 +5805,8 @@ G.scenes.village = function (params) {
     bld.cursor = 'pointer';
 
     // спрайтовое здание (Tiny Swords) или процедурный фолбэк
-    const BT = { forge: 'b_barracks', shipyard: 'b_house3', stone: 'b_tower2', thing: 'b_monastery' };
-    const BH = { forge: 175, shipyard: 150, stone: 190, thing: 205 };
+    const BT = { forge: 'b_barracks', shipyard: 'b_house3', stone: 'b_tower2', shop: 'b_house2', thing: 'b_monastery' };
+    const BH = { forge: 175, shipyard: 150, stone: 190, shop: 118, thing: 205 };
     let sprBuilt = false;
     if (G.TEX && G.TEX[BT[b.id]]) {
       const t = G.TEX[BT[b.id]];
@@ -5779,7 +5833,7 @@ G.scenes.village = function (params) {
 
     // табличка с названием раздела — деревянная плашка Tiny Swords
     const label = new PIXI.Text({
-      text: G.t(def.titleKey).split('·')[0].trim(),
+      text: (isShop ? G.t('shop_title') : G.t(def.titleKey)).split('·')[0].trim(),
       style: { fontFamily: G.FONT_BODY, fontSize: 14, fill: 0xf0e2b8, fontWeight: 'bold' },
     });
     label.anchor.set(0.5, 0);
@@ -5822,6 +5876,7 @@ G.scenes.village = function (params) {
       if (!open) { G.sfx.play('thud'); G.ui.toast(G.t('village_locked', { n: b.need })); return; }
       G.sfx.play('blip');
       closeOverlays();
+      if (isShop) { openShop(); return; }
       const p = G.ui.buildingPanel({
         title: G.t(def.titleKey),
         facts: def.facts,
@@ -5835,6 +5890,118 @@ G.scenes.village = function (params) {
     });
 
     c.addChild(bld);
+  }
+
+  // --- Лавка: единственный магазин рейда — сюда уходит золото за волны ---
+  function openShop() {
+    closeOverlays();
+    const p = new PIXI.Container();
+    p.zIndex = 50;
+    p.eventMode = 'static';
+    const w = 660, h = 430;
+    p.x = G.W / 2; p.y = G.H / 2 - 10;
+    const sheet = G.ui.parchment(w, h);
+    const g = new PIXI.Graphics();
+    G.ui.fancyFrame(g, w, h);
+    const grain = G.viz.grain(w, h, 0.04);
+    grain.x = -w / 2; grain.y = -h / 2;
+    p.addChild(sheet, g, grain);
+    const tt = new PIXI.Text({
+      text: G.t('shop_title'),
+      style: { fontFamily: G.FONT_TITLE, fontSize: 21, fill: G.C.ink, letterSpacing: 1 },
+    });
+    tt.x = -w / 2 + 26; tt.y = -h / 2 + 20;
+    const flour = new PIXI.Graphics();
+    flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(w / 2 - 26, -h / 2 + 56)
+      .stroke({ width: 2, color: G.C.goldDark, alpha: 0.55 });
+    flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(-w / 2 + 96, -h / 2 + 56)
+      .stroke({ width: 3, color: G.C.goldDark });
+    p.addChild(tt, flour);
+
+    // кошелёк кандидата
+    const wallet = new PIXI.Text({
+      text: G.t('shop_gold', { n: G.economy.gold }),
+      style: { fontFamily: G.FONT_TITLE, fontSize: 17, fill: G.C.goldDark },
+    });
+    wallet.x = -w / 2 + 26; wallet.y = -h / 2 + 66;
+    p.addChild(wallet);
+
+    const items = [
+      { id: 'crystal', icon: '💎', owned: (G.economy.energy || 0) > 0 },
+      { id: 'coat', icon: '🧥', owned: (G.economy.coat || 0) > 0 },
+      { id: 'luck', icon: '🍀', owned: !!G.economy.luck },
+    ];
+    items.forEach((it, i) => {
+      const price = G.ECONOMY.upgrades[it.id].price;
+      const row = new PIXI.Container();
+      row.x = -w / 2 + 26;
+      row.y = -h / 2 + 116 + i * 84;
+      const iconBg = new PIXI.Graphics();
+      iconBg.circle(20, 20, 19).fill(0x2c2115);
+      iconBg.circle(20, 20, 19).stroke({ width: 1.5, color: G.C.goldDark, alpha: 0.9 });
+      const icon = new PIXI.Text({ text: it.icon, style: { fontSize: 19 } });
+      icon.anchor.set(0.5);
+      icon.x = 20; icon.y = 20;
+      const nameT = new PIXI.Text({
+        text: G.t('shop_' + it.id),
+        style: { fontFamily: G.FONT_SERIF, fontSize: 15, fill: G.C.ink },
+      });
+      nameT.x = 50; nameT.y = 2;
+      const desc = new PIXI.Text({
+        text: G.t('shop_' + it.id + '_d'),
+        style: { fontFamily: G.FONT_BODY, fontSize: 12, fill: G.C.inkSoft, wordWrap: true, wordWrapWidth: w - 320, lineHeight: 15 },
+      });
+      desc.x = 50; desc.y = 26;
+      row.addChild(iconBg, icon, nameT, desc);
+
+      if (it.owned) {
+        const chip = new PIXI.Text({
+          text: G.t('shop_owned'),
+          style: { fontFamily: G.FONT_TITLE, fontSize: 13, fill: 0x4a6a3a },
+        });
+        chip.anchor.set(1, 0.5);
+        chip.x = w - 78; chip.y = 20;
+        row.addChild(chip);
+      } else {
+        const buy = G.ui.button({
+          label: '🪙 ' + price, x: w - 140, y: 20, w: 124, h: 40, small: true,
+          onClick: () => {
+            if (G.economy.gold < price) { G.sfx.play('thud'); G.ui.toast(G.t('no_gold')); return; }
+            G.economy.gold -= price;
+            G.economy.spent += price;
+            if (it.id === 'crystal') G.economy.energy++;
+            if (it.id === 'coat') G.economy.coat++;
+            if (it.id === 'luck') G.economy.luck = true;
+            G.sfx.play('chime');
+            G.fxParticles.burst(G.W / 2, G.H / 2 - 10, G.C.gold, 14, { size: 2.5, speed: 110, ttl: 700, grav: 80 });
+            p.destroy({ children: true });
+            openShop(); // перерисовать панель с новым состоянием кошелька
+          },
+        });
+        row.addChild(buy);
+      }
+      row.alpha = 0;
+      p.addChild(row);
+      setTimeout(() => { if (!row.destroyed) G.tween(row, { alpha: 1 }, 240, null, G.easeOut); }, 120 + i * 110);
+    });
+
+    const shint = new PIXI.Text({
+      text: G.t('shop_hint'),
+      style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 52 },
+    });
+    shint.x = -w / 2 + 26; shint.y = h / 2 - 62;
+    p.addChild(shint);
+
+    p.addChild(G.ui.button({
+      label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true,
+      onClick: () => { c.removeChild(p); p.destroy({ children: true }); },
+    }));
+    c.addChild(p);
+    p.alpha = 0;
+    p.scale.set(0.95);
+    G.tween(p, { alpha: 1 }, 200, null, G.easeOut);
+    G.tween(p.scale, { x: 1, y: 1 }, 200, null, G.easeOut);
+    G.sfx.play('chime');
   }
 
   // пропсы: деревья, кусты, камни, пни, инструменты, бочки — всё спрайты
@@ -6044,6 +6211,23 @@ function drawBuilding(g, id, open) {
       g.circle(-40, 42, 4.5).fill(0x2a3648).stroke({ width: 1, color: outline });
       g.circle(34, 40, 5).fill(0x39465c).stroke({ width: 1, color: outline });
       break;
+    case 'shop':
+      // торговый прилавок: стол, полосатый тент, товар и вывеска-монета
+      g.rect(-40, 6, 80, 30).fill(woodDark).stroke({ width: 2, color: outline });
+      g.rect(-44, 0, 88, 8).fill(wood).stroke({ width: 2, color: outline });
+      g.rect(-6, -58, 5, 60).fill(woodDark).stroke({ width: 1, color: outline });
+      g.rect(22, -58, 5, 60).fill(woodDark).stroke({ width: 1, color: outline });
+      for (let i = 0; i < 6; i++) {
+        g.rect(-45 + i * 15, -66, 15, 14).fill(i % 2 ? (open ? 0xb07722 : 0x3a2d1c) : (open ? G.C.gold : 0x5a4a38))
+          .stroke({ width: 1, color: outline });
+      }
+      if (open) {
+        g.circle(-20, 0, 8).fill(0xc4ad82).stroke({ width: 1.5, color: outline });
+        g.rect(4, -8, 24, 10).fill(0x8a5a2a).stroke({ width: 1.5, color: outline });
+        g.rect(4, -4, 24, 2.5).fill(G.C.gold);
+        g.circle(-1, -74, 5).fill(G.C.gold).stroke({ width: 1.5, color: outline });
+      }
+      break;
     case 'thing':
       g.rect(-64, -18, 128, 52).fill(wood).stroke({ width: 2, color: outline });
       g.moveTo(-64, -2).lineTo(64, -2).stroke({ width: 3, color: woodDark });
@@ -6102,8 +6286,9 @@ G.scenes.battle = function (params) {
     offerReady: false,
     over: false,
     events: [],            // итоги раунда для баннера
-    energy: G.ECONOMY.energyBase,   // общий пул энергии на раунд
-    energyMax: G.ECONOMY.energyBase,
+    energy: G.ECONOMY.energyBase + (G.economy.energy || 0),   // пул с учётом лавки
+    energyMax: G.ECONOMY.energyBase + (G.economy.energy || 0),
+    energyBought: false,   // докупка энергии — раз в раунд
   };
   const waveDamage0 = G.stats.damage;
   const waveCards0 = G.stats.cards;
@@ -6333,6 +6518,45 @@ G.scenes.battle = function (params) {
     });
     t.x = B.energyMax * 22 + 8; t.y = -1;
     energyHud.addChild(t);
+
+    // кошелёк и докупка энергии: внутриигровая покупка — раз в раунд
+    const goldT = new PIXI.Text({
+      text: '🪙 ' + G.economy.gold,
+      style: { fontFamily: G.FONT_BODY, fontSize: 14, fontWeight: 'bold', fill: G.C.gold },
+    });
+    goldT.y = 24;
+    energyHud.addChild(goldT);
+
+    const bought = B.energyBought;
+    const can = !bought && !B.over && G.economy.gold >= G.ECONOMY.energyPrice;
+    const pill = new PIXI.Container();
+    pill.x = 92; pill.y = 22;
+    pill.eventMode = 'static';
+    pill.cursor = 'pointer';
+    const pg = new PIXI.Graphics();
+    pg.roundRect(0, 0, 168, 26, 13)
+      .fill({ color: 0x0b121d, alpha: 0.92 })
+      .stroke({ width: 1.5, color: can ? G.C.gold : G.C.hexBorder, alpha: can ? 0.9 : 0.55 });
+    const pt = new PIXI.Text({
+      text: bought
+        ? '✓ ⚡ +' + G.ECONOMY.energyBuy
+        : '⚡ +' + G.ECONOMY.energyBuy + ' · 🪙 ' + G.ECONOMY.energyPrice,
+      style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fontWeight: 'bold', fill: can ? 0xffe4a8 : G.C.textDim },
+    });
+    pt.x = 13; pt.y = 5;
+    pill.addChild(pg, pt);
+    pill.on('pointertap', () => {
+      if (B.over) return;
+      if (bought) { G.ui.toast(G.t('energy_bought')); return; }
+      if (G.economy.gold < G.ECONOMY.energyPrice) { G.sfx.play('thud'); G.ui.toast(G.t('no_gold')); return; }
+      G.economy.gold -= G.ECONOMY.energyPrice;
+      G.economy.spent += G.ECONOMY.energyPrice;
+      B.energyBought = true;
+      B.energy = Math.min(B.energyMax, B.energy + G.ECONOMY.energyBuy);
+      G.sfx.play('chime');
+      drawEnergy();
+    });
+    energyHud.addChild(pill);
   }
   drawEnergy();
 
@@ -6914,10 +7138,12 @@ G.scenes.battle = function (params) {
   }
 
   // --- Расстановка ---
+  // «Меховой плащ» из лавки: +2 макс HP героям на весь рейд
+  const coatHp = (G.economy.coat || 0) * 2;
   const heroes = [
-    makeUnit({ id: 'berserk', kind: 'hero', def: G.HEROES[0], hp: G.HEROES[0].hp, maxHp: G.HEROES[0].hp, col: 2, row: 1, move: G.HEROES[0].move }),
-    makeUnit({ id: 'skald', kind: 'hero', def: G.HEROES[1], hp: G.HEROES[1].hp, maxHp: G.HEROES[1].hp, col: 1, row: 2, move: G.HEROES[1].move }),
-    makeUnit({ id: 'smith', kind: 'hero', def: G.HEROES[2], hp: G.HEROES[2].hp, maxHp: G.HEROES[2].hp, col: 2, row: 3, move: G.HEROES[2].move }),
+    makeUnit({ id: 'berserk', kind: 'hero', def: G.HEROES[0], hp: G.HEROES[0].hp + coatHp, maxHp: G.HEROES[0].hp + coatHp, col: 2, row: 1, move: G.HEROES[0].move }),
+    makeUnit({ id: 'skald', kind: 'hero', def: G.HEROES[1], hp: G.HEROES[1].hp + coatHp, maxHp: G.HEROES[1].hp + coatHp, col: 1, row: 2, move: G.HEROES[1].move }),
+    makeUnit({ id: 'smith', kind: 'hero', def: G.HEROES[2], hp: G.HEROES[2].hp + coatHp, maxHp: G.HEROES[2].hp + coatHp, col: 2, row: 3, move: G.HEROES[2].move }),
   ];
 
   if (wave.boss) {
@@ -7214,6 +7440,7 @@ G.scenes.battle = function (params) {
       onClick: () => {
         G.stats.rounds += B.round;
         G.stats.facts += 4;
+        awardWaveGold(); // финальная награда за босса — попадёт в отчёт победы
         G.progress = 3;
         G.setScene('victory');
       },
@@ -7533,6 +7760,7 @@ G.scenes.battle = function (params) {
     // новый раунд: итоги + фазы игрока
     B.round++;
     B.energy = B.energyMax; // пул энергии обновляется каждый раунд
+    B.energyBought = false; // докупка снова доступна
     drawEnergy();
     roundLabel.text = G.t('round_n', { n: B.round });
     phaseLabel.text = G.t('phase_player');
@@ -7626,6 +7854,23 @@ G.scenes.battle = function (params) {
     startPlayerPhase();
   }
 
+  // --- Экономика: награда за волну (база + скорость, удача, множитель ивента) ---
+  function awardWaveGold() {
+    const base = wave.reward || 0;
+    const speed = Math.max(0, (wave.par || 0) - B.round) * G.ECONOMY.speedBonus;
+    let gold = base + speed;
+    let luckHit = false;
+    if (G.economy.luck) {
+      G.economy.luck = false;
+      if (Math.random() < 0.5) { gold *= 2; luckHit = true; }
+    }
+    const mult = G.goldMult();
+    if (mult > 1) gold *= mult;
+    G.economy.gold += gold;
+    G.economy.earned += gold;
+    return { base, speed, gold, luckHit, mult };
+  }
+
   // --- Итоги волны: панель со статистикой ---
   function waveClear() {
     G.sfx.play('chime');
@@ -7633,6 +7878,7 @@ G.scenes.battle = function (params) {
     G.progress = waveIdx + 1;
     hideRing();
     clearHighlights();
+    const pay = awardWaveGold();
     const ov = new PIXI.Container();
     ov.zIndex = 85;
     ov.eventMode = 'static';
@@ -7657,6 +7903,8 @@ G.scenes.battle = function (params) {
       G.t('wc_rounds', { n: B.round }),
       G.t('wc_damage', { n: G.stats.damage - waveDamage0 }),
       G.t('wc_cards', { n: G.stats.cards - waveCards0 }),
+      G.t('wc_gold', { n: pay.gold, a: pay.base, b: pay.speed })
+        + (pay.luckHit ? ' 🍀' : '') + (pay.mult > 1 ? ' · ' + G.t('ev_x2') : ''),
     ];
     rows.forEach((r, i) => {
       const t = new PIXI.Text({
@@ -7829,10 +8077,10 @@ G.scenes.victory = function () {
   ship.x = G.W / 2; ship.y = 560;
   c.addChild(ship);
 
-  // Отчёт рейда — пергамент
+  // Отчёт рейда — пергамент (внизу — экономика: заработано / кошелёк)
   const panel = new PIXI.Container();
-  panel.x = G.W / 2; panel.y = 350;
-  const pw = 460, ph = 190;
+  panel.x = G.W / 2; panel.y = 356;
+  const pw = 460, ph = 268;
   const sheet = G.ui.parchment(pw, ph);
   const pg = new PIXI.Graphics();
   G.ui.fancyFrame(pg, pw, ph);
@@ -7850,6 +8098,8 @@ G.scenes.victory = function () {
     ['win_damage', G.stats.damage],
     ['win_cards', G.stats.cards],
     ['win_facts', G.stats.facts],
+    ['win_earned', '🪙 ' + G.economy.earned],
+    ['win_net', '🪙 ' + G.economy.gold],
   ];
   let yy = -ph / 2 + 52;
   for (const [k, v] of rows) {
@@ -7900,6 +8150,7 @@ G.scenes.victory = function () {
     onClick: () => {
       G.progress = 0;
       G.stats = { rounds: 0, damage: 0, cards: 0, facts: 0 };
+      G.resetEconomy();
       G.setScene('title');
     },
   });

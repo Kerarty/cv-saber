@@ -22,8 +22,9 @@ G.scenes.battle = function (params) {
     offerReady: false,
     over: false,
     events: [],            // итоги раунда для баннера
-    energy: G.ECONOMY.energyBase,   // общий пул энергии на раунд
-    energyMax: G.ECONOMY.energyBase,
+    energy: G.ECONOMY.energyBase + (G.economy.energy || 0),   // пул с учётом лавки
+    energyMax: G.ECONOMY.energyBase + (G.economy.energy || 0),
+    energyBought: false,   // докупка энергии — раз в раунд
   };
   const waveDamage0 = G.stats.damage;
   const waveCards0 = G.stats.cards;
@@ -253,6 +254,45 @@ G.scenes.battle = function (params) {
     });
     t.x = B.energyMax * 22 + 8; t.y = -1;
     energyHud.addChild(t);
+
+    // кошелёк и докупка энергии: внутриигровая покупка — раз в раунд
+    const goldT = new PIXI.Text({
+      text: '🪙 ' + G.economy.gold,
+      style: { fontFamily: G.FONT_BODY, fontSize: 14, fontWeight: 'bold', fill: G.C.gold },
+    });
+    goldT.y = 24;
+    energyHud.addChild(goldT);
+
+    const bought = B.energyBought;
+    const can = !bought && !B.over && G.economy.gold >= G.ECONOMY.energyPrice;
+    const pill = new PIXI.Container();
+    pill.x = 92; pill.y = 22;
+    pill.eventMode = 'static';
+    pill.cursor = 'pointer';
+    const pg = new PIXI.Graphics();
+    pg.roundRect(0, 0, 168, 26, 13)
+      .fill({ color: 0x0b121d, alpha: 0.92 })
+      .stroke({ width: 1.5, color: can ? G.C.gold : G.C.hexBorder, alpha: can ? 0.9 : 0.55 });
+    const pt = new PIXI.Text({
+      text: bought
+        ? '✓ ⚡ +' + G.ECONOMY.energyBuy
+        : '⚡ +' + G.ECONOMY.energyBuy + ' · 🪙 ' + G.ECONOMY.energyPrice,
+      style: { fontFamily: G.FONT_BODY, fontSize: 12.5, fontWeight: 'bold', fill: can ? 0xffe4a8 : G.C.textDim },
+    });
+    pt.x = 13; pt.y = 5;
+    pill.addChild(pg, pt);
+    pill.on('pointertap', () => {
+      if (B.over) return;
+      if (bought) { G.ui.toast(G.t('energy_bought')); return; }
+      if (G.economy.gold < G.ECONOMY.energyPrice) { G.sfx.play('thud'); G.ui.toast(G.t('no_gold')); return; }
+      G.economy.gold -= G.ECONOMY.energyPrice;
+      G.economy.spent += G.ECONOMY.energyPrice;
+      B.energyBought = true;
+      B.energy = Math.min(B.energyMax, B.energy + G.ECONOMY.energyBuy);
+      G.sfx.play('chime');
+      drawEnergy();
+    });
+    energyHud.addChild(pill);
   }
   drawEnergy();
 
@@ -834,10 +874,12 @@ G.scenes.battle = function (params) {
   }
 
   // --- Расстановка ---
+  // «Меховой плащ» из лавки: +2 макс HP героям на весь рейд
+  const coatHp = (G.economy.coat || 0) * 2;
   const heroes = [
-    makeUnit({ id: 'berserk', kind: 'hero', def: G.HEROES[0], hp: G.HEROES[0].hp, maxHp: G.HEROES[0].hp, col: 2, row: 1, move: G.HEROES[0].move }),
-    makeUnit({ id: 'skald', kind: 'hero', def: G.HEROES[1], hp: G.HEROES[1].hp, maxHp: G.HEROES[1].hp, col: 1, row: 2, move: G.HEROES[1].move }),
-    makeUnit({ id: 'smith', kind: 'hero', def: G.HEROES[2], hp: G.HEROES[2].hp, maxHp: G.HEROES[2].hp, col: 2, row: 3, move: G.HEROES[2].move }),
+    makeUnit({ id: 'berserk', kind: 'hero', def: G.HEROES[0], hp: G.HEROES[0].hp + coatHp, maxHp: G.HEROES[0].hp + coatHp, col: 2, row: 1, move: G.HEROES[0].move }),
+    makeUnit({ id: 'skald', kind: 'hero', def: G.HEROES[1], hp: G.HEROES[1].hp + coatHp, maxHp: G.HEROES[1].hp + coatHp, col: 1, row: 2, move: G.HEROES[1].move }),
+    makeUnit({ id: 'smith', kind: 'hero', def: G.HEROES[2], hp: G.HEROES[2].hp + coatHp, maxHp: G.HEROES[2].hp + coatHp, col: 2, row: 3, move: G.HEROES[2].move }),
   ];
 
   if (wave.boss) {
@@ -1134,6 +1176,7 @@ G.scenes.battle = function (params) {
       onClick: () => {
         G.stats.rounds += B.round;
         G.stats.facts += 4;
+        awardWaveGold(); // финальная награда за босса — попадёт в отчёт победы
         G.progress = 3;
         G.setScene('victory');
       },
@@ -1453,6 +1496,7 @@ G.scenes.battle = function (params) {
     // новый раунд: итоги + фазы игрока
     B.round++;
     B.energy = B.energyMax; // пул энергии обновляется каждый раунд
+    B.energyBought = false; // докупка снова доступна
     drawEnergy();
     roundLabel.text = G.t('round_n', { n: B.round });
     phaseLabel.text = G.t('phase_player');
@@ -1546,6 +1590,23 @@ G.scenes.battle = function (params) {
     startPlayerPhase();
   }
 
+  // --- Экономика: награда за волну (база + скорость, удача, множитель ивента) ---
+  function awardWaveGold() {
+    const base = wave.reward || 0;
+    const speed = Math.max(0, (wave.par || 0) - B.round) * G.ECONOMY.speedBonus;
+    let gold = base + speed;
+    let luckHit = false;
+    if (G.economy.luck) {
+      G.economy.luck = false;
+      if (Math.random() < 0.5) { gold *= 2; luckHit = true; }
+    }
+    const mult = G.goldMult();
+    if (mult > 1) gold *= mult;
+    G.economy.gold += gold;
+    G.economy.earned += gold;
+    return { base, speed, gold, luckHit, mult };
+  }
+
   // --- Итоги волны: панель со статистикой ---
   function waveClear() {
     G.sfx.play('chime');
@@ -1553,6 +1614,7 @@ G.scenes.battle = function (params) {
     G.progress = waveIdx + 1;
     hideRing();
     clearHighlights();
+    const pay = awardWaveGold();
     const ov = new PIXI.Container();
     ov.zIndex = 85;
     ov.eventMode = 'static';
@@ -1577,6 +1639,8 @@ G.scenes.battle = function (params) {
       G.t('wc_rounds', { n: B.round }),
       G.t('wc_damage', { n: G.stats.damage - waveDamage0 }),
       G.t('wc_cards', { n: G.stats.cards - waveCards0 }),
+      G.t('wc_gold', { n: pay.gold, a: pay.base, b: pay.speed })
+        + (pay.luckHit ? ' 🍀' : '') + (pay.mult > 1 ? ' · ' + G.t('ev_x2') : ''),
     ];
     rows.forEach((r, i) => {
       const t = new PIXI.Text({
