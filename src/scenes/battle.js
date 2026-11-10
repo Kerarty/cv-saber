@@ -22,6 +22,8 @@ G.scenes.battle = function (params) {
     offerReady: false,
     over: false,
     events: [],            // итоги раунда для баннера
+    energy: G.ECONOMY.energyBase,   // общий пул энергии на раунд
+    energyMax: G.ECONOMY.energyBase,
   };
   const waveDamage0 = G.stats.damage;
   const waveCards0 = G.stats.cards;
@@ -230,6 +232,29 @@ G.scenes.battle = function (params) {
   phaseLabel.anchor.set(1, 0);
   phaseLabel.x = G.W - 76; phaseLabel.y = 16;
   c.addChild(waveLabel, roundLabel, phaseLabel);
+
+  // Энергия команды на раунд: гемы под названием волны
+  const energyHud = new PIXI.Container();
+  energyHud.x = 24; energyHud.y = 56;
+  c.addChild(energyHud);
+
+  function drawEnergy() {
+    energyHud.removeChildren();
+    for (let i = 0; i < B.energyMax; i++) {
+      const g = new PIXI.Graphics();
+      g.roundRect(i * 22, 0, 16, 16, 4);
+      if (i < B.energy) g.fill(G.C.gold).stroke({ width: 1.5, color: G.C.goldDark });
+      else g.fill({ color: 0x141c29, alpha: 0.85 }).stroke({ width: 1.5, color: G.C.hexBorder });
+      energyHud.addChild(g);
+    }
+    const t = new PIXI.Text({
+      text: '⚡ ' + B.energy + '/' + B.energyMax,
+      style: { fontFamily: G.FONT_BODY, fontSize: 13, fontWeight: 'bold', fill: G.C.text },
+    });
+    t.x = B.energyMax * 22 + 8; t.y = -1;
+    energyHud.addChild(t);
+  }
+  drawEnergy();
 
   // Трекер фаз раунда: [Твой ход | Враги | Раунд]
   const phaseBar = new PIXI.Container();
@@ -1135,7 +1160,17 @@ G.scenes.battle = function (params) {
     if (card.echo) {
       if (!B.lastCard) { G.ui.toast(G.t('echo_empty')); return; }
       actual = Object.assign({}, B.lastCard.card, { echoOf: B.lastCard.card.id });
+      actual.cost = card.cost; // эхо стоит свою цену, а не цену скопированной карты
     }
+    // энергия: общий пул команды на раунд
+    const cost = actual.cost || 0;
+    if (B.energy < cost) {
+      G.sfx.play('thud');
+      G.ui.toast(G.t('no_energy'));
+      return;
+    }
+    B.energy -= cost;
+    drawEnergy();
     G.sfx.play('card');
     B.pendingCard = actual;
     hideHand();
@@ -1417,6 +1452,8 @@ G.scenes.battle = function (params) {
 
     // новый раунд: итоги + фазы игрока
     B.round++;
+    B.energy = B.energyMax; // пул энергии обновляется каждый раунд
+    drawEnergy();
     roundLabel.text = G.t('round_n', { n: B.round });
     phaseLabel.text = G.t('phase_player');
     phaseLabel.style.fill = G.C.heroBlue;

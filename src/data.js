@@ -61,18 +61,26 @@ G.HEROES = [
   { id: 'smith', nameKey: 'hero_smith', hp: 10, move: 2, color: G.C.heroYellow },
 ];
 
-// --- Карты способностей (каждая = факт из портфолио) ---
+// --- Карты способностей (каждая = факт из портфолио; cost — цена в ⚡) ---
 G.CARDS = [
-  { id: 'balance_lab', hero: 'berserk', dmg: 5, range: 1 },
-  { id: 'event_tuner', hero: 'berserk', dmg: 3, range: 1, stun: true },
-  { id: 'math_model', hero: 'berserk', bonusNext: 2 },
-  { id: 'echo_loop', hero: 'skald', echo: true },
-  { id: 'onefile', hero: 'skald', dmg: 3, range: 3 },
-  { id: 'mvp', hero: 'skald', dmg: 2, range: 1 },
-  { id: 'rune_sdk', hero: 'smith', shieldAll: 2 },
-  { id: 'kb472', hero: 'smith', shieldSelf: 3, dmg: 1, range: 1 },
-  { id: 'retention_loop', hero: 'smith', heal: 3, range: 2 },
+  { id: 'balance_lab', hero: 'berserk', cost: 3, dmg: 5, range: 1 },
+  { id: 'event_tuner', hero: 'berserk', cost: 2, dmg: 3, range: 1, stun: true },
+  { id: 'math_model', hero: 'berserk', cost: 1, bonusNext: 2 },
+  { id: 'echo_loop', hero: 'skald', cost: 2, echo: true },
+  { id: 'onefile', hero: 'skald', cost: 2, dmg: 3, range: 3 },
+  { id: 'mvp', hero: 'skald', cost: 1, dmg: 2, range: 1 },
+  { id: 'rune_sdk', hero: 'smith', cost: 2, shieldAll: 2 },
+  { id: 'kb472', hero: 'smith', cost: 2, shieldSelf: 3, dmg: 1, range: 1 },
+  { id: 'retention_loop', hero: 'smith', cost: 2, heal: 3, range: 2 },
 ];
+
+// --- Экономика рейда: живой кейс для вакансии «экономика и монетизация» ---
+// Энергия — внутрибоевая валюта на раунд; золото и лавка добавляются в деревне
+G.ECONOMY = {
+  energyBase: 6,     // пул энергии команды на раунд
+  energyBuy: 2,      // докупка энергии в бою
+  energyPrice: 30,   // цена докупки, золото
+};
 
 // --- Враги ---
 G.ENEMY_DEFS = {
