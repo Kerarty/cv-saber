@@ -634,6 +634,111 @@ G.ui = {
 };
 
 
+// Лента liveops-ивента: таймер до конца окна, тап — Ивент-центр
+G.ui.eventBanner = function (onTap) {
+  const c = new PIXI.Container();
+  c.eventMode = 'static';
+  c.cursor = 'pointer';
+  const g = new PIXI.Graphics();
+  const t = new PIXI.Text({
+    text: '',
+    style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: 0xffe4a8, letterSpacing: 1 },
+  });
+  const draw = () => {
+    t.text = G.t('ev_banner', { n: G.EVENT.endsIn() });
+    g.clear();
+    g.roundRect(0, 0, t.width + 44, 36, 18)
+      .fill({ color: 0x241c12, alpha: 0.94 })
+      .stroke({ width: 1.5, color: G.C.gold, alpha: 0.95 });
+  };
+  draw();
+  t.x = 22; t.y = 8;
+  c.addChild(g, t);
+  c.refresh = draw;
+  if (onTap) c.on('pointertap', () => { G.sfx.play('blip'); onTap(); });
+  return c;
+};
+
+// Ивент-центр: мой ивент + разбор чужого ивента — витрина liveops-мышления
+G.ui.eventHub = function ({ onClose }) {
+  const c = new PIXI.Container();
+  c.zIndex = 55;
+  c.eventMode = 'static';
+  const w = 700, h = 520;
+  c.x = G.W / 2; c.y = G.H / 2;
+  const sheet = G.ui.parchment(w, h);
+  const g = new PIXI.Graphics();
+  G.ui.fancyFrame(g, w, h);
+  const grain = G.viz.grain(w, h, 0.04);
+  grain.x = -w / 2; grain.y = -h / 2;
+  c.addChild(sheet, g, grain);
+
+  const tt = new PIXI.Text({
+    text: G.t('ev_center'),
+    style: { fontFamily: G.FONT_TITLE, fontSize: 21, fill: G.C.ink, letterSpacing: 1 },
+  });
+  tt.x = -w / 2 + 26; tt.y = -h / 2 + 20;
+  const flour = new PIXI.Graphics();
+  flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(w / 2 - 26, -h / 2 + 56)
+    .stroke({ width: 2, color: G.C.goldDark, alpha: 0.55 });
+  flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(-w / 2 + 96, -h / 2 + 56)
+    .stroke({ width: 3, color: G.C.goldDark });
+  c.addChild(tt, flour);
+
+  // живой таймер окна ивента
+  const timer = new PIXI.Text({
+    text: G.t('ev_left', { n: G.EVENT.endsIn() }),
+    style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: G.C.goldDark },
+  });
+  timer.x = -w / 2 + 26; timer.y = -h / 2 + 68;
+  c.addChild(timer);
+  c.refreshTimer = () => { timer.text = G.t('ev_left', { n: G.EVENT.endsIn() }); };
+
+  const head = (key, y) => {
+    const t = new PIXI.Text({
+      text: G.t(key),
+      style: { fontFamily: G.FONT_SERIF, fontSize: 16, fill: G.C.ink },
+    });
+    t.x = -w / 2 + 26; t.y = y;
+    c.addChild(t);
+  };
+  const line = (key, y) => {
+    const dot = new PIXI.Graphics();
+    dot.circle(-w / 2 + 32, y + 8, 3.5).fill(G.C.goldDark);
+    const t = new PIXI.Text({
+      text: G.t(key),
+      style: { fontFamily: G.FONT_BODY, fontSize: 13, fill: G.C.inkSoft, wordWrap: true, wordWrapWidth: w - 96, lineHeight: 17 },
+    });
+    t.x = -w / 2 + 46; t.y = y;
+    c.addChild(dot, t);
+  };
+
+  head('ev_my', -h / 2 + 104);
+  line('ev_goal', -h / 2 + 132);
+  line('ev_mech', -h / 2 + 172);
+  line('ev_metrics', -h / 2 + 212);
+  head('ev_review', -h / 2 + 258);
+  line('ev_r1', -h / 2 + 286);
+  line('ev_r2', -h / 2 + 326);
+  line('ev_r3', -h / 2 + 366);
+  line('ev_r4', -h / 2 + 406);
+
+  const foot = new PIXI.Text({
+    text: G.t('ev_footer'),
+    style: { fontFamily: G.FONT_BODY, fontSize: 12, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 56 },
+  });
+  foot.x = -w / 2 + 26; foot.y = h / 2 - 46;
+  c.addChild(foot);
+
+  if (onClose) c.addChild(G.ui.button({ label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true, onClick: onClose }));
+  c.alpha = 0;
+  c.scale.set(0.95);
+  G.tween(c, { alpha: 1 }, 200, null, G.easeOut);
+  G.tween(c.scale, { x: 1, y: 1 }, 200, null, G.easeOut);
+  G.sfx.play('chime');
+  return c;
+};
+
 // Деревянная рама с золотыми уголками для больших панелей
 G.ui.fancyFrame = function (g, w, h) {
   g.roundRect(-w / 2 - 5, -h / 2 - 5, w + 10, h + 10, 15).stroke({ width: 8, color: 0x3a2d1c });

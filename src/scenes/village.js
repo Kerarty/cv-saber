@@ -406,6 +406,16 @@ G.scenes.village = function (params) {
   const langT = G.ui.langToggle();
   c.addChild(langT);
 
+  // Лента liveops-ивента: тап — Ивент-центр
+  const evBanner = G.ui.eventBanner(() => {
+    const hub = G.ui.eventHub({
+      onClose: () => { c.removeChild(hub); hub.destroy({ children: true }); },
+    });
+    c.addChild(hub);
+  });
+  evBanner.x = 24; evBanner.y = 12;
+  c.addChild(evBanner);
+
   // Возвращение после победы в волне — тост о новой постройке
   if (params.unlocked) {
     const def = G.BUILDINGS[params.unlocked - 1];
@@ -415,6 +425,7 @@ G.scenes.village = function (params) {
   // Анимация: качание драккара, дрейф воды, мерцание огней
   c.tick = (dtMs) => {
     aur.update();
+    evBanner.refresh();
     const t = performance.now() / 1000;
     ship.rotation = Math.sin(t * 1.4) * 0.03;
     if (water && water.__tile) {

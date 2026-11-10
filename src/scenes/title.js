@@ -169,9 +169,20 @@ G.scenes.title = function () {
   const langT = G.ui.langToggle();
   c.addChild(langT);
 
+  // Лента liveops-ивента: тап — Ивент-центр
+  const evBanner = G.ui.eventBanner(() => {
+    const hub = G.ui.eventHub({
+      onClose: () => { c.removeChild(hub); hub.destroy({ children: true }); },
+    });
+    c.addChild(hub);
+  });
+  evBanner.x = 24; evBanner.y = 12;
+  c.addChild(evBanner);
+
   // Анимация воды и покачивания
   c.tick = (dtMs) => {
     aur.update();
+    evBanner.refresh();
     const dt = dtMs / 1000;
     shimmer.clear();
     const t = performance.now() / 1000;

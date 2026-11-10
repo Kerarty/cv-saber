@@ -94,8 +94,27 @@ G.resetEconomy = function () {
   G.economy = { gold: 0, earned: 0, spent: 0, energy: 0, coat: 0, luck: false };
 };
 
-// Множитель золота liveops-ивента («Золотой рейд» ×2)
-G.EVENT = { enabled: false, mult: 2 };
+// Liveops-ивент «Золотой рейд»: ×2 золото, авто-продление до ближайшего воскресенья
+G.EVENT = {
+  enabled: true,
+  mult: 2,
+  key: 'golden_raid',
+  until: function () {
+    const now = new Date();
+    const d = new Date(now);
+    d.setDate(d.getDate() + ((7 - d.getDay()) % 7)); // ближайшее воскресенье
+    d.setHours(23, 59, 0, 0);
+    if (d <= now) d.setDate(d.getDate() + 7);        // воскресенье на исходе — продлеваем
+    return d;
+  },
+  endsIn: function () {
+    const ms = G.EVENT.until() - new Date();
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    if (h >= 24) return Math.ceil(h / 24) + ' ' + G.t('ev_days');
+    return h + ' ' + G.t('ev_hours') + ' ' + m + ' ' + G.t('ev_min');
+  },
+};
 G.goldMult = function () { return G.EVENT && G.EVENT.enabled ? G.EVENT.mult : 1; };
 
 // --- Враги ---

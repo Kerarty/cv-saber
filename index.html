@@ -2514,6 +2514,24 @@ G.T = {
     shop_owned: '✓ Куплено',
     shop_hint: 'Доход: база волны + бонус за скорость. Сходится ли экономика — см. Excel-модель в репозитории',
 
+    // Ивент «Золотой рейд»
+    ev_banner: '⭐ ЗОЛОТОЙ РЕЙД ×2 · {n}',
+    ev_left: 'До конца ивента: {n}',
+    ev_center: 'Ивент-центр · Золотой рейд',
+    ev_my: '⭐ Мой ивент: Золотой рейд',
+    ev_goal: 'Цель: вернуть игроков в бой на выходных — множитель награды ×2',
+    ev_mech: 'Механика: золото за волны ×2, окно автопродлевается до воскресенья 23:59',
+    ev_metrics: 'Метрики: доля участников, D1-retention участников, ΔARPDAU к базовой неделе',
+    ev_review: '🔍 Разбор чужого ивента: «Колесо фортуны»',
+    ev_r1: 'Было: прокрут 100🪙, топ-приз 5%, EV приза ≈ 40🪙 — игрок платит вдвое больше ценности',
+    ev_r2: 'Проблема: отрицательная ценность покупки — математику колеса считают на реддитах, платящие уходят',
+    ev_r3: 'Правка: цена 60🪙, pity-гарант топ-приза на 10-й прокрут, итоговый EV ≈ 45🪙 — margin 25% сохранён',
+    ev_r4: 'Прогноз: конверсия в покупку ×1.8, выручка на DAU +12%, отток платящих −8%',
+    ev_footer: 'Полный расчёт с формулами — в Excel-модели экономики (ссылка в README)',
+    ev_days: 'дн.',
+    ev_hours: 'ч',
+    ev_min: 'мин',
+
     thing_title: 'Тинг · Софт-скиллы',
     thing_1: '12+ интерактивных резюме-игр — под каждую студию свой жанр',
     thing_2: 'Русский / English',
@@ -2688,6 +2706,24 @@ G.T = {
     shop_luck_d: '50%: gold ×2 for the next wave. An honest chance — the Excel model computes the EV',
     shop_owned: '✓ Owned',
     shop_hint: 'Income: wave base + speed bonus. Whether it adds up — see the Excel model in the repo',
+
+    // Golden Raid event
+    ev_banner: '⭐ GOLDEN RAID ×2 · {n}',
+    ev_left: 'Event ends in: {n}',
+    ev_center: 'Event hub · Golden Raid',
+    ev_my: '⭐ My event: Golden Raid',
+    ev_goal: 'Goal: bring players back over the weekend — reward multiplier ×2',
+    ev_mech: 'Mechanic: wave gold ×2, the window auto-renews until Sunday 23:59',
+    ev_metrics: 'Metrics: participation rate, participants D1-retention, ΔARPDAU vs baseline week',
+    ev_review: '🔍 Reviewing someone else’s event: the "Wheel of Fortune"',
+    ev_r1: 'Before: spin 100🪙, top prize 5%, prize EV ≈ 40🪙 — players pay double the value',
+    ev_r2: 'Problem: negative purchase value — wheel math gets posted on Reddit, payers churn',
+    ev_r3: 'Fix: price 60🪙, pity guarantee on the 10th spin, final EV ≈ 45🪙 — a 25% margin kept',
+    ev_r4: 'Forecast: purchase conversion ×1.8, revenue per DAU +12%, payer churn −8%',
+    ev_footer: 'Full calculations with formulas — in the economy Excel model (link in the README)',
+    ev_days: 'd',
+    ev_hours: 'h',
+    ev_min: 'min',
 
     thing_title: 'Thing · Soft skills',
     thing_1: '12+ interactive résumé games — a genre for every studio',
@@ -3767,8 +3803,27 @@ G.resetEconomy = function () {
   G.economy = { gold: 0, earned: 0, spent: 0, energy: 0, coat: 0, luck: false };
 };
 
-// Множитель золота liveops-ивента («Золотой рейд» ×2)
-G.EVENT = { enabled: false, mult: 2 };
+// Liveops-ивент «Золотой рейд»: ×2 золото, авто-продление до ближайшего воскресенья
+G.EVENT = {
+  enabled: true,
+  mult: 2,
+  key: 'golden_raid',
+  until: function () {
+    const now = new Date();
+    const d = new Date(now);
+    d.setDate(d.getDate() + ((7 - d.getDay()) % 7)); // ближайшее воскресенье
+    d.setHours(23, 59, 0, 0);
+    if (d <= now) d.setDate(d.getDate() + 7);        // воскресенье на исходе — продлеваем
+    return d;
+  },
+  endsIn: function () {
+    const ms = G.EVENT.until() - new Date();
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    if (h >= 24) return Math.ceil(h / 24) + ' ' + G.t('ev_days');
+    return h + ' ' + G.t('ev_hours') + ' ' + m + ' ' + G.t('ev_min');
+  },
+};
 G.goldMult = function () { return G.EVENT && G.EVENT.enabled ? G.EVENT.mult : 1; };
 
 // --- Враги ---
@@ -5284,6 +5339,111 @@ G.ui = {
 };
 
 
+// Лента liveops-ивента: таймер до конца окна, тап — Ивент-центр
+G.ui.eventBanner = function (onTap) {
+  const c = new PIXI.Container();
+  c.eventMode = 'static';
+  c.cursor = 'pointer';
+  const g = new PIXI.Graphics();
+  const t = new PIXI.Text({
+    text: '',
+    style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: 0xffe4a8, letterSpacing: 1 },
+  });
+  const draw = () => {
+    t.text = G.t('ev_banner', { n: G.EVENT.endsIn() });
+    g.clear();
+    g.roundRect(0, 0, t.width + 44, 36, 18)
+      .fill({ color: 0x241c12, alpha: 0.94 })
+      .stroke({ width: 1.5, color: G.C.gold, alpha: 0.95 });
+  };
+  draw();
+  t.x = 22; t.y = 8;
+  c.addChild(g, t);
+  c.refresh = draw;
+  if (onTap) c.on('pointertap', () => { G.sfx.play('blip'); onTap(); });
+  return c;
+};
+
+// Ивент-центр: мой ивент + разбор чужого ивента — витрина liveops-мышления
+G.ui.eventHub = function ({ onClose }) {
+  const c = new PIXI.Container();
+  c.zIndex = 55;
+  c.eventMode = 'static';
+  const w = 700, h = 520;
+  c.x = G.W / 2; c.y = G.H / 2;
+  const sheet = G.ui.parchment(w, h);
+  const g = new PIXI.Graphics();
+  G.ui.fancyFrame(g, w, h);
+  const grain = G.viz.grain(w, h, 0.04);
+  grain.x = -w / 2; grain.y = -h / 2;
+  c.addChild(sheet, g, grain);
+
+  const tt = new PIXI.Text({
+    text: G.t('ev_center'),
+    style: { fontFamily: G.FONT_TITLE, fontSize: 21, fill: G.C.ink, letterSpacing: 1 },
+  });
+  tt.x = -w / 2 + 26; tt.y = -h / 2 + 20;
+  const flour = new PIXI.Graphics();
+  flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(w / 2 - 26, -h / 2 + 56)
+    .stroke({ width: 2, color: G.C.goldDark, alpha: 0.55 });
+  flour.moveTo(-w / 2 + 26, -h / 2 + 56).lineTo(-w / 2 + 96, -h / 2 + 56)
+    .stroke({ width: 3, color: G.C.goldDark });
+  c.addChild(tt, flour);
+
+  // живой таймер окна ивента
+  const timer = new PIXI.Text({
+    text: G.t('ev_left', { n: G.EVENT.endsIn() }),
+    style: { fontFamily: G.FONT_TITLE, fontSize: 15, fill: G.C.goldDark },
+  });
+  timer.x = -w / 2 + 26; timer.y = -h / 2 + 68;
+  c.addChild(timer);
+  c.refreshTimer = () => { timer.text = G.t('ev_left', { n: G.EVENT.endsIn() }); };
+
+  const head = (key, y) => {
+    const t = new PIXI.Text({
+      text: G.t(key),
+      style: { fontFamily: G.FONT_SERIF, fontSize: 16, fill: G.C.ink },
+    });
+    t.x = -w / 2 + 26; t.y = y;
+    c.addChild(t);
+  };
+  const line = (key, y) => {
+    const dot = new PIXI.Graphics();
+    dot.circle(-w / 2 + 32, y + 8, 3.5).fill(G.C.goldDark);
+    const t = new PIXI.Text({
+      text: G.t(key),
+      style: { fontFamily: G.FONT_BODY, fontSize: 13, fill: G.C.inkSoft, wordWrap: true, wordWrapWidth: w - 96, lineHeight: 17 },
+    });
+    t.x = -w / 2 + 46; t.y = y;
+    c.addChild(dot, t);
+  };
+
+  head('ev_my', -h / 2 + 104);
+  line('ev_goal', -h / 2 + 132);
+  line('ev_mech', -h / 2 + 172);
+  line('ev_metrics', -h / 2 + 212);
+  head('ev_review', -h / 2 + 258);
+  line('ev_r1', -h / 2 + 286);
+  line('ev_r2', -h / 2 + 326);
+  line('ev_r3', -h / 2 + 366);
+  line('ev_r4', -h / 2 + 406);
+
+  const foot = new PIXI.Text({
+    text: G.t('ev_footer'),
+    style: { fontFamily: G.FONT_BODY, fontSize: 12, fill: G.C.inkDim, wordWrap: true, wordWrapWidth: w - 56 },
+  });
+  foot.x = -w / 2 + 26; foot.y = h / 2 - 46;
+  c.addChild(foot);
+
+  if (onClose) c.addChild(G.ui.button({ label: '✕', x: w / 2 - 26, y: -h / 2 + 26, w: 38, h: 38, small: true, onClick: onClose }));
+  c.alpha = 0;
+  c.scale.set(0.95);
+  G.tween(c, { alpha: 1 }, 200, null, G.easeOut);
+  G.tween(c.scale, { x: 1, y: 1 }, 200, null, G.easeOut);
+  G.sfx.play('chime');
+  return c;
+};
+
 // Деревянная рама с золотыми уголками для больших панелей
 G.ui.fancyFrame = function (g, w, h) {
   g.roundRect(-w / 2 - 5, -h / 2 - 5, w + 10, h + 10, 15).stroke({ width: 8, color: 0x3a2d1c });
@@ -5617,9 +5777,20 @@ G.scenes.title = function () {
   const langT = G.ui.langToggle();
   c.addChild(langT);
 
+  // Лента liveops-ивента: тап — Ивент-центр
+  const evBanner = G.ui.eventBanner(() => {
+    const hub = G.ui.eventHub({
+      onClose: () => { c.removeChild(hub); hub.destroy({ children: true }); },
+    });
+    c.addChild(hub);
+  });
+  evBanner.x = 24; evBanner.y = 12;
+  c.addChild(evBanner);
+
   // Анимация воды и покачивания
   c.tick = (dtMs) => {
     aur.update();
+    evBanner.refresh();
     const dt = dtMs / 1000;
     shimmer.clear();
     const t = performance.now() / 1000;
@@ -6108,6 +6279,16 @@ G.scenes.village = function (params) {
   const langT = G.ui.langToggle();
   c.addChild(langT);
 
+  // Лента liveops-ивента: тап — Ивент-центр
+  const evBanner = G.ui.eventBanner(() => {
+    const hub = G.ui.eventHub({
+      onClose: () => { c.removeChild(hub); hub.destroy({ children: true }); },
+    });
+    c.addChild(hub);
+  });
+  evBanner.x = 24; evBanner.y = 12;
+  c.addChild(evBanner);
+
   // Возвращение после победы в волне — тост о новой постройке
   if (params.unlocked) {
     const def = G.BUILDINGS[params.unlocked - 1];
@@ -6117,6 +6298,7 @@ G.scenes.village = function (params) {
   // Анимация: качание драккара, дрейф воды, мерцание огней
   c.tick = (dtMs) => {
     aur.update();
+    evBanner.refresh();
     const t = performance.now() / 1000;
     ship.rotation = Math.sin(t * 1.4) * 0.03;
     if (water && water.__tile) {
